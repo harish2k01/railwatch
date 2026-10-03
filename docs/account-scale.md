@@ -16,4 +16,12 @@ The isolated database test covers 2,000 journeys, unique page boundaries, full-a
 
 Browser regression coverage loads a second batch and edits a search result outside the first page, then verifies all other records survive. Existing desktop/mobile, theme, ticket, drag/drop and account checks remain in the suite.
 
-Dashboard, Calendar and Routines still request full planning context. Canonical writes and scheduler planning still process the encrypted workspace. Bounded reads for those views, narrower writes and scheduler scaling remain the next account-scale phase; this change does not claim to remove every whole-workspace operation.
+Dashboard now reads full-account aggregates plus up to 30 attention items, four upcoming journeys and four booking openings. The week strip uses exact per-day counts. Time-sensitive dashboard totals refresh each minute without blanking an already loaded dashboard. When attention exceeds the preview, View all journeys opens the full paginated board.
+
+Calendar requests only its visible six-week range, with 200 unique journey records per batch. Exact date aggregates drive event totals and overflow indicators independently of the loaded rows. Month and agenda views can load more; opening a crowded day requests that day's own batches. Both travel dates and booking dates are included, with cancellation styling preserved. Calendar cursors bind the account, range and revision.
+
+Routines and other workspace screens bootstrap settings/rules/holidays without downloading journey history. Routine save, pause, resume and remove actions operate on the canonical server workspace and return metadata only. They retain booked tickets and explicit exceptions, reject stale edits, and update the encrypted index atomically. Notification links fetch an owned journey directly, while backups and calendar exports explicitly request complete data.
+
+The 2,000-journey database fixture verifies dashboard counts, bounded previews, calendar counts, distinct batches, tenant isolation and stale calendar cursors. Browser checks include a 210-journey crowded day and retention of a booked routine occurrence through pause/removal.
+
+Canonical writes, bootstrap reconciliation and scheduler planning still process the encrypted workspace. Narrower storage writes and scheduler scaling remain the next account-scale phase; this change does not claim to remove every whole-workspace operation.
