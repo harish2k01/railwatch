@@ -1,6 +1,6 @@
 "use client";
 import {cloneElement,useEffect,useId,useRef,type ReactElement,type ReactNode} from "react";
-import {X} from "lucide-react";
+import {ArrowLeft,X} from "lucide-react";
 import s from "./planner.module.css";
 /** Associates a form control with its generated label and optional help text. */
 export function Field({ label, children, hint }: { label: string; children: ReactElement; hint?: string }) {
@@ -21,5 +21,5 @@ export function Modal({ title, subtitle, children, close, wide = false, guard = 
     return () => window.removeEventListener("beforeunload", warn);
   }, [guard]);
   useEffect(() => { const dialog = ref.current; dialog?.showModal(); return () => dialog?.close(); }, []);
-  return <dialog ref={ref} className={`${s.modal} ${wide ? s.wideModal : ""}`} onInputCapture={() => { dirty.current = true; }} onChangeCapture={() => { dirty.current = true; }} onCancel={event => { event.preventDefault(); dismiss(); }} aria-labelledby={titleId} onClick={e => { if (e.target === e.currentTarget) dismiss(); }}><header className={s.modalHead}><div><h2 id={titleId}>{title}</h2>{subtitle && <p>{subtitle}</p>}</div><button type="button" className={s.iconButton} onClick={dismiss} aria-label="Close Dialog"><X size={20} /></button></header>{children}</dialog>;
+  return <dialog ref={ref} className={`${s.modal} ${wide ? s.wideModal : ""}`} onInputCapture={() => { dirty.current = true; }} onChangeCapture={() => { dirty.current = true; }} onCancel={event => { event.preventDefault(); dismiss(); }} aria-labelledby={titleId} onClick={e => { if (e.target === e.currentTarget) dismiss(); }}><header className={s.modalHead}><button type="button" className={s.mobileDialogBack} onClick={dismiss} aria-label="Back"><ArrowLeft size={22}/></button><div><h2 id={titleId}>{title}</h2>{subtitle && <p>{subtitle}</p>}</div><button type="button" className={s.iconButton} onClick={dismiss} aria-label="Close Dialog"><X size={20} /></button></header>{children}</dialog>;
 }

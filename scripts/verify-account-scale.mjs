@@ -45,6 +45,18 @@ export async function verifyAccountScale({page,api,url}) {
     await dialog.getByRole('button',{name:'Load more day events',exact:true}).click();
     await expect(dialog.getByRole('button',{name:/^ScaleOrigin/})).toHaveCount(210);
     await dialog.getByRole('button',{name:'Close Dialog',exact:true}).click();
+    // The phone screens must retain pagination beyond their compact initial lists.
+    await page.setViewportSize({width:390,height:844});await page.goto(url+'/journeys');
+    await page.getByRole('button',{name:'Planned',exact:true}).click();
+    await page.getByLabel('Search Journeys',{exact:true}).fill('ScaleOrigin');
+    const mobileRows=page.getByRole('button',{name:/^Open journey ScaleOrigin/});
+    await expect(mobileRows).toHaveCount(30);
+    await page.getByRole('button',{name:'Load more to book',exact:true}).click();await expect(mobileRows).toHaveCount(60);
+    await page.goto(url+'/calendar');await page.getByLabel('Choose date',{exact:true}).fill(targetDay);
+    await expect(mobileRows).toHaveCount(200);
+    await page.getByRole('button',{name:'Load more day events',exact:true}).click();await expect(mobileRows).toHaveCount(210);
+    await page.screenshot({path:'build/railwatch-qa/mobile-scale-agenda.png',animations:'disabled'});
+    await page.setViewportSize({width:1482,height:876});
     await page.goto(url+'/routines');
     if(baseline.planner.rules.length){
       const rule=baseline.planner.rules[0];
