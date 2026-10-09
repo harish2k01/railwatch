@@ -50,3 +50,13 @@ it("shows a replaceable journey notification and opens only the same-origin jour
   handlers.notificationclick({notification:{close:()=>{}},waitUntil:(value:Promise<unknown>)=>{pending=value;}});
   await pending;expect(opened).toBe("https://railwatch.test/journeys");
 });
+
+
+it("opens the encoded journey from push data and rejects external click destinations", async()=>{
+  const handlers:Record<string,(event:unknown)=>void>={};let shown:{url:string}|undefined,opened="",pending:Promise<unknown>|undefined;
+  runInNewContext(readFileSync("public/sw.js","utf8"),{URL,encodeURIComponent,self:{location:{origin:"https://railwatch.test"},addEventListener:(type:string,handler:(event:unknown)=>void)=>{handlers[type]=handler;},registration:{showNotification:async(_title:string,options:{data:{url:string}})=>{shown=options.data;}},clients:{matchAll:async()=>[],openWindow:async(url:string)=>{opened=url;}}}});
+  handlers.push({data:{json:()=>({url:"/journeys?journey=trip%26return"})},waitUntil:(value:Promise<unknown>)=>{pending=value;}});await pending;
+  expect(shown?.url).toBe("/journeys?journey=trip%26return");
+  handlers.notificationclick({notification:{data:shown,close:()=>{}},waitUntil:(value:Promise<unknown>)=>{pending=value;}});await pending;expect(opened).toBe("https://railwatch.test/journeys?journey=trip%26return");
+  handlers.notificationclick({notification:{data:{url:"https://evil.test"},close:()=>{}},waitUntil:(value:Promise<unknown>)=>{pending=value;}});await pending;expect(opened).toBe("https://railwatch.test/journeys");
+});

@@ -47,3 +47,11 @@ Each device is independently registered (maximum ten per account). Disable remov
 Physical acceptance: allow and send a test on desktop Chrome, Android installed Chrome and installed iPhone Safari; close the app and verify a scheduled reminder; disable and confirm no further push; revoke OS permission and check the UI. iOS status-bar metadata changes may require closing/reopening or reinstalling an existing home-screen app. Check the top area in dark mode and that dialogs have one vertical scroll surface with no horizontal scrolling.
 
 Platform reference: https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/
+
+## Journey links and settings edits
+
+Journey dialogs provide **Copy Journey Link** and **Notification History**. Reminder email buttons, Telegram buttons and device notifications open `/journeys?journey=<id>`; signing in retains this destination. Links always resolve against the signed-in account, including journeys outside the currently loaded list. An unavailable or another account's journey displays a generic error without revealing its details.
+
+Journey notification history includes scheduled reminders, current delivery outcomes, attempt counts and provider-safe errors. Historical payloads stay encrypted: each journey-history request examines at most 100 owned jobs, with Next reaching older records even when a page contains no matches. Attempt counts describe the current job record, not a separate event for each transport attempt.
+
+Profile, preferences, security and administrator/provider forms warn before closing, switching sections, following links, browser history navigation or reloading with edits. Successful saves clear only the saved form; failed saves retain its warning and values. Settings inputs and credentials are never written to local storage for this protection.

@@ -11,19 +11,29 @@ self.addEventListener("fetch", event => {
   event.respondWith(fetch(event.request).catch(() => caches.match("/offline.html")));
 });
 
+// Restricts notification clicks to this application's journey route.
+function journeyDestination(value) {
+  try {
+    const url = new URL(value || "/journeys", self.location.origin);
+    if (url.origin !== self.location.origin || url.pathname !== "/journeys") return "/journeys";
+    const id = url.searchParams.get("journey");
+    return id && id.length <= 128 ? "/journeys?journey=" + encodeURIComponent(id) : "/journeys";
+  } catch { return "/journeys"; }
+}
+
 // Display one notification per journey; URLs are constrained to the current origin.
 self.addEventListener("push", event => {
   let payload;
   try { payload = event.data.json(); } catch { return; }
   event.waitUntil(self.registration.showNotification(payload.title || "RailWatch", {
     body: payload.body, tag: payload.tag || "railwatch", icon: "/icons/app-192.png",
-    data: { url: "/journeys" }, renotify: false,
+    data: { url: journeyDestination(payload.url) }, renotify: false,
   }));
 });
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async windows => {
-    const target = new URL("/journeys", self.location.origin).href;
+    const target = new URL(journeyDestination(event.notification.data?.url), self.location.origin).href;
     const client = windows.find(window => new URL(window.url).origin === self.location.origin);
     if (client) { await client.navigate(target); return client.focus(); }
     return self.clients.openWindow(target);

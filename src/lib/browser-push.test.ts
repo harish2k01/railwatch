@@ -23,7 +23,7 @@ it("sends encrypted subscription data with a stable journey tag and removes expi
   mocks.send.mockResolvedValue({});
   await sendBrowserPush("owner", "device", "Book your train", "railwatch-journey-j1");
   expect(mocks.find).toHaveBeenCalledWith({ where: { id: "device", userId: "owner" } });
-  expect(JSON.parse(mocks.send.mock.lastCall?.[1])).toMatchObject({ tag: "railwatch-journey-j1", url: "/journeys" });
+  expect(JSON.parse(mocks.send.mock.lastCall?.[1])).toMatchObject({ tag: "railwatch-journey-j1", url: "/journeys?journey=j1" });
   mocks.send.mockRejectedValue({ statusCode: 410 });
   await sendBrowserPush("owner", "device", "Book", "same-tag");
   expect(mocks.remove).toHaveBeenCalledWith({ where: { id: "device", userId: "owner" } });

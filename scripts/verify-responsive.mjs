@@ -104,6 +104,26 @@ export async function verifyResponsive({page,api,url,otherApi}) {
       }
     }
   }
+  await page.setViewportSize({width:390,height:844});await page.goto(url+'/');
+  await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();
+  const guardedSettings=page.getByRole('dialog');await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();
+  const username=guardedSettings.getByRole('textbox',{name:'Username',exact:true}),originalName=await username.inputValue();await username.fill(originalName+' edited');
+  page.removeAllListeners('dialog');let settingsWarnings=0;page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
+  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await expect(username).toHaveValue(originalName+' edited');assert.equal(settingsWarnings,1);
+  await guardedSettings.getByRole('button',{name:'← Settings',exact:true}).click();await expect(username).toBeVisible();assert.equal(settingsWarnings,2);
+  await page.route('**/api/railwatch/profile',route=>route.request().method()==='PATCH'?route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:{message:'Settings failure fixture'}})}):route.continue());
+  await guardedSettings.getByRole('button',{name:'Save Profile',exact:true}).click();await expect(guardedSettings.getByRole('alert')).toContainText('Settings failure fixture');
+  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();assert.equal(settingsWarnings,3);await expect(username).toHaveValue(originalName+' edited');await page.unroute('**/api/railwatch/profile');
+  await username.fill(originalName);await guardedSettings.getByRole('button',{name:'Save Profile',exact:true}).click();await expect(guardedSettings.getByRole('status').filter({hasText:'Your profile has been updated'})).toBeVisible();
+  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await expect(guardedSettings).toHaveCount(0);assert.equal(settingsWarnings,3);
+  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await guardedSettings.getByRole('textbox',{name:'Username',exact:true}).fill('Discarded settings fixture');await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();
+  await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await expect(guardedSettings.getByRole('textbox',{name:'Username',exact:true})).toHaveValue(originalName);await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();
+  page.removeAllListeners('dialog');page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
+  await page.goto(url+'/admin');await page.getByRole('button',{name:'Normal booking',exact:true}).click();const bookingDays=page.getByRole('spinbutton',{name:'Booking opens this many days before travel',exact:true}),originalDays=await bookingDays.inputValue();await bookingDays.fill('61');
+  await page.getByRole('button',{name:'More',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,4);
+  await page.getByRole('button',{name:'← Administrator settings',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,5);
+  await bookingDays.fill(originalDays);await page.getByRole('button',{name:'Save Booking Rules',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Settings saved'})).toBeVisible();await page.getByRole('button',{name:'← Administrator settings',exact:true}).click();assert.equal(settingsWarnings,5);
+  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());
   await page.setViewportSize({width:1482,height:876});
   const state=(await(await api('/api/railwatch/workspace')).json()).data;state.planner.settings.theme='light';assert.equal((await api('/api/railwatch/workspace','put',state)).status(),200);
   await page.goto(url+'/journeys');await page.getByRole('region',{name:'Booked column',exact:true}).getByRole('button',{name:/Open journey/}).first().click();

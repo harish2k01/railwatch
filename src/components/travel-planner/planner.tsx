@@ -1,4 +1,5 @@
 "use client";
+import { settingsNavigationAllowed } from "./settings-guard";
 import {MobileRoutines,MobileTimeOff,MobileHome,MobileNavigation,MobileScreen,MobileJourneyRow,MobileWeek,useMobileWorkspace} from "./mobile-workspace";
 import m from "./mobile-workspace.module.css";
 import {usePlanningView} from "./planning-views";
@@ -12,8 +13,9 @@ import { JourneySummary } from "./journey-summary";
 import { groupTimeOff, stationLabel } from "@/lib/journey-display";
 import { RailWatchMark } from "@/components/railwatch-mark";
 
+import { journeyLink } from "@/lib/journey-links";
 import Link from "next/link";
-import { usePathname,useRouter } from "next/navigation";
+import { usePathname,useRouter,useSearchParams } from "next/navigation";
 import type { UserProfile } from "@/lib/feature-policy";
 import { AdminPanel } from "./admin";
 import { Profile } from "./profile";
@@ -44,9 +46,9 @@ function download(name: string, value: string, type: string) { const url = URL.c
 /** Coordinates routed workspace views, optimistic saves, item dialogs, and account-scoped actions. */
 export function TravelPlanner({ account }: { account: AccountWorkspace & UserProfile }) {
   const mobile=useMobileWorkspace();
-  const router=useRouter(),pathname=usePathname();const policy=account.policy;
+  const router=useRouter(),pathname=usePathname(),params=useSearchParams();const policy=account.policy;
   const tab=(Object.keys(PATHS) as Tab[]).find(key=>PATHS[key]===pathname)??"home";
-  const /** Navigates to the selected workspace page. */ setTab=(tab:Tab)=>router.push(PATHS[tab]);
+  const /** Navigates to the selected workspace page. */ setTab=(tab:Tab)=>{if(settingsNavigationAllowed())router.push(PATHS[tab]);};
   const navItems=NAV.filter(n=>n.id!=="settings"||account.role==="ADMIN");
   const activeNav=tab==="users"||tab==="integrations"||tab==="operations"?"settings":tab;
   const saveLock=useRef(false); const [displayName,setDisplayName]=useState(account.name);
@@ -67,6 +69,16 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   const [mobileStatus, setMobileStatus] = useState("booked");
   const [calendarView, setCalendarView] = useState("month");
   const [editor, setEditor] = useState<Editor>(null);
+  const linkedJourney=params.get("journey");
+  const openedLink=useRef<string|null>(null);
+  const [historyJourney,setHistoryJourney]=useState<string>();
+  useEffect(()=>{
+    if(!linkedJourney||linkedJourney===openedLink.current)return;
+    if(linkedJourney.length>128)return;
+    let live=true;
+    void apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(linkedJourney)).then(({journey})=>{if(!live)return;openedLink.current=linkedJourney;setMoreOpen(false);setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==journey.id),journey]});});setEditor({type:"journey",journey,editing:window.matchMedia("(min-width:769px)").matches});}).catch(()=>{if(live)setError("This journey is unavailable for your account.");});
+    return()=>{live=false;};
+  },[linkedJourney]);
   const [viewTicket,setViewTicket]=useState<import("@/lib/travel-planner").TicketAttachment>();
   const [journeyView, setJourneyView] = useState("board"); const [undo, setUndo] = useState<{ id: string; status: Journey["status"]; next: Journey["status"] } | null>(null);
   const [invalidDismissed,setInvalidDismissed]=useState(false);
@@ -113,11 +125,11 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     }catch(e){setRemote(previous);setError(e instanceof Error ? e.message : "Could not save your changes.");return false;}finally{saveLock.current=false;setSaving(false);}
   }
     /** Opens the selected item editor and clears stale feedback. */
-  function open(next: Editor) { setError(""); setEditor(next?.type === "journey" && next.journey && window.matchMedia("(min-width: 769px)").matches ? {...next,editing:true} : next); }
+  function open(next: Editor) { if(next?.type==="journey"&&next.journey){openedLink.current=next.journey.id;const url=new URL(location.href);url.searchParams.set("journey",next.journey.id);history.replaceState(null,"",url.pathname+url.search);} setError(""); setEditor(next?.type === "journey" && next.journey && window.matchMedia("(min-width: 769px)").matches ? {...next,editing:true} : next); }
   /** Opens an owned journey even when its row is outside the currently loaded pages. */
   async function openJourneyById(id:string){const existing=planner.journeys.find(j=>j.id===id);if(existing){open({type:"journey",journey:existing});return;}try{const result=await apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(id));setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==id),result.journey]});});open({type:"journey",journey:result.journey});}catch(e){setError(e instanceof Error?e.message:"Could not open this journey.");}}
     /** Closes the active editor and clears its transient feedback. */
-  function close() { if(saving)return; setEditor(null); setError(""); }
+  function close() { if(saving)return; setEditor(null);openedLink.current=null;const url=new URL(location.href);url.searchParams.delete("journey");history.replaceState(null,"",url.pathname+url.search); setError(""); }
     /** Persists the edited journey while retaining the other account travel plans. */
   function update(j: Journey) { return commit({ ...planner, journeys: planner.journeys.map(old => old.id === j.id ? j : old) }, "Journey updated."); }
     /** Changes a journey board status and records an undo opportunity. */
@@ -244,9 +256,11 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       {!mobile&&tab === "vault" && <><label className={s.search}><Search size={16}/><input aria-label="Search Tickets" placeholder="Search tickets…" value={vaultSearch} onChange={e=>setVaultSearch(e.target.value)}/></label><div className={s.vaultGrid}>{filtered.flatMap(j => (j.attachments ?? []).filter(file=>file.type==="application/pdf").map(file => <article className={s.vaultCard} key={file.id}><button className={s.vaultOpen} onClick={()=>open({type:"journey",journey:j})} aria-label={`Open ticket journey ${j.from} to ${j.to}`}><span className={s.vaultDate}>{formatDay(j.date,{day:"numeric",month:"long",year:"numeric"})}</span><span className={s.vaultRoute} title={`${j.from} → ${j.to}`}>{stationLabel(j.from)}<ArrowRight size={16}/>{stationLabel(j.to)}</span></button><div className={s.cardActions}><button className={s.secondary} onClick={()=>setViewTicket(file)}>View Ticket</button><ActionMenu label={`Ticket Actions For ${j.from} to ${j.to}`} actions={[{label:"Download Ticket",onClick:()=>void downloadTicketFile(file).catch(e=>setError(e.message))}]}/></div></article>))}{!pages.pending&&!filtered.some(j=>j.attachments?.some(file=>file.type==="application/pdf")) && <section className={s.emptyPage}><Files size={32}/><h2>A Home For Your Tickets</h2><p>Upload a PDF from a booked journey. Images and QR codes only extract details and are not stored. PDFs are deleted seven days after cancellation or completion; journey history and entered details remain.</p></section>}</div>{pages.data?.pages.all?.nextCursor&&<button className={s.secondary} disabled={pages.busy} onClick={()=>void pages.more("all")}>Load more tickets</button>}</>}
       {!moreVisible&&(tab === "settings" || tab === "users" || tab === "integrations" || tab === "operations") && account.role==="ADMIN" && <AdminPanel view={tab==="operations"?"operations":tab==="users"?"users":tab==="integrations"?"integrations":"settings"} currentUserId={account.id} notice={setNotice} refresh={refreshWorkspace}/>}
     </main></div>
-    {mobile&&<MobileNavigation disabled={saving} tab={tab} more={moreOpen} openMore={()=>setMoreOpen(!moreVisible)} navigate={()=>setMoreOpen(false)}/>}
+    {mobile&&<MobileNavigation disabled={saving} tab={tab} more={moreOpen} openMore={()=>{if(settingsNavigationAllowed())setMoreOpen(!moreVisible);}} navigate={()=>setMoreOpen(false)}/>}
+    {historyJourney&&<Modal title="Journey Notifications" close={()=>setHistoryJourney(undefined)}><NotificationHistory journeyId={historyJourney} notice={setNotice} open={()=>setHistoryJourney(undefined)}/></Modal>}
     {editor && <Modal title={editor.type === "journey" ? editor.ticket ? "Record Booked Ticket" : editor.journey ? `${editor.journey.from} → ${editor.journey.to}` : "New Journey" : editor.type === "rule" ? editor.rule?.id ? "Edit Routine" : "New Routine" : editor.type === "day" ? formatDay(editor.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : editor.type === "holiday" ? "Add Time Off" : "Import Company Holidays"} subtitle={editor.type === "journey" && editor.journey ? `${formatDay(editor.journey.date)} · ${ruleName(editor.journey) || "One-off journey"}` : undefined} close={close} wide={editor.type === "journey" && (!editor.journey || Boolean(editor.editing))} guard={editor.type !== "day" && (editor.type !== "journey" || !editor.journey || Boolean(editor.editing))}>
       <div inert={saving}>
+      {editor.type==="journey"&&editor.journey&&<div className={s.cardActions}><button type="button" className={s.textButton} onClick={()=>{void navigator.clipboard.writeText(new URL(journeyLink(editor.journey!.id),location.origin).href).then(()=>setNotice("Journey link copied.")).catch(()=>setError("Could not copy the journey link."));}}>Copy Journey Link</button>{policy.remindersEnabled&&<button type="button" className={s.textButton} onClick={()=>setHistoryJourney(editor.journey!.id)}>Notification History</button>}</div>}
       {editor.type === "journey" && editor.journey && !editor.editing ? <JourneySummary journey={editor.journey} routine={ruleName(editor.journey)} edit={()=>setEditor({...editor,editing:true})} view={setViewTicket} cancel={()=>{const j=editor.journey;if(j&&confirm("Have you cancelled this ticket through IRCTC?"))void update(transitionJourney(j,"cancelled")).then(saved=>{if(saved)close();});}}/> : editor.type === "journey" && <JourneyForm remindersEnabled={policy.remindersEnabled} uploadsEnabled={policy.ticketUploadsEnabled} journey={editor.journey} date={editor.date} ticket={editor.ticket} planner={planner} today={today} fail={setError} save={async j => { const saved = await commit({ ...planner, journeys: [...planner.journeys.filter(old => old.id !== j.id), j] }, "Journey saved."); if (saved) close(); return saved; }} />}
       {editor.type === "rule" && <RuleForm remindersEnabled={policy.remindersEnabled} rule={editor.rule} planner={planner} today={today} fail={setError} save={saveRoutine} />}
       {editor.type === "day" && <div className={s.form}>{selectedDay.pending&&<p role="status">Loading events…</p>}{selectedDay.error&&<><p role="alert">{selectedDay.error}</p><button onClick={()=>selectedDay.refresh()}>Refresh events</button></>}{dayEvents.holidays.map(h=><p key={h.id}>{h.name}</p>)}{dayEvents.bookings.map(j=><button key={"b"+j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>Booking: {j.from} → {j.to}</button>)}{dayEvents.journeys.map(j=><button key={j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>{j.from} → {j.to} · {STATUS[j.status]}</button>)}{selectedDay.data?.nextCursor&&<button className={s.secondary} disabled={selectedDay.busy} onClick={()=>void selectedDay.more()}>Load more day events</button>}<button className={s.primary} onClick={()=>open({type:"journey",date:editor.date})}>Plan Travel</button></div>}

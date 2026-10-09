@@ -1,3 +1,4 @@
+import { journeyLink } from "./journey-links";
 import { bookingTimeLabel,bookingDay,formatDay,type Journey } from "./travel-planner";
 import {emailTemplate} from "./message-templates";
 import { logger } from "./logger";
@@ -62,6 +63,6 @@ export function sendVerificationEmail(email:string,token:string){
 }
 /** Delivers a branded booking reminder; callers must recheck verified recipient eligibility. */
 export function sendBookingEmail(email:string,journey:Journey){
-  if(journey.status==="cancellation_needed")return send(email,"RailWatch · Cancellation reminder",`${journey.from} → ${journey.to}\n\nTravel: ${formatDay(journey.date,{day:"numeric",month:"long",year:"numeric"})}\n\nCancel through IRCTC, then confirm cancellation in RailWatch.`,{label:"Open Journeys",url:`${appUrl()}/journeys`});
-  return send(email,"RailWatch · Booking reminder",`${journey.from} → ${journey.to}\n\nTravel: ${formatDay(journey.date,{day:"numeric",month:"long",year:"numeric"})}\nBooking Date: ${formatDay(bookingDay(journey),{day:"numeric",month:"long",year:"numeric"})}\nOpens at ${bookingTimeLabel(journey)}\n\nBook through IRCTC, then mark this journey as booked in RailWatch.`,{label:"Open Journeys",url:`${appUrl()}/journeys`});
+  if(journey.status==="cancellation_needed")return send(email,"RailWatch · Cancellation reminder",`${journey.from} → ${journey.to}\n\nTravel: ${formatDay(journey.date,{day:"numeric",month:"long",year:"numeric"})}\n\nCancel through IRCTC, then confirm cancellation in RailWatch.`,{label:"Open Journey",url:`${appUrl()}${journeyLink(journey.id)}`});
+  return send(email,"RailWatch · Booking reminder",`${journey.from} → ${journey.to}\n\nTravel: ${formatDay(journey.date,{day:"numeric",month:"long",year:"numeric"})}\nBooking Date: ${formatDay(bookingDay(journey),{day:"numeric",month:"long",year:"numeric"})}\nOpens at ${bookingTimeLabel(journey)}\n\nBook through IRCTC, then mark this journey as booked in RailWatch.`,{label:"Open Journey",url:`${appUrl()}${journeyLink(journey.id)}`});
 }

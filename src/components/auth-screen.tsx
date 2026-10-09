@@ -1,4 +1,5 @@
 "use client";
+import { safeJourneyDestination } from "@/lib/journey-links";
 import { Toast } from "./travel-planner/toast";
 import { RailWatchMark } from "@/components/railwatch-mark";
 
@@ -34,7 +35,7 @@ export function AuthScreen({ mode, allowSignups, token, tokenType }: { mode: Aut
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(errorMessage(data));
-      router.replace("/");
+      const next=new URL(location.href).searchParams.get("next");router.replace(next?safeJourneyDestination(next):"/");
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "The request could not be completed.");
