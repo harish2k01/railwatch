@@ -44,7 +44,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await page.getByRole('button',{name:'Open Profile Menu',exact:true}).click();await page.getByRole('menuitem',{name:'User Settings',exact:true}).click();
         const drawer=page.getByRole('dialog',{name:'User Settings',exact:true});
         const bounds=await drawer.boundingBox();assert.ok(bounds.width>=width-1,'Settings fills the phone');
-        if(width===390){await page.setViewportSize({width:1482,height:876});await expect(drawer.getByLabel('Username',{exact:true})).toBeVisible();await page.setViewportSize({width,height:844});await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();}
+        if(width===390){await page.setViewportSize({width:1482,height:876});await expect(page.getByRole('dialog')).toHaveCount(1);await expect(drawer.getByLabel('Username',{exact:true})).toBeVisible();await drawer.getByLabel('Username',{exact:true}).focus();await expect(drawer.getByLabel('Username',{exact:true})).toBeFocused();await page.setViewportSize({width,height:844});await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();}
         for(const tab of await drawer.getByRole('navigation',{name:'Settings sections'}).getByRole('button').all()){const box=await tab.boundingBox();assert.ok(box.x>=bounds.x&&box.x+box.width<=bounds.x+bounds.width+1,'Settings sections fit phone');}
         await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
         await page.goto(url+'/journeys');await page.getByRole('button',{name:/Open journey/}).first().click();
