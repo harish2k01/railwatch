@@ -13,15 +13,19 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 /** Returns a bounded page of this account's delivery outcomes without provider secrets. */
 export async function GET(request:Request){try{
   const user=await requireUser();
-  const cursor=new URL(request.url).searchParams.get("cursor");
+  const params=new URL(request.url).searchParams;const cursor=params.get("cursor"),journeyId=params.get("journeyId");
+  if(journeyId&&journeyId.length>128)throw new ApiError(400,"Invalid journey.","INVALID_INPUT");
+  const scope=journeyId?await prisma.railWorkspace.findUnique({where:{userId:user.id}}):null;
+  if(journeyId&&(!scope||!(await storedPlanner(prisma,user.id,scope,[journeyId])).journeys.some(j=>j.id===journeyId)))throw new ApiError(404,"Journey not found.","NOT_FOUND");
+  const limit=journeyId?100:25;
   if(cursor&&cursor.length>128)throw new ApiError(400,"Invalid history cursor.","INVALID_INPUT");
   // A cursor must belong to this account; identifiers never authorize access.
   if(cursor&&!await prisma.railJob.findFirst({where:{id:cursor,userId:user.id},select:{id:true}}))throw new ApiError(400,"Refresh notification history.","INVALID_CURSOR");
-  const rows=await prisma.railJob.findMany({where:{userId:user.id,state:{in:["SENT","SUPPRESSED","CANCELLED","FAILED","MISSED"]}},orderBy:[{createdAt:"desc"},{id:"desc"}],take:26,...(cursor?{cursor:{id:cursor},skip:1}:{})});
+  const rows=await prisma.railJob.findMany({where:{userId:user.id,...(!journeyId?{state:{in:["SENT","SUPPRESSED","CANCELLED","FAILED","MISSED"]}}:{})},orderBy:[{createdAt:"desc"},{id:"desc"}],take:limit+1,...(cursor?{cursor:{id:cursor},skip:1}:{})});
   const now=new Date();
   const [workspace,pauses]=await Promise.all([prisma.railWorkspace.findUnique({where:{userId:user.id}}),prisma.railReminderPause.findMany({where:{userId:user.id,until:{gt:now}}})]);
   const journeys=workspace?(await storedPlanner(prisma,user.id,workspace,[...pauses.map(p=>p.journeyId),...rows.map(j=>reminderJourneyId(j.payload)).filter((id):id is string=>Boolean(id))])).journeys:[];
-  const items=rows.slice(0,25).map(job=>{
+  const items=rows.slice(0,limit).filter(job=>!journeyId||reminderJourneyId(job.payload)===journeyId).map(job=>{
     const details=JSON.parse(decryptSecret(job.payload)??"{}");
     const journey=journeys.find(j=>j.id===details.journeyId);
     return {id:job.id,kind:job.kind,state:job.state,dueAt:job.dueAt,sentAt:job.sentAt,readAt:job.readAt,attempts:job.attempts,lastError:job.lastError,message:String(details.message??"Reminder"),journeyId:typeof details.journeyId==="string"?details.journeyId:null,
@@ -29,8 +33,8 @@ export async function GET(request:Request){try{
       canRead:!job.readAt&&(job.state==="FAILED"||job.state==="MISSED"||job.kind==="IN_APP"&&job.state==="SENT"),
       pausedUntil:pauses.find(p=>p.journeyId===details.journeyId)?.until??null};
   });
-  const pausedJourneys=pauses.flatMap(p=>{const j=journeys.find(j=>j.id===p.journeyId);return j?[{journeyId:j.id,from:j.from,to:j.to,date:j.date,until:p.until}]:[];});
-  return jsonData({items,pausedJourneys,nextCursor:rows.length>25?rows[24].id:null});
+  const pausedJourneys=pauses.filter(p=>!journeyId||p.journeyId===journeyId).flatMap(p=>{const j=journeys.find(j=>j.id===p.journeyId);return j?[{journeyId:j.id,from:j.from,to:j.to,date:j.date,until:p.until}]:[];});
+  return jsonData({items,pausedJourneys,nextCursor:rows.length>limit?rows[limit-1].id:null});
 }catch(error){return routeError(error,request);}}
 
 /** Acknowledges an owned notification or pauses/resumes an owned journey's reminders. */

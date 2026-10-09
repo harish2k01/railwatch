@@ -1,3 +1,4 @@
+import { journeyLink } from "./journey-links";
 import webpush from "web-push";
 import { Agent } from "node:https";
 import { createHash } from "node:crypto";
@@ -34,7 +35,7 @@ export async function sendBrowserPush(userId: string, deviceId: string, message:
   if (!validPushEndpoint(subscription.endpoint)) throw new ApiError(400, "Unsupported browser push service.");
   const identity = await pushIdentity();
   try {
-    await webpush.sendNotification(subscription, JSON.stringify({ title: "RailWatch", body: message, tag, url: "/journeys" }), {
+    await webpush.sendNotification(subscription, JSON.stringify({ title: "RailWatch", body: message, tag, url: tag.startsWith("railwatch-journey-") ? journeyLink(tag.slice("railwatch-journey-".length)) : "/journeys" }), {
       TTL: 3600, timeout: 15000,
       // Apple publishes IPv6 addresses even on hosts without usable IPv6 egress.
       ...(new URL(subscription.endpoint).hostname.endsWith(".push.apple.com") ? { agent: new Agent({ family: 4 }) } : {}),

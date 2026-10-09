@@ -43,6 +43,21 @@ try{
   historyJourney.date=new Date(Date.now()+60*86400000).toISOString().slice(0,10);
   assert.equal((await api(admin,'/api/railwatch/workspace','put',{...baselineHistoryWorkspace,planner:{...baselineHistoryWorkspace.planner,journeys:[historyJourney]}})).status(),200);
   await deliveryDb.query('UPDATE "RailJob" SET payload=$1 WHERE id=$2',[JSON.stringify({journeyId:historyJourney.id,message:'Notification history fixture',reminderType:'booking'}),history.items[0].id]);
+  const scoped=await read(admin,'/api/railwatch/notifications?journeyId='+historyJourney.id);assert.equal(scoped.items.length,1);assert.equal(scoped.items[0].journeyId,historyJourney.id);
+  assert.equal((await api(regular,'/api/railwatch/notifications?journeyId='+historyJourney.id)).status(),404);
+  await deliveryDb.query('INSERT INTO "RailJob" (id,"userId",key,kind,"dueAt",state,payload,"updatedAt") VALUES ($1,$2,$1,$3,now(),$4,$5,now())',['history-scan-pending',deliveryOwner,'EMAIL','PENDING',JSON.stringify({journeyId:historyJourney.id,message:'Scheduled history fixture'})]);
+  for(let n=0;n<101;n++)await deliveryDb.query('INSERT INTO "RailJob" (id,"userId",key,kind,"dueAt",state,payload,"createdAt","updatedAt") VALUES ($1,$2,$1,$3,now(),$4,$5,now()+interval \'1 hour\',now())',['history-scan-'+n,deliveryOwner,'EMAIL','PENDING',JSON.stringify({journeyId:'another-journey',message:'Unrelated history fixture'})]);
+  const scanned=await read(admin,'/api/railwatch/notifications?journeyId='+historyJourney.id);assert.equal(scanned.items.length,0);assert.ok(scanned.nextCursor);
+  const olderScoped=await read(admin,'/api/railwatch/notifications?journeyId='+historyJourney.id+'&cursor='+scanned.nextCursor);assert.equal(olderScoped.items.length,2);assert.ok(olderScoped.items.some(item=>item.state==='PENDING'));assert.ok(olderScoped.items.every(item=>item.journeyId===historyJourney.id));
+  await deliveryDb.query('DELETE FROM "RailJob" WHERE "userId"=$1 AND key LIKE $2',[deliveryOwner,'history-scan-%']);
+
+  await page.goto(url+'/journeys?journey='+historyJourney.id);await expect(page.getByRole('dialog').getByLabel('Notes',{exact:true})).toBeVisible();
+  await page.getByRole('dialog').getByRole('button',{name:'Notification History',exact:true}).click();
+  const journeyHistory=page.getByRole('dialog',{name:'Journey Notifications'});await expect(journeyHistory.getByText('Notification history fixture',{exact:true})).toBeVisible();await journeyHistory.getByRole('button',{name:'Close Dialog',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Close Dialog',exact:true}).click();assert.equal(new URL(page.url()).searchParams.has('journey'),false);
+  const signedOutJourney=await browser.newContext(),signInJourney=await signedOutJourney.newPage();await signInJourney.goto(url+'/journeys?journey='+historyJourney.id);await expect(signInJourney).toHaveURL(url+'/login?next='+encodeURIComponent('/journeys?journey='+historyJourney.id));
+  await signInJourney.getByLabel('Email',{exact:true}).fill(email);await signInJourney.getByLabel('Password',{exact:true}).fill(password);await signInJourney.getByRole('button',{name:'Sign in',exact:true}).click();await expect(signInJourney.getByRole('dialog').getByLabel('Notes',{exact:true})).toBeVisible();await signedOutJourney.close();
+  await p2.goto(url+'/journeys?journey='+historyJourney.id);await expect(p2.getByRole('alert').filter({hasText:'unavailable for your account'})).toContainText('unavailable for your account');await expect(p2.getByRole('dialog')).toHaveCount(0);
   assert.equal((await api(regular,'/api/railwatch/notifications','post',{action:'snooze',journeyId:historyJourney.id,minutes:30})).status(),404);
   assert.equal((await api(admin,'/api/railwatch/notifications','post',{action:'snooze',journeyId:historyJourney.id,minutes:2})).status(),400);
   await page.goto(url+'/notifications');await expect(page.getByRole('heading',{name:'Notifications',exact:true})).toBeVisible();
