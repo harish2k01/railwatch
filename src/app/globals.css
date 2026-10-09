@@ -101,3 +101,7 @@ main article,
 html:has(dialog[open]), body:has(dialog[open]) { overflow: hidden; }
 html:has([data-theme="dark"]), body:has([data-theme="dark"]) { background: #1c222a; color-scheme: dark; }
 html:has([data-theme="light"]), body:has([data-theme="light"]) { background: #fff; color-scheme: light; }
+
+/* Match the standalone phone safe area and overscroll to its workspace surface. */
+html:has([data-mobile="true"][data-theme="dark"]),body:has([data-mobile="true"][data-theme="dark"]){background:#0c1015}
+html:has([data-mobile="true"][data-theme="light"]),body:has([data-mobile="true"][data-theme="light"]){background:#eef2f5}

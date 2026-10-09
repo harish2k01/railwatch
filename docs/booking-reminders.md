@@ -10,4 +10,4 @@ The scheduler keeps stable per-channel/device identities and rechecks the curren
 
 Apple push requests use IPv4 because the deployment's network has no usable IPv6 route. Delivery failures log the safe HTTP status or network error code without exposing subscription URLs. HTTP 201 confirms acceptance by Apple's push service; actual device display still depends on notification permission and the device's settings.
 
-Desktop journey clicks open editing directly. Mobile clicks retain a summary before editing. The calendar's Month/Agenda switch is mobile-only. PDF tickets render pages vertically, loading pages near the viewport and retaining zoom, fit-width and download controls.
+Desktop journey clicks open editing directly. Mobile clicks retain a summary before editing. The phone calendar uses a week selector and daily agenda, with a date picker for other months. PDF tickets render pages vertically, loading pages near the viewport and retaining zoom, fit-width and download controls.

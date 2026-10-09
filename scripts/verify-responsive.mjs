@@ -27,32 +27,79 @@ export async function verifyResponsive({page,api,url,otherApi}) {
       }
       if(width<=390) {
         await page.goto(url+'/journeys');
-        for(const name of ['Dashboard','My Journeys','Calendar']) {
-          const link=page.getByRole('link',{name,exact:true});await expect(link).toBeVisible();
+        const mobileNav=page.getByRole('navigation',{name:'Mobile navigation'});
+        for(const name of ['Home','Journeys','Tickets']) {
+          const link=mobileNav.getByRole('link',{name,exact:true});await expect(link).toBeVisible();
           const box=await link.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width,`Mobile ${name} fits`);
         }
-        await expect(page.getByRole('region',{name:'Booked column',exact:true})).toBeVisible();
-        await expect(page.getByRole('region',{name:'Planned column',exact:true})).toBeHidden();
-        if(width===390)await page.screenshot({path:`build/railwatch-qa/mobile-board-${theme}.png`,animations:'disabled'});
-        await page.getByRole('button',{name:/^Planned \d+/}).click();
-        await expect(page.getByRole('region',{name:'Planned column',exact:true})).toBeVisible();
-        await page.getByRole('button',{name:'More',exact:true}).click();
-        const more=page.getByRole('dialog',{name:'More',exact:true});await expect(more.getByRole('link',{name:'Ticket Vault',exact:true})).toBeVisible();
-        await more.getByRole('link',{name:'Routines',exact:true}).click();await expect(more).toHaveCount(0);
+        await expect(page.getByRole('region',{name:'Booked column',exact:true})).toHaveCount(0);
+        await expect(page.getByRole('button',{name:'Booked',exact:true})).toHaveAttribute('aria-pressed','true');
+        if(width===390)await page.screenshot({path:`build/railwatch-qa/mobile-list-${theme}.png`,animations:'disabled'});
+        await page.getByRole('button',{name:'Planned',exact:true}).click();
+        await expect(page.getByRole('button',{name:'Planned',exact:true})).toHaveAttribute('aria-pressed','true');
+        await mobileNav.getByRole('button',{name:'More',exact:true}).click();
+        await expect(page.getByRole('heading',{name:'More',exact:true})).toBeVisible();
+        const more=page.getByRole('navigation',{name:'More destinations'});
+        await more.getByRole('link',{name:'Routines',exact:false}).click();await expect(page.getByRole('heading',{name:'Routines',exact:true})).toBeVisible();
         await page.getByRole('button',{name:'Open Profile Menu',exact:true}).click();await page.getByRole('menuitem',{name:'User Settings',exact:true}).click();
         const drawer=page.getByRole('dialog',{name:'User Settings',exact:true});
-        const bounds=await drawer.boundingBox();for(const tab of await drawer.getByRole('tab').all()){const box=await tab.boundingBox();assert.ok(box.x>=bounds.x&&box.x+box.width<=bounds.x+bounds.width+1,'Settings tabs fit phone');}
+        const bounds=await drawer.boundingBox();assert.ok(bounds.width>=width-1,'Settings fills the phone');
+        if(width===390){await page.setViewportSize({width:1482,height:876});await expect(page.getByRole('dialog')).toHaveCount(1);await expect(drawer.getByLabel('Username',{exact:true})).toBeVisible();await drawer.getByLabel('Username',{exact:true}).focus();await expect(drawer.getByLabel('Username',{exact:true})).toBeFocused();await page.setViewportSize({width,height:844});await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();}
+        for(const tab of await drawer.getByRole('navigation',{name:'Settings sections'}).getByRole('button').all()){const box=await tab.boundingBox();assert.ok(box.x>=bounds.x&&box.x+box.width<=bounds.x+bounds.width+1,'Settings sections fit phone');}
         await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
-        await page.goto(url+'/journeys');await page.getByRole('region',{name:'Booked column',exact:true}).getByRole('button',{name:/Open journey/}).first().click();
-        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
-        await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await drawer.getByRole('tab',{name:'Preferences',exact:true}).click();await expect(drawer.getByRole('heading',{name:'Normal Booking Reminders'})).toBeVisible();
+        await page.goto(url+'/journeys');await page.getByRole('button',{name:/Open journey/}).first().click();
+        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);
+        assert.ok((await summary.boundingBox()).width>=width-1,'Journey summary fills phone');
+        await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
+        await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await drawer.getByRole('button',{name:'Preferences',exact:true}).click();await expect(drawer.getByRole('heading',{name:'Normal Booking Reminders'})).toBeVisible();
         assert.ok(await drawer.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Custom reminder controls fit mobile');await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
 
         await page.getByRole('button',{name:/^Notifications/}).click();
         const inbox=page.getByRole('region',{name:'Notifications',exact:true});
         const panel=await inbox.boundingBox();assert.ok(panel.x>=0&&panel.x+panel.width<=width,'Notification inbox fits phone');
         await inbox.getByRole('button',{name:/Close/}).click();
-        await page.goto(url+'/calendar');await page.getByRole('button',{name:'Agenda',exact:true}).click();await expect(page.getByRole('region',{name:'Month agenda',exact:true})).toBeVisible();
+        if(width===390&&theme==='light') {
+          await mobileNav.getByRole('button',{name:'More',exact:true}).click();
+          await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User Settings',exact:false}).click();
+          await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();
+          await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
+          await mobileNav.getByRole('link',{name:'Tickets',exact:true}).click();
+          const ticketRow=page.getByRole('button',{name:/^View ticket/}).first();await ticketRow.click();
+          const pdf=page.getByRole('dialog',{name:'Ticket',exact:true});
+          await expect(pdf.locator('canvas[data-rendered-page="1"]')).toBeVisible();
+          await pdf.getByRole('button',{name:'Zoom in',exact:true}).click();
+          assert.ok(await pdf.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Zoom stays within PDF scroll surface');
+          await pdf.getByRole('button',{name:'Fit Width',exact:true}).click();
+          await pdf.getByRole('button',{name:'Back',exact:true}).click();
+          await page.getByRole('button',{name:/^Ticket Actions For/}).first().click();await page.getByRole('menuitem',{name:'Journey details',exact:true}).click();await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await summary.getByRole('button',{name:'Back',exact:true}).click();
+          await mobileNav.getByRole('link',{name:'Journeys',exact:true}).click();
+          await page.getByRole('button',{name:/Open journey/}).first().click();
+          await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
+          await summary.getByLabel('Notes',{exact:true}).fill('Saved from the dedicated mobile editor');
+          await summary.getByRole('button',{name:'Save journey',exact:true}).click();
+          await expect(summary).toHaveCount(0);
+          const stored=(await(await api('/api/railwatch/workspace')).json()).data;
+          assert.ok(stored.planner.journeys.some(j=>j.notes==='Saved from the dedicated mobile editor'),'Mobile edit persisted');
+          await page.getByRole('button',{name:/Open journey/}).first().click();
+          await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
+          await summary.getByLabel('Notes',{exact:true}).fill('Unsaved mobile edit');
+          page.removeAllListeners('dialog');let guarded=false;page.on('dialog',async d=>{guarded=true;await d.dismiss();});
+          await summary.getByRole('button',{name:'Back',exact:true}).click();assert.equal(guarded,true);await expect(summary).toBeVisible();
+          page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await summary.getByRole('button',{name:'Back',exact:true}).click();
+          await page.getByRole('button',{name:'Journey filters',exact:true}).click();
+          await expect(page.getByRole('combobox',{name:'Routine',exact:true})).toBeVisible();
+          await page.getByLabel('Search Journeys',{exact:true}).fill('no-such-route-mobile-qa');
+          await expect(page.getByText('No journeys in this list.',{exact:true})).toBeVisible();
+          await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+          await page.getByRole('button',{name:'To cancel',exact:true}).click();
+          await page.getByRole('button',{name:/Open journey/}).first().click();
+          await summary.getByRole('button',{name:'Confirm Cancellation',exact:true}).click();await expect(summary).toHaveCount(0);
+          await page.getByRole('button',{name:'Cancelled',exact:true}).click();await expect(page.getByRole('button',{name:/Open journey/}).first()).toBeVisible();
+          await page.locator('[aria-label="Journey lists"]').getByRole('button',{name:'History',exact:true}).click();await expect(page.locator('[aria-label="Journey lists"]').getByRole('button',{name:'History',exact:true})).toHaveAttribute('aria-pressed','true');
+          await page.locator('[aria-label="Journey lists"]').getByRole('button',{name:'Archive',exact:true}).click();await expect(page.locator('[aria-label="Journey lists"]').getByRole('button',{name:'Archive',exact:true})).toHaveAttribute('aria-pressed','true');
+          await page.goto(url+'/admin');await page.getByRole('navigation',{name:'Administrator settings groups'}).getByRole('button',{name:'Normal booking',exact:true}).click();await expect(page.getByLabel('Booking opens this many days before travel')).toBeVisible();await expect(page.getByLabel('SMTP Connection')).toHaveCount(0);await page.getByRole('button',{name:'Administrator settings',exact:false}).click();await expect(page.getByRole('navigation',{name:'Administrator settings groups'})).toBeVisible();
+        }
+        await page.goto(url+'/calendar');await expect(page.getByRole('region',{name:'Day agenda',exact:true})).toBeVisible();await expect(page.getByLabel('Choose date',{exact:true})).toBeVisible();
         await page.goto(url+'/');await page.getByRole('heading',{level:1}).waitFor();await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);await page.screenshot({path:`build/railwatch-qa/mobile-${width}-${theme}.png`,animations:'disabled'});
       }
     }
@@ -88,5 +135,5 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   const cache=await page.evaluate(async()=>{const keys=await caches.keys();return Promise.all(keys.filter(key=>key.startsWith('railwatch-')).map(async key=>(await(await caches.open(key)).keys()).map(request=>new URL(request.url).pathname)));});
   assert.deepEqual(cache.flat(),['/offline.html']);
   await page.context().setOffline(true);await page.goto(url+'/journeys');await expect(page.getByRole('heading',{name:'You’re offline',exact:true})).toBeVisible();await page.context().setOffline(false);await page.goto(url+'/');
-  console.log('Passed: responsive routes in light/dark themes, visible mobile navigation, status columns, More menu, settings tabs, agenda, unsaved-change guard, standalone manifest and offline-only cache.');
+  console.log('Passed: responsive routes in light/dark themes, dedicated mobile navigation, journey lists, More screen, full-screen settings, day agenda, unsaved-change guard, standalone manifest and offline-only cache.');
 }
