@@ -7,14 +7,23 @@ on:
 permissions:
   contents: write
   packages: write
+defaults:
+  run:
+    shell: bash
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: railwatch-runner
+    container: node:24-bookworm
     env:
       RELEASE_TAG: ${{ inputs.tag }}
       RELEASE_SHA: ${{ inputs.sha }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Install workflow tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential docker.io
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.sha }}

@@ -13,9 +13,12 @@ concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
 jobs:
   release-label:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
     steps:
       - uses: actions/github-script@v8
         with:
@@ -23,7 +26,8 @@ jobs:
             const selected = context.payload.pull_request.labels.filter(label => ["major", "minor", "patch"].includes(label.name));
             if (selected.length !== 1) core.setFailed("Add exactly one release label: major, minor, or patch.");
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    container: node:24-bookworm
     timeout-minutes: 20
     services:
       postgres:
@@ -32,20 +36,24 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: local-ci-only
           POSTGRES_DB: railwatch_ci_test
-        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:local-ci-only@127.0.0.1:5432/railwatch_ci_test
+      DATABASE_URL: postgresql://postgres:local-ci-only@postgres:5432/railwatch_ci_test
       APP_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       CRON_SECRET: local-ci-worker-secret
       APP_URL: http://127.0.0.1:3102
       RUN_DB_TESTS: "1"
       RUN_E2E: "1"
     steps:
+      - name: Install workflow tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential docker.io
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
