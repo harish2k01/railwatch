@@ -13,9 +13,12 @@ concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
 jobs:
   release-label:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
     steps:
       - uses: actions/github-script@v8
         with:
@@ -23,8 +26,8 @@ jobs:
             const selected = context.payload.pull_request.labels.filter(label => ["major", "minor", "patch"].includes(label.name));
             if (selected.length !== 1) core.setFailed("Add exactly one release label: major, minor, or patch.");
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:18-alpine
@@ -47,6 +50,10 @@ jobs:
       RUN_E2E: "1"
     steps:
       - uses: actions/checkout@v6
+      - name: Install workflow tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -70,6 +77,8 @@ jobs:
             build/railwatch-qa
           retention-days: 7
       - uses: docker/setup-buildx-action@v4
+        with:
+          driver-opts: network=host
       - name: Build container
         uses: docker/build-push-action@v7
         with:
