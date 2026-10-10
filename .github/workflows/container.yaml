@@ -13,29 +13,20 @@ defaults:
 jobs:
   publish:
     runs-on: railwatch-runner
-    container: node:24-bookworm
     env:
       RELEASE_TAG: ${{ inputs.tag }}
       RELEASE_SHA: ${{ inputs.sha }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Install workflow tools
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
-          install -m 0755 -d /etc/apt/keyrings
-          curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-          chmod a+r /etc/apt/keyrings/docker.asc
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list
-          apt-get update
-          apt-get install -y --no-install-recommends docker-ce-cli docker-buildx-plugin
-          docker version
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Install workflow tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
       - name: Verify immutable release identity
         shell: bash
         run: |

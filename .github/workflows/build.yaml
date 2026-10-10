@@ -27,7 +27,6 @@ jobs:
             if (selected.length !== 1) core.setFailed("Add exactly one release label: major, minor, or patch.");
   verify:
     runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
-    container: node:24-bookworm
     timeout-minutes: 20
     services:
       postgres:
@@ -36,32 +35,25 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: local-ci-only
           POSTGRES_DB: railwatch_ci_test
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:local-ci-only@postgres:5432/railwatch_ci_test
+      DATABASE_URL: postgresql://postgres:local-ci-only@127.0.0.1:5432/railwatch_ci_test
       APP_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       CRON_SECRET: local-ci-worker-secret
       APP_URL: http://127.0.0.1:3102
       RUN_DB_TESTS: "1"
       RUN_E2E: "1"
     steps:
+      - uses: actions/checkout@v6
       - name: Install workflow tools
         run: |
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
-          install -m 0755 -d /etc/apt/keyrings
-          curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-          chmod a+r /etc/apt/keyrings/docker.asc
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list
-          apt-get update
-          apt-get install -y --no-install-recommends docker-ce-cli docker-buildx-plugin
-          docker version
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: actions/checkout@v6
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
       - uses: actions/setup-node@v6
         with:
           node-version: 24

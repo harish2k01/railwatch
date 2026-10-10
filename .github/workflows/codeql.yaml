@@ -24,20 +24,18 @@ defaults:
 jobs:
   analyze:
     runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
-    container: node:24-bookworm
     timeout-minutes: 15
     permissions:
       contents: read
       security-events: write
     steps:
-      - name: Install workflow tools
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential zstd
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Install workflow tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential zstd
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
