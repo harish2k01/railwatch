@@ -36,6 +36,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential zstd
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
