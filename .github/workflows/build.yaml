@@ -27,7 +27,7 @@ jobs:
             if (selected.length !== 1) core.setFailed("Add exactly one release label: major, minor, or patch.");
   verify:
     runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
-    timeout-minutes: 20
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:18-alpine

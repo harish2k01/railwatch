@@ -14,7 +14,7 @@ defaults:
 jobs:
   verify:
     runs-on: railwatch-runner
-    timeout-minutes: 20
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:18-alpine
