@@ -19,7 +19,7 @@ import { encryptSecret } from "./crypto";
 import { processRailWatch } from "./railwatch-jobs";
 import { retryReminder } from "./reminder-operations";
 import { runWithHeartbeat } from "@/backend/scheduler";
-import { addDays,bookingDay,EMPTY_PLANNER,todayIST,type Journey,type Rule } from "./travel-planner";
+import { addDays,bookingDay,EMPTY_PLANNER,todayIST,weekday,type Journey,type Rule } from "./travel-planner";
 vi.mock("./railwatch-google",()=>({syncGoogleCalendars:async()=>0}));
 const emailDelivery=vi.hoisted(()=>vi.fn().mockResolvedValue({sent:true}));
 vi.mock("./mail",()=>({sendBookingEmail:emailDelivery}));
@@ -29,6 +29,28 @@ const users:string[]=[];
 async function fixture(){if(!new URL(process.env.DATABASE_URL!).pathname.endsWith("_test"))throw new Error("Use an isolated test database.");await prisma.appSettings.upsert({where:{id:"global"},create:{id:"global"},update:{bookingWindowDays:60,remindersEnabled:true,whatsappEnabled:true}});const u=await prisma.user.create({data:{email:`${randomUUID()}@railwatch.invalid`}});users.push(u.id);return {user:u,...await loadWorkspace(u.id)};}
 afterEach(async()=>{vi.useRealTimers();vi.unstubAllEnvs();if(users.length)await prisma.user.deleteMany({where:{id:{in:users.splice(0)}}});});
 describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{timeout:15000},()=>{
+  it("filters desktop lists and counts by travel window and the account week, without exposing another account",async()=>{
+    vi.stubEnv("RAILWATCH_NORMALIZED_STORAGE","true");
+    const f=await fixture(),other=await fixture(),today=todayIST(),start=addDays(today,-weekday(today));
+    const sample=(id:string,date:string,status:Journey["status"]):Journey=>({id,from:"AAA",to:"BBB",date,status,departure:"20:00",train:"",pnr:"",travelClass:"SL",windowDays:60,originOffset:0,notes:""});
+    await saveWorkspace(f.user.id,{...f.planner,journeys:[sample("opens-first",addDays(start,60),"needs_booking"),sample("opens-last",addDays(start,66),"needs_booking"),sample("opens-next-week",addDays(start,67),"needs_booking"),sample("travel-this-week",addDays(start,6),"booked"),sample("travel-next-week",addDays(start,7),"booked"),sample("pending-cancellation",addDays(start,6),"cancellation_needed"),sample("past-completed",addDays(today,-2),"completed")],settings:{...f.planner.settings,bookingSchedule:[],cancellationEnabled:false}},f.revision);
+    const quick=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",quick:"booking_week"}));
+    expect(quick.pages.all.items.map(j=>j.id)).toEqual(["opens-first","opens-last"]);
+    expect(quick.filteredTotals).toMatchObject({board:2,completed:0,archive:0});
+    const monday=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",quick:"booking_week",weekStartsOn:1}));
+    expect(monday.pages.all.items.map(j=>j.id)).toEqual(weekday(today)===0?["opens-first"]:["opens-last","opens-next-week"]);
+    const travel=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",quick:"travel_week"}));
+    expect(travel.pages.all.items.map(j=>j.id)).toEqual(["travel-this-week"]);
+    const scoped=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",range:"all",from:addDays(start,6),to:addDays(start,7),status:"booked"}));
+    expect(scoped.pages.all.total).toBe(2);expect(scoped.filteredTotals?.board).toBe(2);
+    const combined=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",range:"all",quick:"booking_week",from:addDays(start,67)}));
+    expect(combined.pages.all.total).toBe(0);expect(combined.filteredTotals?.board).toBe(0);
+    const completed=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"completed",range:"all",from:addDays(today,-2),to:addDays(today,-2)}));
+    expect(completed.pages.all.items.map(j=>j.id)).toEqual(["past-completed"]);expect(completed.filteredTotals).toEqual({board:0,completed:1,archive:0});
+    const cancel=await readJourneyPages(f.user.id,journeyQuerySchema.parse({view:"list",quick:"cancellation"}));expect(cancel.pages.all.items.map(j=>j.id)).toEqual(["pending-cancellation"]);
+    expect((await readJourneyPages(other.user.id,journeyQuerySchema.parse({view:"list",quick:"booking_week"}))).pages.all.total).toBe(0);
+    expect(journeyQuerySchema.safeParse({from:today,to:addDays(today,-1)}).success).toBe(false);
+  });
   it("indexes 2,000 encrypted journeys, pages accurately and preserves unloaded records during edits",async()=>{
     vi.stubEnv("RAILWATCH_NORMALIZED_STORAGE","true");
     const f=await fixture(),other=await fixture(),today=todayIST();
@@ -38,6 +60,9 @@ describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{time
     const query=journeyQuerySchema.parse({});const began=Date.now();const first=await readJourneyPages(f.user.id,query);const pageMs=Date.now()-began;
     expect(first.pages.needs_booking.total).toBe(1598);expect(first.pages.booked.total).toBe(400);expect(first.pages.needs_booking.items).toHaveLength(30);expect(first.totals).toMatchObject({board:1998,completed:1,archive:1,ready:0,booked:400});
     const next=await readJourneyPages(f.user.id,{...query,column:"needs_booking",cursor:first.pages.needs_booking.nextCursor!});const ids=[...first.pages.needs_booking.items,...next.pages.needs_booking.items].map(j=>j.id);expect(new Set(ids).size).toBe(60);
+    const listQuery=journeyQuerySchema.parse({view:"list"}),list=await readJourneyPages(f.user.id,listQuery),nextList=await readJourneyPages(f.user.id,{...listQuery,column:"all",cursor:list.pages.all.nextCursor!});
+    expect(list.pages.all.total).toBe(1998);expect(list.pages.all.items).toHaveLength(30);expect(new Set([...list.pages.all.items,...nextList.pages.all.items].map(j=>j.id)).size).toBe(60);
+    await expect(readJourneyPages(f.user.id,{...listQuery,column:"all",quick:"cancellation",cursor:list.pages.all.nextCursor!})).rejects.toThrow("Filters changed");
     const expected=saved.planner.journeys.filter(j=>j.status==="needs_booking").sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id)).slice(0,60).map(j=>j.id);expect(ids).toEqual(expected);
     const search=await readJourneyPages(f.user.id,journeyQuerySchema.parse({q:"needle-1901"}));expect(search.pages.needs_booking.total).toBe(1);expect(search.pages.needs_booking.items[0].id).toBe("scale-1901");
     const substring=await readJourneyPages(f.user.id,journeyQuerySchema.parse({q:"MDU"}));expect(substring.pages.booked.total).toBe(400);

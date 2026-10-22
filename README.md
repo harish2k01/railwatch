@@ -72,3 +72,5 @@ Configure and test SMTP under Admin Settings. Users verify their saved email und
 For administrator recovery and monitoring, see [reminder operations](docs/reminder-operations.md).
 
 For paginated journey lists, encrypted search and remaining scaling work, see [account scale](docs/account-scale.md). For staged row storage, scheduler limits and rollback, see [workspace storage](docs/workspace-storage.md).
+
+For desktop Board/List views, travel-date ranges, quick filters and account-wide matching counts, see [journey workspace](docs/journey-workspace.md).
