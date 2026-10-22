@@ -1,3 +1,4 @@
+import {verifyDesktopJourneys} from "./verify-desktop-journeys.mjs";
 import assert from 'node:assert/strict';
 import { createECDH, randomBytes } from 'node:crypto';
 import { expect } from '@playwright/test';
@@ -152,6 +153,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   await page.evaluate(()=>{window.viewMotionCalls=[];});
   await page.getByRole('button',{name:/^Archive \d/}).click();assert.equal(await page.evaluate(()=>window.viewMotionCalls.length),0);
   await page.emulateMedia({reducedMotion:'no-preference'});
+  await verifyDesktopJourneys(page,api,url);
   await page.goto(url+'/');await expect(page.locator('link[rel=manifest]')).toHaveAttribute('href','/manifest.webmanifest');
   const manifest=await(await page.request.get(url+'/manifest.webmanifest')).json();assert.equal(manifest.display,'standalone');
   await page.evaluate(()=>navigator.serviceWorker.ready);
