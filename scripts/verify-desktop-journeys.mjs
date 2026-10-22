@@ -31,12 +31,13 @@ export async function verifyDesktopJourneys(page,api,url){
     await workspace.getByRole('region',{name:'Booked column',exact:true}).getByRole('article').first().dragTo(cancelled);
     await expect(cancelled.getByRole('article')).toHaveCount(1);
     const moved=(await(await api('/api/railwatch/workspace')).json()).data;assert.equal(moved.planner.journeys.find(j=>j.id==='desktop-window-0').status,'cancelled');
+    await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(cancelled.getByRole('article')).toHaveCount(0);await expect.poll(async()=>((await(await api('/api/railwatch/workspace')).json()).data.planner.journeys.find(j=>j.id==='desktop-window-0')?.status)).toBe('booked');
     await workspace.getByRole('button',{name:'List',exact:true}).click();await workspace.getByRole('button',{name:/Open journey/}).first().click();await expect(page.getByRole('dialog').getByLabel('Notes',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close Dialog',exact:true}).click();
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);await page.goto(url+'/journeys');
-      await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table')).toBeVisible();
+      await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table')).toBeVisible();await expect(workspace.getByText('Loading journeys…',{exact:true})).toHaveCount(0);
       for(const width of [820,1040,1482]){await page.setViewportSize({width,height:900});assert.ok(await workspace.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Desktop workspace fits '+width);}
-      await page.screenshot({path:`build/railwatch-qa/desktop-journeys-list-${theme}.png`,fullPage:true,animations:'disabled'});await workspace.getByRole('button',{name:'Board',exact:true}).click();await page.screenshot({path:`build/railwatch-qa/desktop-journeys-board-${theme}.png`,fullPage:true,animations:'disabled'});
+      await page.screenshot({path:`build/railwatch-qa/desktop-journeys-list-${theme}.png`,fullPage:false,animations:'disabled'});await workspace.getByRole('button',{name:'Board',exact:true}).click();await expect(workspace.getByText('Loading journeys…',{exact:true})).toHaveCount(0);await page.screenshot({path:`build/railwatch-qa/desktop-journeys-board-${theme}.png`,fullPage:false,animations:'disabled'});
     }
     console.log('Passed: desktop Board/List, compact date presets/custom validation, filtered counts, quick filters, collapsed cancellation drop target, details, and light/dark layouts.');
   }finally{
