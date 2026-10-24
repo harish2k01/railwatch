@@ -4,7 +4,7 @@ Choose Normal or Tatkal when creating an unbooked journey. Normal bookings use t
 
 User Settings → Preferences provides independent schedules for normal, Tatkal AC and Tatkal non-AC bookings. Add up to 20 reminders with a number of days before opening and an IST clock time; zero means opening day. Journey and routine overrides can replace these defaults. Existing three-choice preferences remain supported until edited.
 
-Cancellation reminders run while a journey is To Cancel. Choose a daily IST time, or explicit days before travel, in Preferences or the journey editor. Confirmation of cancellation, archiving, or passing the travel date stops delivery. Messages explicitly ask the user to cancel through IRCTC. Push, in-app, verified email and connected Telegram use the same scheduler and preferences. WhatsApp requires a separate approved cancellation template with two body parameters: route and travel date; the normal booking template retains three parameters.
+Cancellation reminders run while a journey is To Cancel. Choose a daily IST time, or explicit days before travel, in Preferences or the journey editor. Confirmation of cancellation, archiving, or passing the travel date stops delivery. Messages explicitly ask the user to cancel through IRCTC. Push, verified email and connected Telegram use the same scheduler and preferences. WhatsApp requires a separate approved cancellation template with two body parameters: route and travel date; the normal booking template retains three parameters.
 
 The scheduler keeps stable per-channel/device identities and rechecks the current journey and preferences before sending. Booking and cancellation notification payloads are distinguished so an old unread booking alert cannot hide a cancellation alert.
 

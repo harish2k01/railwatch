@@ -2,7 +2,6 @@ import { expect, it } from "vitest";
 import { bookingDay, bookingInstant, EMPTY_PLANNER, journeySchema, migratePlanner, scheduledReminders, type Journey } from "./travel-planner";
 import { reminderJobs } from "./railwatch-jobs";
 import { telegramBookingMessage } from "./message-templates";
-import { unreadNotifications, shouldShowInApp } from "./in-app-notifications";
 
 const journey: Journey = {id:"j",from:"AAA",to:"BBB",date:"2026-12-03",windowDays:60,originOffset:0,departure:"20:00",status:"needs_booking",train:"",travelClass:"",pnr:"",notes:""};
 it("uses the train origin date and quota-specific Tatkal opening, preserving it through workspace migration",()=>{
@@ -24,7 +23,7 @@ it("queues cancellation follow-ups per channel/device, stops after confirmation,
  const planner=structuredClone(EMPTY_PLANNER),now=new Date("2026-12-01T03:00:00Z");
  const j={...journey,status:"cancellation_needed" as const};planner.journeys=[j];planner.settings.telegramEnabled=true;
  const jobs=reminderJobs(planner,now,undefined,["phone"]);
- expect(jobs.map(j=>j.kind).sort()).toEqual(["IN_APP","PUSH","TELEGRAM"]);expect(jobs[0].message).toContain("Cancel your ticket");
+ expect(jobs.map(j=>j.kind).sort()).toEqual(["PUSH","TELEGRAM"]);expect(jobs[0].message).toContain("Cancel your ticket");
  expect(telegramBookingMessage(j)).toContain("Cancellation Reminder");expect(telegramBookingMessage({...journey,bookingType:"tatkal",tatkalClass:"ac"})).toContain("10:00 AM IST");
  planner.journeys=[{...j,status:"cancelled"}];expect(reminderJobs(planner,now)).toEqual([]);
  planner.journeys=[{...j,cancellationReminder:{enabled:false,time:"09:00"}}];expect(reminderJobs(planner,now)).toEqual([]);
@@ -35,9 +34,4 @@ it("queues cancellation follow-ups per channel/device, stops after confirmation,
 it("rejects invalid custom clocks and oversized schedules",()=>{
  expect(journeySchema.safeParse({...journey,reminderOverride:{mode:"custom",times:[],clock:EMPTY_PLANNER.settings.reminderClock,schedule:[{daysBefore:0,time:"25:00"}]}}).success).toBe(false);
 });
-it("replaces stale booking notifications with cancellation actions for the same journey",()=>{
- const booking={id:"b",payload:JSON.stringify({journeyId:"j",message:"Book your train"}),readAt:null};
- const cancellation={id:"c",payload:JSON.stringify({journeyId:"j",message:"Cancel your ticket",reminderType:"cancellation"}),readAt:null};
- expect(unreadNotifications([booking,cancellation],[{...journey,status:"cancellation_needed"}],new Date("2026-12-01"))).toEqual([cancellation]);
- expect(shouldShowInApp([booking],"j",new Date("2026-12-01"),"cancellation")).toBe(true);
-});
+it("does not create a browser inbox when no delivery channel is enabled",()=>{const planner=structuredClone(EMPTY_PLANNER);planner.journeys=[journey];expect(reminderJobs(planner,new Date("2026-10-02T02:30:00Z"))).toEqual([]);});

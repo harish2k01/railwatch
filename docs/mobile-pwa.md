@@ -6,7 +6,7 @@ RailWatch exposes a same-origin manifest with standalone display, regular/maskab
 
 At widths up to 768 pixels, RailWatch uses dedicated phone screens with Home, Journeys, Tickets and More in the bottom navigation. The desktop dashboard and Kanban remain available at larger widths.
 
-Home prioritizes the next trip, booking openings and cancellation actions. Journeys uses searchable status lists with date/routine filters, sorting and additional-page controls. Tickets opens the original PDF directly; its action menu also opens journey details or downloads the ticket. More contains Calendar, Routines, Holidays & Leave, User Settings, notification history and administrator pages when permitted. Installation is at the bottom of More.
+Home prioritizes the next trip, booking openings and cancellation actions. Journeys uses searchable status lists with date/routine filters, sorting and additional-page controls. Tickets opens the original PDF directly; its action menu also opens journey details or downloads the ticket. More contains Calendar, Routines, Holidays & Leave, User Settings, administrator pages when permitted. Installation is at the bottom of More.
 
 Calendar uses a seven-day selector and a paginated agenda for the selected date. Choose date reaches any month; calendar filters control travel, booking openings and time off. Routines retain linked-return, pause, resume and removal actions. Consecutive time off is grouped into expandable ranges with individual removal controls.
 
@@ -42,7 +42,7 @@ Enable in User Settings > Connections > Device Notifications, then send a test. 
 
 The backend creates one encrypted, persistent VAPID identity in PostgreSQL, shared across replicas. Preserve the database and APP_ENCRYPTION_KEY on restores. All delivery is outgoing HTTPS to the browser push service; no incoming webhook or public callback is needed. The app origin still needs HTTPS and must be reachable for login and subscription changes. Backend egress must allow supported Google, Mozilla, Apple or Windows push services on TCP 443. Unsupported endpoints are rejected.
 
-Each device is independently registered (maximum ten per account). Disable removes only that device. Switching accounts cannot overwrite the original owner subscription. Scheduled jobs recheck active account, journey, reminder policy and subscription before sending. Existing scheduler leases and retries handle transient failures; HTTP 404/410 removes expired devices. Failures appear in the notification inbox. Stable journey tags replace visible notifications for the same journey; ambiguous network failures may still cause transport retries.
+Each device is independently registered (maximum ten per account). Disable removes only that device. Switching accounts cannot overwrite the original owner subscription. Scheduled jobs recheck active account, journey, reminder policy and subscription before sending. Existing scheduler leases and retries handle transient failures; HTTP 404/410 removes expired devices. Administrators can inspect unresolved failures in Reminder delivery. Stable journey tags replace visible notifications for the same journey; ambiguous network failures may still cause transport retries.
 
 Physical acceptance: allow and send a test on desktop Chrome, Android installed Chrome and installed iPhone Safari; close the app and verify a scheduled reminder; disable and confirm no further push; revoke OS permission and check the UI. iOS status-bar metadata changes may require closing/reopening or reinstalling an existing home-screen app. Check the top area in dark mode and that dialogs have one vertical scroll surface with no horizontal scrolling.
 
@@ -50,8 +50,7 @@ Platform reference: https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-a
 
 ## Journey links and settings edits
 
-Journey dialogs provide **Copy Journey Link** and **Notification History**. Reminder email buttons, Telegram buttons and device notifications open `/journeys?journey=<id>`; signing in retains this destination. Links always resolve against the signed-in account, including journeys outside the currently loaded list. An unavailable or another account's journey displays a generic error without revealing its details.
+Journey dialogs provide **Copy Journey Link** and journey reminder controls. Reminder email buttons, Telegram buttons and device notifications open `/journeys?journey=<id>`; signing in retains this destination. Links always resolve against the signed-in account, including journeys outside the currently loaded list. An unavailable or another account's journey displays a generic error without revealing its details.
 
-Journey notification history includes scheduled reminders, current delivery outcomes, attempt counts and provider-safe errors. Historical payloads stay encrypted: each journey-history request examines at most 100 owned jobs, with Next reaching older records even when a page contains no matches. Attempt counts describe the current job record, not a separate event for each transport attempt.
 
 Profile, preferences, security and administrator/provider forms warn before closing, switching sections, following links, browser history navigation or reloading with edits. Successful saves clear only the saved form; failed saves retain its warning and values. Settings inputs and credentials are never written to local storage for this protection.

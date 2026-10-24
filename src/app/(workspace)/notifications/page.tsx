@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
-export const metadata:Metadata={title:"Notifications · RailWatch"};
-/** Renders notification history within the authenticated workspace shell. */
-export default function Page(){return null;}
+import {redirect} from "next/navigation";
+/** Keeps older bookmarks useful after the notification feed was retired. */
+export default function Page(){redirect("/journeys");}

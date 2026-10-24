@@ -11,7 +11,7 @@ export async function GET(request:Request) {
   try {
     await requireAdmin();
     const url=new URL(request.url),cursor=z.string().max(128).nullable().parse(url.searchParams.get("cursor"));
-    const jobs=await prisma.railJob.findMany({where:{state:{in:["MISSED","FAILED"]}},orderBy:{id:"desc"},take:26,...(cursor?{cursor:{id:cursor},skip:1}:{}),select:{id:true,kind:true,state:true,dueAt:true,attempts:true,lastError:true,payload:true,user:{select:{name:true}}}});
+    const jobs=await prisma.railJob.findMany({where:{kind:{not:"IN_APP"},state:{in:["MISSED","FAILED"]}},orderBy:{id:"desc"},take:26,...(cursor?{cursor:{id:cursor},skip:1}:{}),select:{id:true,kind:true,state:true,dueAt:true,attempts:true,lastError:true,payload:true,user:{select:{name:true}}}});
     return jsonData({health:await reminderHealth(),jobs:jobs.slice(0,25).map(({payload,...job})=>{
       // Only the generated reminder text identifies its route/date, never the raw payload.
       const details=payload?JSON.parse(decryptSecret(payload)!):{};
