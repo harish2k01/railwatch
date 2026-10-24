@@ -66,7 +66,7 @@ export function TicketViewer({file,blob:staged,close}:{file:TicketAttachment;blo
   /** Applies bounded viewer zoom so text/canvas layers redraw together at the new scale. */
   function zoom(direction:number){const view=reader.current;if(view)view.currentScale=Math.min(4,Math.max(.3,view.currentScale*(direction>0?1.2:1/1.2)));}
   /** Navigates by document page without replacing the continuous scroll surface. */
-  function go(number:number){if(reader.current&&pdf)reader.current.currentPageNumber=Math.max(1,Math.min(pdf.numPages,number||1));}
+  function go(number:number){if(reader.current&&pdf)reader.current.currentPageNumber=Math.max(1,Math.min(pdf.numPages,Math.trunc(number)||1));}
   /** Opens a locally fetched original; no private ticket is sent to an external document service. */
   function native(){if(url)window.open(url,"_blank","noopener,noreferrer");}
   const controlsDisabled=!ready||!pdf;

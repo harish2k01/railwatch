@@ -23,7 +23,7 @@ try{
     for(const width of [390,1482]){
       await page.setViewportSize({width,height:844});await page.goto(url+'/tickets');await page.getByRole('button',{name:/^View ticket/}).first().click();
       const dialog=page.getByRole('dialog',{name:'Ticket',exact:true});await expect(dialog.locator('canvas[data-rendered-page="1"]')).toBeVisible();
-      await expect(dialog.getByLabel('Page number',{exact:true})).toHaveAttribute('max','2');
+      await expect(dialog.getByLabel('Page number',{exact:true})).toHaveAttribute('max','2');await dialog.getByLabel('Page number',{exact:true}).fill('1.5');await expect(dialog.getByLabel('Page number',{exact:true})).toHaveValue('1');
       await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');
       const before=await dialog.locator('.page').first().boundingBox();await dialog.getByRole('button',{name:'Zoom in',exact:true}).click();await expect.poll(async()=>(await dialog.locator('.page').first().boundingBox()).width).toBeGreaterThan(before.width);
       await dialog.getByRole('button',{name:'Find in ticket',exact:true}).click();await dialog.getByRole('searchbox',{name:'Find in document'}).fill('searchable');await expect(dialog.getByText('1 of 1',{exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Close search',exact:true}).click();
