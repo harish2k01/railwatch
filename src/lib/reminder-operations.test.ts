@@ -10,7 +10,7 @@ describe("reminder operational signals",()=>{
     expect(operationAlerts({succeededAt:now,startedAt:now,failedAt:null,exhausted:0,missed:0,oldestDueAt:null},now)).toEqual([]);
   });
   it("exports numeric metrics without private labels or negative queue ages",()=>{
-    const metrics=reminderMetrics({startedAt:now,succeededAt:now,failedAt:null,durationMs:1000,failureCount:3,states:{PENDING:2,MISSED:1},exhausted:0,oldestDueAt:new Date(now.getTime()+1000),providerFailures:{},alerts:[]},now);
+    const metrics=reminderMetrics({startedAt:now,succeededAt:now,failedAt:null,durationMs:1000,failureCount:3,states:{PENDING:2,MISSED:1},exhausted:0,oldestDueAt:new Date(now.getTime()+1000),queue:{scheduled:2,due:0,overdue:0,nextAt:null,channels:{PUSH:2}},providerFailures:{},alerts:[]},now);
     expect(metrics).toContain("railwatch_scheduler_last_duration_seconds 1");
     expect(metrics).toContain("railwatch_reminder_oldest_due_age_seconds 0");
     expect(metrics).toContain('railwatch_reminder_provider_failures{channel="EMAIL"} 0');

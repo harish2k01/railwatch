@@ -1,11 +1,9 @@
-# Notification history and controls
+# Reminder controls
 
-The Notifications page shows account-owned reminder outcomes with read, snooze and resume actions. A journey dialog also has **Notification History**, scoped to that journey, including scheduled and sending jobs, current outcomes, delivery-attempt counts and provider-safe error messages.
+Reminders arrive through opted-in device push, Telegram, WhatsApp, or email. There is no user notification feed or delivery-history page. Existing /notifications bookmarks redirect to My Journeys.
 
-General history returns 25 outcomes per page. Journey history examines up to 100 owned records per request because historical journey IDs are inside encrypted payloads. Next advances the scan even when a page has no matching records. Cursors and journey ownership are checked against the authenticated account. Provider credentials and encrypted job payloads are never returned.
+Journey reminder controls can pause an actionable journey for 30 minutes, one hour, or one day. Resume brings deferred jobs forward. Quiet hours are configured in User Settings and use IST. Eligibility is checked again before delivery; snooze does not consume attempts.
 
-Snooze pauses an actionable journey for 30 minutes, one hour or one day. Resume brings deferred jobs forward. Quiet hours are configured in User Settings and use IST; in-app reminders remain available. Eligibility is checked again before delivery.
+The server retains encrypted delivery records for retry safety, deduplication, and operational diagnostics. Removing the inbox does not delete that evidence. Pending legacy in-app jobs are cancelled when reconciled; no new in-app jobs are generated.
 
-Email, Telegram and device reminders open the specific journey through an account-authorized link. Sign-in preserves the journey destination. A link does not grant access to another user's journey.
-
-Attempt counts and errors describe the current job record. A separate per-attempt event timeline and an indexed journey-history projection remain future work.
+Administrators use Reminder delivery to distinguish future scheduled deliveries from due work and overdue work (more than five minutes late). Counts describe deliveries, including a separate delivery per enabled device. Manual recovery remains an explicit, audited action.

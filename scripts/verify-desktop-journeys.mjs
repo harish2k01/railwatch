@@ -32,7 +32,7 @@ export async function verifyDesktopJourneys(page,api,url){
     await expect(cancelled.getByRole('article')).toHaveCount(1);
     const moved=(await(await api('/api/railwatch/workspace')).json()).data;assert.equal(moved.planner.journeys.find(j=>j.id==='desktop-window-0').status,'cancelled');
     await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(cancelled.getByRole('article')).toHaveCount(0);await expect.poll(async()=>((await(await api('/api/railwatch/workspace')).json()).data.planner.journeys.find(j=>j.id==='desktop-window-0')?.status)).toBe('booked');
-    await workspace.getByRole('button',{name:'List',exact:true}).click();await workspace.getByRole('button',{name:/Open journey/}).first().click();await expect(page.getByRole('dialog').getByLabel('Notes',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close Dialog',exact:true}).click();
+    await workspace.getByRole('button',{name:'List',exact:true}).click();await workspace.getByRole('button',{name:/Open journey/}).first().click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close Dialog',exact:true}).click();
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);await page.goto(url+'/journeys');
       await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table')).toBeVisible();await expect(workspace.getByText('Loading journeys…',{exact:true})).toHaveCount(0);

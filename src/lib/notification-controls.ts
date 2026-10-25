@@ -1,5 +1,5 @@
 import {storedPlanner} from "./workspace-storage";
-import { reminderJourneyId } from "./in-app-notifications";
+import { reminderJourneyId } from "./reminder-reference";
 import { addDays,todayIST,type Planner } from "./travel-planner";
 import { prisma } from "./db";
 import { ApiError } from "./http";

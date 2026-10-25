@@ -21,7 +21,7 @@ export async function verifyAccountScale({page,api,url}) {
     await expect(column.getByRole('article')).toHaveCount(1);
     await column.getByRole('button',{name:/Open journey/}).click();
     const dialog=page.getByRole('dialog');
-    await dialog.getByLabel('Notes',{exact:true}).fill('Edited beyond the first page');
+    await dialog.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await dialog.getByLabel('Notes',{exact:true}).fill('Edited beyond the first page');
     await dialog.getByRole('button',{name:/^Save journey$/i}).click();
     await expect(dialog).toHaveCount(0);
     await expect.poll(async()=>((await (await api('/api/railwatch/workspace')).json()).data.planner.journeys.find(j=>j.id==='scale-ui-209')?.notes)).toBe('Edited beyond the first page');

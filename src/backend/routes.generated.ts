@@ -64,7 +64,6 @@ export const routes = [
 { method: "GET" as const, path: "/api/railwatch/google/callback", handler: r20.GET as Handler },
 { method: "POST" as const, path: "/api/railwatch/google/connect", handler: r21.POST as Handler },
 { method: "GET" as const, path: "/api/railwatch/journeys", handler: r22.GET as Handler },
-{ method: "GET" as const, path: "/api/railwatch/notifications", handler: r23.GET as Handler },
 { method: "POST" as const, path: "/api/railwatch/notifications", handler: r23.POST as Handler },
 { method: "GET" as const, path: "/api/railwatch/profile", handler: r24.GET as Handler },
 { method: "PATCH" as const, path: "/api/railwatch/profile", handler: r24.PATCH as Handler },

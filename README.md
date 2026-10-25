@@ -27,9 +27,11 @@ Scheduled work runs inside the persistent backend. Once a minute it completes bo
 
 [Deployment guide](docs/railwatch-deployment.md) covers GHCR releases, manual Kubernetes hosting, secrets, backups, WhatsApp setup, and Google Calendar OAuth. Providers can be configured later.
 
+[Ticket reader](docs/ticket-reader.md) covers viewing, search, zoom, and opening the original.
+
 [Booking and cancellation reminders](docs/booking-reminders.md) explains normal/Tatkal dates, custom reminder schedules, cancellation follow-ups, and device notifications.
 
-The dashboard is at `/`; journeys, calendar, routines, holidays, tickets, and admin pages have their own routes. User Settings manages profile details, phone number, preferences, connections, and passwords. Admin Settings contains General, Integrations, and User Management. Administrators control shared booking rules and features, configure encrypted Telegram/Google/WhatsApp credentials in the app, create or invite users, and manage roles and access. Each account has a private workspace. The notification bell links to paginated delivery history with snooze/resume controls; optional quiet hours are configured under Preferences. See [notification controls](docs/notification-controls.md).
+The dashboard is at `/`; journeys, calendar, routines, holidays, tickets, and admin pages have their own routes. User Settings manages profile details, phone number, preferences, connections, and passwords. Admin Settings separates booking rules, calendar and routines, integrations, email delivery, user access, reminder delivery, and feature availability. Administrators control shared booking rules and features, configure encrypted Telegram/Google/WhatsApp credentials in the app, create or invite users, and manage roles and access. Each account has a private workspace. Reminders arrive through enabled delivery channels without a separate notification inbox. Journey reminder controls offer snooze/resume; optional quiet hours are configured under Preferences. See [notification controls](docs/notification-controls.md).
 
 Set `APP_URL` to the public base URL at runtime so invitation links, password resets, and Google OAuth use the deployed hostname. The first account becomes administrator. Existing RailWatch installations can apply the checked-in Prisma migrations; a fresh installation starts with an empty database.
 
@@ -67,7 +69,7 @@ The current application implements the planning and reminder core. [Production r
 
 ### Email booking reminders
 
-Configure and test SMTP under Admin Settings. Users verify their saved email under User Settings → Profile, confirm the emailed link, and opt into Email Reminders under Connections. Verification links expire after 24 hours and can be used once. Changing the email pauses delivery until the new address is verified. Reminders use branded HTML with a plain-text alternative and the backend's durable schedule/retry queue; failures appear in the notification bell. SMTP is optional for self-hosting and does not block initial administrator setup or signup.
+Configure and test SMTP under Admin Settings. Users verify their saved email under User Settings → Profile, confirm the emailed link, and opt into Email Reminders under Connections. Verification links expire after 24 hours and can be used once. Changing the email pauses delivery until the new address is verified. Reminders use branded HTML with a plain-text alternative and the backend's durable schedule/retry queue; administrators can review delivery failures under Reminder delivery. SMTP is optional for self-hosting and does not block initial administrator setup or signup.
 
 For administrator recovery and monitoring, see [reminder operations](docs/reminder-operations.md).
 

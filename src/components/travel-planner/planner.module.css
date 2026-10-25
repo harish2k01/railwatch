@@ -60,7 +60,6 @@
 .profileLayout{display:flex;flex-direction:column;min-height:0}.profileTabs{flex-direction:row;padding:12px 24px;border-right:0;border-bottom:1px solid var(--line);gap:8px;overflow:auto;flex-shrink:0}.profileTabs button{flex-shrink:0;padding:10px 16px}.adminTabs{display:flex;gap:8px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow:auto}.adminTabs a{padding:10px 16px;text-decoration:none;border-radius:9px;color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap}.adminTabs a[aria-current=page]{background:var(--purple-bg);color:var(--purple-ink)}.adminSettings a.textButton{justify-self:start}.adminSettings .settingsCard{display:grid;gap:16px}@media(max-width:600px){.profileTabs{padding:10px}.profileTabs button{padding:10px;font-size:12px}.adminTabs a{padding:10px;font-size:12px}}
 
 .bookingSummary{display:grid;gap:7px;padding:18px 20px;background:var(--soft);border:1px solid var(--line);border-radius:12px}.bookingSummary b{font-size:13px;color:var(--muted)}.bookingSummary strong{font-size:17px}.bookingSummary span{font-size:13px;color:var(--muted)}
-.notifications{position:relative}.notifications>.iconButton{position:relative}.notificationCount{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--ink);font-size:10px;display:grid;place-items:center;padding:0 4px}.notificationPanel{position:absolute;top:calc(100% + 14px);right:0;width:min(420px,calc(100vw - 32px));max-height:65vh;overflow:auto;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);box-shadow:0 12px 40px #0003;z-index:35}.notificationPanel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.notificationPanel h2{font-size:17px}.notificationPanel article{border-top:1px solid var(--line);padding:14px 0}.notificationPanel article p{font-size:13px;line-height:1.6}.notificationPanel article>div{display:flex;gap:18px;margin-top:10px}.notificationPanel .help{white-space:normal}
 .sidebar nav{overflow-x:hidden;min-width:0}.app[data-sidebar=collapsed] .navItem b,.app[data-sidebar=collapsed] .navActive b{display:none}.sidebar nav a{min-width:0;flex-shrink:0}
 .selectRoot{position:relative;min-width:0;width:100%}.hiddenSelect{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;pointer-events:none;padding:0!important;border:0!important}.selectTrigger{display:flex!important;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;border:1px solid var(--line)!important;border-radius:10px;background:var(--panel)!important;color:var(--ink)!important;font:inherit!important;text-align:left;min-height:44px}.selectTrigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.selectTrigger svg{flex-shrink:0}.selectTrigger:disabled{opacity:.55}.selectOptions{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:240px;overflow:auto;padding:6px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0003;z-index:50}.selectOptions button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;border-radius:7px;background:transparent;color:var(--ink);padding:10px 12px;font:inherit;text-align:left}.selectOptions button[data-active=true],.selectOptions button[aria-selected=true]{background:var(--soft);color:var(--ink)}.selectOptions button:disabled{opacity:.45}
 
@@ -117,7 +116,7 @@
 @media(max-width:900px){.holidayLayout{grid-template-columns:minmax(0,1fr)}}
 
 .sidebarInstall{margin-top:auto;padding:18px 14px;border-top:1px solid var(--line)}.mobileStatusFilter{display:none}.modal:not(.wideModal){width:min(680px,calc(100vw - 32px))}
-@media(max-width:600px){.sidebarInstall{display:none}.mobileStatusFilter{display:block}.notificationPanel{position:fixed;top:calc(68px + env(safe-area-inset-top));left:12px;right:12px;width:auto;max-height:calc(100dvh - 160px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}.modal:not(.wideModal){width:calc(100vw - 16px)}}
+@media(max-width:600px){.sidebarInstall{display:none}.mobileStatusFilter{display:block}.modal:not(.wideModal){width:calc(100vw - 16px)}}
 
 @media(min-width:601px){.columnBody{max-height:none;overflow-y:visible}}
 
@@ -140,10 +139,10 @@
 @keyframes drawerEnter{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
 @media(prefers-reduced-motion:no-preference){
  .pageHead{animation:surfaceEnter 180ms ease-out}
- .modal[open],.notificationPanel,.profileMenu,.moreMenu,.actionMenu>div,.selectOptions{animation:surfaceEnter 160ms ease-out}
+ .modal[open],.profileMenu,.moreMenu,.actionMenu>div,.selectOptions{animation:surfaceEnter 160ms ease-out}
  .modal[open]::backdrop{animation:itemEnter 140ms ease-out}
  .profileDrawer{animation:drawerEnter 180ms ease-out}
- .app main .card,.app main .routineCard,.app main .vaultCard,.attentionList>*,.holidayRow,.leaveGroup,.notificationPanel article,.scheduleRow{animation:itemEnter 160ms ease-out}
+ .app main .card,.app main .routineCard,.app main .vaultCard,.attentionList>*,.holidayRow,.leaveGroup,.scheduleRow{animation:itemEnter 160ms ease-out}
  .toast:popover-open{animation:surfaceEnter 180ms ease-out}
  .app button,.modal button,.navItem,.navActive,.metricCard,.card,.routineCard,.vaultCard{transition:background-color 140ms ease,border-color 140ms ease,box-shadow 140ms ease,color 140ms ease}
 }
@@ -152,11 +151,6 @@
  .app *,.app *::before,.app *::after,.modal,.modal *,.modal::backdrop,.toast,.profileDrawer,.profileDrawer *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
 
-.notificationHistory {display:grid;gap:12px;max-width:900px;}
-.notificationHistory article {min-width:0;overflow-wrap:anywhere;padding:14px 16px;margin:0;}
-.notificationHistory article p {margin:8px 0;font-size:14px;line-height:1.6;}
-.notificationHistory article header {justify-content:space-between;border:0;padding:0;margin:0;}
-.notificationHistory article small {font-size:12px;color:var(--muted);}
 
 /* The phone workspace has its own shell, screens and one document scroll owner. */
 .mobileBrand{display:flex;align-items:center;gap:9px;background:none;border:0;color:var(--ink);font-weight:750;font-size:18px;min-height:44px;padding:0}
@@ -181,3 +175,7 @@
  .profileDrawer .profileLayout{display:block}.profileDrawer .profileFields{grid-template-columns:1fr}.profileDrawer .settingsActions{align-items:stretch}.profileDrawer button{min-height:44px}
  .ticketViewer .ticketViewport{max-height:none;overflow:auto}.ticketViewer{padding:16px}.ticketViewer nav{top:60px}
 }
+@media(max-width:420px){.scheduleRow{grid-template-columns:minmax(72px,1fr) minmax(125px,1.4fr);align-items:end}.scheduleRow button{grid-column:1/-1;justify-self:end;min-height:36px;padding:6px 10px}.scheduleRows input[type=time]{min-width:125px;font-size:16px}.scheduleRows input[type=number]{font-size:16px}}
+.operationStats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+
+.journeyLinkActions{padding:10px 24px 0}

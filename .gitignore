@@ -43,3 +43,6 @@ next-env.d.ts
 
 /public/railwatch/pdf.worker.min.mjs
 /public/railwatch/ocr/
+/public/railwatch/cmaps/
+/public/railwatch/standard_fonts/
+/public/railwatch/wasm/

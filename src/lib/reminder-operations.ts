@@ -1,4 +1,4 @@
-import {reminderJourneyId} from "./in-app-notifications";
+import {reminderJourneyId} from "./reminder-reference";
 import {storedPlanner} from "./workspace-storage";
 import { prisma } from "./db";
 import { ApiError } from "./http";
@@ -22,16 +22,23 @@ export function operationAlerts(input:{succeededAt:Date|null;startedAt:Date|null
 
 /** Reads durable heartbeat and bounded queue aggregates for administrators and monitoring. */
 export async function reminderHealth(now=new Date()) {
-  const [heartbeat,counts,oldest,failures]=await Promise.all([
+  const external={kind:{not:"IN_APP"}};
+  const eligible={...external,state:{in:["PENDING","FAILED"]},attempts:{lt:5}};
+  const [heartbeat,counts,oldest,failures,scheduled,due,overdue,next,channels]=await Promise.all([
     prisma.railOperations.findUnique({where:{id:"scheduler"}}),
-    prisma.railJob.groupBy({by:["state"],_count:true}),
-    prisma.railJob.aggregate({where:{state:{in:["PENDING","FAILED"]},attempts:{lt:5},dueAt:{lte:now}},_min:{dueAt:true}}),
-    prisma.railJob.groupBy({by:["kind"],where:{state:"FAILED"},_count:true}),
+    prisma.railJob.groupBy({by:["state"],where:external,_count:true}),
+    prisma.railJob.aggregate({where:{...eligible,dueAt:{lte:now}},_min:{dueAt:true}}),
+    prisma.railJob.groupBy({by:["kind"],where:{...external,state:"FAILED"},_count:true}),
+    prisma.railJob.count({where:{...eligible,dueAt:{gt:now}}}),
+    prisma.railJob.count({where:{...eligible,dueAt:{lte:now}}}),
+    prisma.railJob.count({where:{...eligible,dueAt:{lt:new Date(now.getTime()-300000)}}}),
+    prisma.railJob.aggregate({where:{...eligible,dueAt:{gt:now}},_min:{dueAt:true}}),
+    prisma.railJob.groupBy({by:["kind"],where:{...eligible,dueAt:{gt:now}},_count:true}),
   ]);
   const states=Object.fromEntries(counts.map(row=>[row.state,row._count]));
-  const exhausted=await prisma.railJob.count({where:{state:"FAILED",attempts:{gte:5}}});
+  const exhausted=await prisma.railJob.count({where:{...external,state:"FAILED",attempts:{gte:5}}});
   const timing={startedAt:heartbeat?.startedAt??null,succeededAt:heartbeat?.succeededAt??null,failedAt:heartbeat?.failedAt??null};
-  return {...timing,durationMs:heartbeat?.durationMs??null,failureCount:heartbeat?.failureCount??0,states,exhausted,oldestDueAt:oldest._min.dueAt,providerFailures:Object.fromEntries(failures.map(row=>[row.kind,row._count])),alerts:operationAlerts({...timing,exhausted,missed:states.MISSED??0,oldestDueAt:oldest._min.dueAt},now)};
+  return {...timing,durationMs:heartbeat?.durationMs??null,failureCount:heartbeat?.failureCount??0,states,exhausted,oldestDueAt:oldest._min.dueAt,queue:{scheduled,due,overdue,nextAt:next._min.dueAt,channels:Object.fromEntries(channels.map(row=>[row.kind,row._count]))},providerFailures:Object.fromEntries(failures.map(row=>[row.kind,row._count])),alerts:operationAlerts({...timing,exhausted,missed:states.MISSED??0,oldestDueAt:oldest._min.dueAt},now)};
 }
 
 /** Audits a single administrator retry after rechecking current ownership and eligibility. */
@@ -65,8 +72,11 @@ export function reminderMetrics(health:Awaited<ReturnType<typeof reminderHealth>
     railwatch_reminders_exhausted:health.exhausted,
     railwatch_reminders_pending:health.states.PENDING??0,
     railwatch_reminders_failed:health.states.FAILED??0,
+    railwatch_reminders_scheduled:health.queue.scheduled,
+    railwatch_reminders_due:health.queue.due,
+    railwatch_reminders_overdue:health.queue.overdue,
     railwatch_reminder_oldest_due_age_seconds:health.oldestDueAt?Math.max(0,(now.getTime()-health.oldestDueAt.getTime())/1000):0,
   };
   return Object.entries(values).map(([name,value])=>`# TYPE ${name} ${name.endsWith('_total')?'counter':'gauge'}\n${name} ${value}`).join('\n')+'\n# TYPE railwatch_reminder_provider_failures gauge\n'+
-    ["IN_APP","EMAIL","PUSH","TELEGRAM","WHATSAPP"].map(kind=>`railwatch_reminder_provider_failures{channel="${kind}"} ${health.providerFailures[kind]??0}`).join('\n')+'\n';
+    ["EMAIL","PUSH","TELEGRAM","WHATSAPP"].map(kind=>`railwatch_reminder_provider_failures{channel="${kind}"} ${health.providerFailures[kind]??0}`).join('\n')+'\n';
 }
