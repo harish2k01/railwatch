@@ -121,15 +121,21 @@ export function generateJourneys(raw: Rule, today = todayIST(), settings = EMPTY
   }
   return settings.routineHorizonMode === "count" ? result.slice(0,settings.routineTicketCount) : result;
 }
+/** Identifies occurrence records that routine edits and removal must retain. */
+function protectedRoutineOccurrence(journey:Journey,today:string){return journey.status!=="needs_booking"||Boolean(journey.manualOverride||journey.archivedAt)||journey.date<today;}
 /** Regenerates a routine while retaining booked tickets and individually changed journeys. */
 export function saveRule(planner: Planner, rule: Rule, today = todayIST()): Planner {
   const generated = generateJourneys({...rule,windowDays:planner.settings.bookingWindowDays}, today, planner.settings);
   const existing = new Map(planner.journeys.map(j => [j.id, j]));
   // Preserve booked tickets and explicit exceptions, including dates removed from the rule.
-  const preserved = planner.journeys.filter(j => j.ruleId !== rule.id || j.status !== "needs_booking" || j.manualOverride || j.archivedAt || j.date < today);
+  const preserved = planner.journeys.filter(j => j.ruleId !== rule.id || protectedRoutineOccurrence(j,today));
   const preservedIds = new Set(preserved.map(j => j.id));
   const additions = generated.filter(j => !preservedIds.has(j.id)).map(j => ({ ...j, notes: existing.get(j.id)?.notes ?? "" }));
   return { ...planner, rules: [...planner.rules.filter(r => r.id !== rule.id), rule], journeys: [...preserved, ...additions] };
+}
+/** Removes a routine and untouched future plans while preserving tickets, exceptions and history. */
+export function removeRule(planner:Planner,id:string,today=todayIST()):Planner{
+  return {...planner,rules:planner.rules.filter(rule=>rule.id!==id).map(rule=>rule.linkedRuleId===id?{...rule,linkedRuleId:undefined}:rule),journeys:planner.journeys.filter(journey=>journey.ruleId!==id||protectedRoutineOccurrence(journey,today))};
 }
 export const CANCELLED_RETENTION_DAYS = 7;
 /** Completes past booked journeys and archives cancelled plans after their retention period. */

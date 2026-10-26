@@ -25,6 +25,18 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);
         const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
         assert.ok(dimensions.scroll<=dimensions.width+1,`${theme} ${width}px ${path}: document overflows`);
+        if(path==='/routines'&&width===390){
+          const edit=page.getByRole('button',{name:/^Edit routine /}).first();await expect(edit).toBeVisible();
+          const target=await edit.boundingBox();assert.ok(target.width>=44&&target.height>=44,'Mobile routine edit target fits touch');
+          await page.screenshot({path:`build/railwatch-qa/routines-mobile-${theme}.png`,animations:'disabled'});
+          if(theme==='light'){
+            await edit.click();const form=page.getByRole('dialog');await form.getByRole('button',{name:'Review changes',exact:true}).click();
+            await expect(form.getByRole('heading',{name:'Review routine changes',exact:true})).toBeVisible();
+            const size=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(size.scroll<=size.width+1,'Mobile routine review fits');
+            await page.screenshot({path:'build/railwatch-qa/routine-review-mobile.png',animations:'disabled'});
+            await form.getByRole('button',{name:'Close Dialog',exact:true}).click();await expect(form).toHaveCount(0);
+          }
+        }
       }
       if(width<=390) {
         await page.goto(url+'/journeys');

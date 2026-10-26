@@ -1,10 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { addDays, bookingDay, bookingInstant, bookingPhase, calendarFile, cancellationStatus, DEFAULT_CLOCK, effectiveReminders, EMPTY_PLANNER, extendRoutines, findBreaks, generateJourneys, migratePlanner, parseHolidayCSV, saveLinkedRule, saveRule, transitionJourney, type Journey, type Rule } from "./travel-planner";
+import { addDays, bookingDay, bookingInstant, bookingPhase, calendarFile, cancellationStatus, DEFAULT_CLOCK, effectiveReminders, EMPTY_PLANNER, extendRoutines, findBreaks, generateJourneys, migratePlanner, parseHolidayCSV, removeRule, saveLinkedRule, saveRule, transitionJourney, type Journey, type Rule } from "./travel-planner";
 
 const rule: Rule = { id: "routine", name: "Custom commute", from: "Station A", to: "Station B", train: "12345", travelClass: "3A", windowDays: 60, originOffset: 0, start: "2026-12-01", end: "2026-12-31", weekdays: [2], intervalWeeks: 1, departure: "22:00", returnAfterDays: 2, returnDeparture: "21:00", returnTrain: "54321", returnOriginOffset: 1, paused: false, excludedDates: [] };
 const journey: Journey = { id: "journey", from: "A", to: "B", train: "", travelClass: "SL", windowDays: 60, originOffset: 0, date: "2026-12-01", departure: "22:00", status: "needs_booking", pnr: "", notes: "" };
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-01T00:00:00Z")); });
 afterEach(() => vi.useRealTimers());
+
+it("removes only untouched future occurrences and unlinks the retained return routine",()=>{
+  const base={...journey,ruleId:rule.id};
+  const protectedJourneys=[{...base,id:"booked",status:"booked" as const,pnr:"1234567890"},{...base,id:"manual",manualOverride:true},{...base,id:"archived",archivedAt:"2026-10-20"},{...base,id:"cancelled",status:"cancelled" as const},{...base,id:"past",date:"2026-10-20"},{...journey,id:"unrelated"}];
+  const planner={...EMPTY_PLANNER,rules:[{...rule,linkedRuleId:"return"},{...rule,id:"return",linkedRuleId:rule.id}],journeys:[{...base,id:"future"},...protectedJourneys]};
+  const next=removeRule(planner,rule.id,"2026-10-25");
+  expect(next.journeys).toEqual(protectedJourneys);expect(next.rules).toHaveLength(1);expect(next.rules[0].id).toBe("return");expect(next.rules[0].linkedRuleId).toBeUndefined();
+  expect(planner.journeys).toHaveLength(7);expect(planner.rules).toHaveLength(2);
+});
 
 describe("booking deadlines", () => {
   it("uses exactly 60 days, including year boundaries and leap days", () => {

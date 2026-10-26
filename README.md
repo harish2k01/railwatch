@@ -21,6 +21,8 @@ RailWatch runs as three separate services: a Next.js frontend, a Fastify backend
 
 Scheduled work runs inside the persistent backend. Once a minute it completes booked journeys after their travel date in IST, archives cancelled or skipped journeys seven days after cancellation, replenishes routines, reads Telegram messages with outgoing requests, reconciles reminders, delivers due jobs, and synchronizes calendars. PostgreSQL advisory locking prevents overlapping scheduler runs across replicas. Reminder jobs retain their durable leases, retries, and delivery records. Regular API requests never spawn Kubernetes jobs. One-time database migrations and database backups remain operational jobs.
 
+Linked routines appear together, with a separate recurrence, next scheduled date and controls for each direction. Routine changes are reviewed against the complete account plan before saving: the review counts added, changed, removed and retained journeys without saving the proposed change. Confirmation uses the reviewed workspace revision; concurrent changes require a fresh review. Booked tickets, history and individual exceptions remain protected. A scheduled date describes the recurrence, not a confirmed train departure.
+
 `BACKEND_URL` points the frontend to the private backend (default `http://127.0.0.1:3001`). The backend listens on `BACKEND_PORT` (default 3001). Only the frontend needs to be exposed. `APP_URL` is the canonical URL users access, including an HTTP LAN URL if hosting without a domain. Provider traffic is outgoing; optional OAuth consent returns through the user's browser. See [service deployment](docs/service-architecture.md).
 
 ## Deployment and providers
