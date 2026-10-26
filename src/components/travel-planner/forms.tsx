@@ -1,12 +1,14 @@
 "use client";
 import {apiRequest} from "@/lib/client-api";
 
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, ArrowLeftRight, Clock3, Bell, Link2 } from "lucide-react";
 import { bookingDay, bookingTimeLabel, DEFAULT_TATKAL_SCHEDULE, type ReminderSchedule, formatDay, DEFAULT_CLOCK, journeySchema, REMINDER_KEYS, ruleSchema, type Journey, type Planner, type ReminderOverride, type Rule } from "@/lib/travel-planner";
 import { Select } from "./select";
 import s from "./planner.module.css";
 import j from "./journey-form.module.css";
+import r from "./routine-overview.module.css";
+import type {RoutineChangePreview} from "@/lib/routine-overview";
 import { weekday, type TicketAttachment } from "@/lib/travel-planner";
 import { TicketViewer } from "./ticket-viewer";
 import { ActionMenu } from "./action-menu";
@@ -60,22 +62,36 @@ export function Weekdays({ name = "weekdays", selected = [], weekStartsOn=0 }: {
 }
 
 /** Validates recurrence inputs and preserves linked routine settings when saving. */
-export function RuleForm({ rule, planner, today, save, fail,remindersEnabled=true }: { remindersEnabled?:boolean;rule?: Partial<Rule>; planner: Planner; today: string; save: (rule: Rule) => void; fail: (message: string) => void }) {
+export function RuleForm({ rule, planner, today, save, preview, fail,saving=false,remindersEnabled=true }: { saving?:boolean;remindersEnabled?:boolean;rule?: Partial<Rule>; planner: Planner; today: string; preview:(rule:Rule)=>Promise<RoutineChangePreview>; save: (rule: Rule,revision:number) => void; fail: (message: string) => void }) {
+  const [review,setReview]=useState<{rule:Rule;data:RoutineChangePreview;fingerprint:string}|null>(null);
+  const [previewing,setPreviewing]=useState(false),[previewError,setPreviewError]=useState("");
+  const draftVersion=useRef(0),reviewElement=useRef<HTMLElement>(null),routineForm=useRef<HTMLFormElement>(null);
+  useEffect(()=>{if(review){reviewElement.current?.focus({preventScroll:true});reviewElement.current?.scrollIntoView({block:"end",behavior:"auto"});}},[review]);
+  /** Invalidates reviewed counts when any native or custom form field changes. */
+  function invalidateReview(){draftVersion.current++;setReview(null);setPreviewError("");}
+  /** Returns from the review to the existing draft without discarding entered values. */
+  function resumeEditing(){invalidateReview();routineForm.current?.querySelector<HTMLInputElement>('input[name="name"]')?.focus();}
   const initial = rule?.recurrence;
   const [start, setStart] = useState(rule?.start ?? today);
   const [preset, setPreset] = useState(initial && initial.interval > 1 || !initial && (rule?.intervalWeeks ?? 1) > 1 ? "custom" : initial?.frequency === "monthly" ? `monthly_${initial.monthlyPattern}` : initial?.frequency ?? "weekly");
   const [unit, setUnit] = useState(initial?.frequency ?? "weekly");
   const frequency = preset === "custom" ? unit : preset.startsWith("monthly") ? "monthly" : preset;
     /** Validates the active form and submits its account-scoped changes. */
-  function submit(e: FormEvent<HTMLFormElement>) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); const form = new FormData(e.currentTarget); const /** Reads a form field as a string. */ str = (key: string) => String(form.get(key) ?? "");
+    if(previewing||saving)return;
+    const fingerprint=JSON.stringify({fields:[...form.entries()],start,preset,unit});
+    if(review&&review.fingerprint===fingerprint){save(review.rule,review.data.revision);return;}
     const selected = form.getAll("weekdays").map(Number);
     const interval = preset === "custom" ? Number(form.get("interval")) : 1;
-    const result = ruleSchema.safeParse({ ...rule, id: rule?.id ?? crypto.randomUUID(), name: str("name"), from: str("from"), to: str("to"), start, end: str("end") || null, weekdays: frequency === "weekly" ? selected : [weekday(start)], intervalWeeks: Math.min(interval, 12), recurrence: { frequency, interval, monthlyPattern: str("monthlyPattern") || "date", dayOfMonth: Number(form.get("dayOfMonth") ?? start.slice(-2)), ordinal: Number(form.get("ordinal") ?? Math.ceil(Number(start.slice(-2)) / 7)), weekday: Number(form.get("monthlyWeekday") ?? weekday(start)) }, timePreference: "any", departure: "20:00", train: "", travelClass: "", windowDays: planner.settings.bookingWindowDays, originOffset: 0, returnAfterDays: null, returnDeparture: "20:00", returnTrain: "", returnOriginOffset: 0, linkedRuleId: str("linkedRuleId") || undefined, excludedDates: [], paused: rule?.paused ?? false, reminderOverride: remindersEnabled ? remindersFromForm(form) : rule?.reminderOverride });
+    const result = ruleSchema.safeParse({ ...rule, id: rule?.id ?? crypto.randomUUID(), name: str("name"), from: str("from"), to: str("to"), start, end: str("end") || null, weekdays: frequency === "weekly" ? selected : [weekday(start)], intervalWeeks: Math.min(interval, 12), recurrence: { frequency, interval, monthlyPattern: str("monthlyPattern") || "date", dayOfMonth: Number(form.get("dayOfMonth") ?? start.slice(-2)), ordinal: Number(form.get("ordinal") ?? Math.ceil(Number(start.slice(-2)) / 7)), weekday: Number(form.get("monthlyWeekday") ?? weekday(start)) }, timePreference: rule?.timePreference ?? "any", departure: rule?.departure ?? "20:00", train: rule?.train ?? "", travelClass: rule?.travelClass ?? "", windowDays: planner.settings.bookingWindowDays, originOffset: rule?.originOffset ?? 0, returnAfterDays: rule?.returnAfterDays ?? null, returnDeparture: rule?.returnDeparture ?? "20:00", returnTrain: rule?.returnTrain ?? "", returnOriginOffset: rule?.returnOriginOffset ?? 0, linkedRuleId: str("linkedRuleId") || undefined, excludedDates: rule?.excludedDates ?? [], paused: rule?.paused ?? false, reminderOverride: remindersEnabled ? remindersFromForm(form) : rule?.reminderOverride });
     if (!result.success) { fail(frequency === "weekly" && !selected.length ? "Choose at least one travel day." : result.error.issues[0]?.message ?? "Check the routine fields."); return; }
-    save(result.data);
+    const version=draftVersion.current;setPreviewing(true);setPreviewError("");
+    try{const data=await preview(result.data);if(draftVersion.current!==version){setPreviewError("The form changed. Review your latest changes before saving.");return;}setReview({rule:result.data,data,fingerprint});}
+    catch(error){setPreviewError(error instanceof Error?error.message:"Could not prepare this review. Try again.");}
+    finally{setPreviewing(false);}
   }
-  return <form className={s.form} onSubmit={submit}>
+  return <form ref={routineForm} className={s.form} onSubmit={submit} onInput={invalidateReview} onChange={invalidateReview} aria-busy={saving||previewing}><fieldset className={r.fields} disabled={saving} aria-label="Routine details">
     <Field label="Routine Name"><input name="name" maxLength={80} defaultValue={rule?.name} placeholder="Give this routine a name" required /></Field>
     <div className={s.formGrid}><Field label="From"><input name="from" defaultValue={rule?.from} maxLength={80} placeholder="Station or city" required /></Field><Field label="To"><input name="to" defaultValue={rule?.to} maxLength={80} placeholder="Station or city" required /></Field></div>
     <div className={s.formGrid}><Field label="Start Date"><input name="start" type="date" value={start} onChange={e => setStart(e.target.value)} required /></Field><Field label="End Date (Optional)" hint="Leave empty for an ongoing routine."><input name="end" type="date" defaultValue={rule?.end ?? ""} /></Field></div>
@@ -87,8 +103,10 @@ export function RuleForm({ rule, planner, today, save, fail,remindersEnabled=tru
       <p className={s.help}>{planner.settings.routineHorizonMode === "count" ? `Up to ${planner.settings.routineTicketCount} upcoming journeys per routine are created.` : `Journeys are created up to ${planner.settings.routineMonthsAhead} months from today.`} Months without your selected date or weekday are skipped.</p>
     </section>
     <section className={s.formSection}><h3><Link2 size={16} /> Onward And Return</h3><Field label="Link To Another Routine" hint="Each direction has its own recurrence and reminders."><Select name="linkedRuleId" defaultValue={rule?.linkedRuleId ?? ""}><option value="">Independent routine</option>{planner.rules.filter(r => r.id !== rule?.id).map(r => <option value={r.id} key={r.id}>{r.name} · {r.from} → {r.to}</option>)}</Select></Field></section>
-    <ReminderFields initial={rule?.reminderOverride} settings={planner.settings} routine enabled={remindersEnabled} /><div className={s.formFooter}><button className={s.primary}>Save routine <ArrowRight size={16} /></button></div>
-  </form>;
+    <ReminderFields initial={rule?.reminderOverride} settings={planner.settings} routine enabled={remindersEnabled} />{previewError&&<p role="alert" className={s.help}>{previewError}</p>}
+    {review&&<section ref={reviewElement} tabIndex={-1} className={r.review} aria-label="Routine change review"><h3>Review routine changes</h3><div className={r.reviewCounts}>{[{label:"New journeys",count:review.data.added},{label:"Updated plans",count:review.data.updated},{label:"Unbooked plans removed",count:review.data.removed},{label:"Journeys unchanged",count:review.data.unchanged}].map(item=><div key={item.label}><strong>{item.count}</strong><span>{item.label}</span></div>)}</div>{review.data.protected>0&&<p>{review.data.protected} booked, past or individually changed journeys stay as they are.</p>}{review.data.firstDates.length>0&&<p>New dates: {review.data.firstDates.map(date=>formatDay(date,{day:"numeric",month:"short",year:"numeric"})).join(" · ")}</p>}<p>Each linked direction keeps its own schedule.</p></section>}
+    <div className={s.formFooter}><div className={r.reviewActions}>{review&&<button type="button" className={s.secondary} onClick={resumeEditing}>Keep editing</button>}<button className={s.primary} disabled={previewing||saving} aria-busy={previewing||saving}>{saving?"Saving routine…":previewing?"Preparing review…":review?"Save routine":"Review changes"}<ArrowRight size={16}/></button></div></div>
+  </fieldset></form>;
 }
 
 /** Edits monthly recurrence by date or weekday occurrence. */
