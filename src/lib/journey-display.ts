@@ -15,3 +15,9 @@ export function groupTimeOff(holidays: Planner["holidays"]) {
   }
   return groups.sort((a, b) => a.start.localeCompare(b.start));
 }
+
+/** Keeps ranges spanning today intact and sorts past ranges most recent first. */
+export function timeOffGroups(holidays: Planner["holidays"], today: string, past: boolean) {
+  return groupTimeOff(holidays).filter(group => past ? group.end < today : group.end >= today)
+    .sort((a, b) => past ? b.end.localeCompare(a.end) : a.start.localeCompare(b.start));
+}

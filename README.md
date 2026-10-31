@@ -37,6 +37,8 @@ The dashboard is at `/`; journeys, calendar, routines, holidays, tickets, and ad
 
 Set `APP_URL` to the public base URL at runtime so invitation links, password resets, and Google OAuth use the deployed hostname. The first account becomes administrator. Existing RailWatch installations can apply the checked-in Prisma migrations; a fresh installation starts with an empty database.
 
+Holidays & Leave opens with upcoming time off. Past entries remain available through the Past filter; consecutive matching days stay together, including ranges already in progress. Expand a range to manage individual days. Long-weekend suggestions use the same saved holidays, leave and booking rules on desktop and mobile.
+
 ## Tickets and history
 
 Ticket extraction reads PDF text and QR codes, and uses local browser OCR for scanned PDFs and ticket images. English recognition assets ship with the app; recognition does not send ticket pixels to an external service. Review detected details before applying them. Completed journeys appear in History and archived cancellations retain entered ticket details. Original PDFs are deleted seven days after cancellation or completion.
