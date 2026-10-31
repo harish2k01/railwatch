@@ -27,7 +27,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         assert.ok(dimensions.scroll<=dimensions.width+1,`${theme} ${width}px ${path}: document overflows`);
         if(path==='/routines'&&width===390){
           const edit=page.getByRole('button',{name:/^Edit routine /}).first();await expect(edit).toBeVisible();
-          const target=await edit.boundingBox();assert.ok(target.width>=44&&target.height>=44,'Mobile routine edit target fits touch');
+          await expect.poll(async()=>{const target=await edit.boundingBox();return Boolean(target&&target.width>=44&&target.height>=44);},{message:'Mobile routine edit target fits touch after entry motion'}).toBe(true);
           await page.screenshot({path:`build/railwatch-qa/routines-mobile-${theme}.png`,animations:'disabled'});
           if(theme==='light'){
             await edit.click();const form=page.getByRole('dialog');await form.getByRole('button',{name:'Review changes',exact:true}).click();
