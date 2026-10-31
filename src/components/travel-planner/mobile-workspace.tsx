@@ -2,11 +2,10 @@
 import {useSyncExternalStore, type ReactNode} from "react";
 import Link from "next/link";
 import {ArrowRight,CalendarDays,Files,House,LayoutList,Settings2} from "lucide-react";
-import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment,type Planner} from "@/lib/travel-planner";
-import {groupTimeOff,stationLabel} from "@/lib/journey-display";
+import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment} from "@/lib/travel-planner";
+import {stationLabel} from "@/lib/journey-display";
 import type {DashboardView} from "@/lib/planning-views";
 import {STATUS} from "./forms";
-import {ActionMenu} from "./action-menu";
 import m from "./mobile-workspace.module.css";
 
 /** Observes the phone layout without changing the server-rendered desktop snapshot. */
@@ -33,8 +32,3 @@ export function MobileHome({data,open,view,plan,go}:{data:DashboardView;open:(j:
 export function MobileScreen({title,children,action}:{title:string;children:ReactNode;action?:ReactNode}){return <div className={m.screen}><div className={m.heading}><h1>{title}</h1>{action}</div>{children}</div>;}
 /** Shows a seven-day selector around the chosen date, including exact event counts. */
 export function MobileWeek({date,choose,count}:{date:string;choose:(date:string)=>void;count:(date:string)=>number}){return <div className={m.week} aria-label="Calendar week">{Array.from({length:7},(_,i)=>addDays(date,i-3)).map(value=><button key={value} aria-label={`View ${value}, ${count(value)} events`} aria-pressed={value===date} onClick={()=>choose(value)}><small>{formatDay(value,{weekday:"short"})}</small><b>{Number(value.slice(-2))}</b><span aria-hidden="true">{count(value)>0?"•":" "}</span></button>)}</div>;}
-
-/** Groups consecutive leave into expandable ranges and preserves individual removal. */
-export function MobileTimeOff({planner,add,importDays,remove,breaks,plan}:{planner:Planner;add:()=>void;importDays:()=>void;remove:(id:string)=>void;breaks:{start:string;end:string;days:number;names:string[]}[];plan:(date:string)=>void}){
- return <MobileScreen title="Time off" action={<div className={m.tools}><button className={m.back} onClick={importDays}>Import</button><button className={m.back} onClick={add}>Add</button></div>}>{groupTimeOff(planner.holidays).map(group=><details className={m.routine} key={group.name+group.start}><summary><strong>{group.name}</strong><p>{formatDay(group.start)}{group.end!==group.start?` — ${formatDay(group.end)}`:""} · {group.days.length} {group.days.length===1?"day":"days"}</p></summary>{group.days.map(h=><div className={m.heading} key={h.id}><small>{formatDay(h.date)}</small><ActionMenu label={`Actions For ${h.name} on ${h.date}`} actions={[{label:"Remove time off",danger:true,onClick:()=>remove(h.id)}]}/></div>)}</details>)}{!planner.holidays.length&&<p className={m.emptyText}>Add holidays and leave to find your next longer break.</p>}<section><h2>Long weekends</h2>{breaks.map(b=><article className={m.routine} key={b.start}><h2>{b.names.join(" + ")}</h2><p>{formatDay(b.start)} — {formatDay(b.end)} · {b.days} days off</p><button className={m.back} onClick={()=>plan(b.start)}>Plan a journey <ArrowRight size={16}/></button></article>)}{!breaks.length&&<p className={m.emptyText}>No longer breaks in your current time off.</p>}</section></MobileScreen>;
-}
