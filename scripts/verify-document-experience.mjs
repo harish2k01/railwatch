@@ -6,11 +6,21 @@ const url=process.env.E2E_URL??'http://127.0.0.1:3102';
 assert.equal(process.env.RUN_E2E,'1');
 assert.ok(['localhost','127.0.0.1'].includes(new URL(url).hostname)&&new URL(process.env.DATABASE_URL).pathname.endsWith('_test'));
 const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL??(process.env.CI?undefined:'chrome'),headless:true});
-const context=await browser.newContext(),page=await context.newPage();page.setDefaultTimeout(30000);
+const context=await browser.newContext();
+// Exercise manual installation guidance without opening a native install prompt.
+await context.addInitScript(()=>window.addEventListener('beforeinstallprompt',event=>event.stopImmediatePropagation(),{capture:true}));
+const page=await context.newPage();page.setDefaultTimeout(30000);
 const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>dialog.accept());
 const api=async(path,method='get',data)=>context.request[method](url+path,{headers:{Origin:url,Cookie:(await context.cookies()).map(c=>`${c.name}=${c.value}`).join('; ')},data});
 try{
   assert.equal((await api('/api/auth/signup','post',{name:'Document Reviewer',email:`reader-${randomUUID()}@example.invalid`,password:'RailWatchReader!2026'})).status(),201);
+  // Reproduce the reported sparse-attention layout with four trips and four openings.
+  const homeOriginal=(await(await api('/api/railwatch/workspace')).json()).data;
+  await page.goto(url+'/');await page.getByRole('heading',{name:'Upcoming Journeys',exact:true}).waitFor();await page.screenshot({path:'build/railwatch-qa/dashboard-empty.png',animations:'disabled'});
+  const ahead=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10);
+  const trip=(id,status,n)=>({id,from:'MDU',to:'MS',date:ahead(n),departure:'20:00',train:'',pnr:'',travelClass:'',windowDays:60,originOffset:0,status,notes:''});
+  for(const theme of ['light','dark']){const home=(await(await api('/api/railwatch/workspace')).json()).data;home.planner.settings.theme=theme;home.planner.journeys=[trip('cancel-pending','cancellation_needed',2),...[9,11,16,18].map((n,i)=>trip('confirmed-'+i,'booked',n)),...[70,72,77,79].map((n,i)=>trip('planned-'+i,'needs_booking',n))];assert.equal((await api('/api/railwatch/workspace','put',home)).status(),200);for(const width of [1440,1920]){await page.setViewportSize({width,height:1080});await page.goto(url+'/');await page.getByRole('heading',{name:'Your Travel Week',exact:true}).waitFor();const bookings=await page.locator('section').filter({has:page.getByRole('heading',{name:'Next Booking Openings',exact:true})}).boundingBox(),week=await page.locator('section').filter({has:page.getByRole('heading',{name:'Your Travel Week',exact:true})}).boundingBox();assert.ok(Math.abs(week.x-bookings.x)<2&&week.y>=bookings.y+bookings.height&&week.y<bookings.y+bookings.height+32,'Travel week uses the space below booking openings');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Dashboard fits viewport');await page.screenshot({path:'build/railwatch-qa/dashboard-gap-'+width+'-'+theme+'.png',animations:'disabled'});}}
+  homeOriginal.revision=(await(await api('/api/railwatch/workspace')).json()).data.revision;assert.equal((await api('/api/railwatch/workspace','put',homeOriginal)).status(),200);
   const sheet=await context.newPage();await sheet.setContent('<main style="font:24px sans-serif"><h1>RailWatch searchable ticket</h1><p>Madurai to Chennai</p><div style="break-before:page">Second page original</div></main>');
   const bytes=await sheet.pdf({format:'A4'});await sheet.close();
   const id=randomUUID(),date=new Date(Date.now()+20*86400000).toISOString().slice(0,10);
@@ -33,6 +43,10 @@ try{
       assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Reader owns horizontal zoom scrolling');
       await dialog.getByLabel('Page number',{exact:true}).fill('1');await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');await page.screenshot({path:`build/railwatch-qa/reader-${width}-${theme}.png`,animations:'disabled'});
       await dialog.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
+      await page.goto(url+'/journeys');await page.getByRole('button',{name:/^Open journey/}).first().click();
+      if(width<600)await page.getByRole('dialog').getByRole('button',{name:'Edit Journey',exact:true}).click();
+      const ticketEditor=page.getByRole('dialog');await expect(ticketEditor.locator('[data-ticket-details]')).not.toHaveAttribute('open','');await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeHidden();await page.screenshot({path:'build/railwatch-qa/ticket-details-'+width+'-'+theme+'.png',animations:'disabled'});await ticketEditor.locator('[data-ticket-details]>summary').click();await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeVisible();await ticketEditor.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
+      if(width>600){await page.getByRole('button',{name:'Install RailWatch',exact:true}).click();const install=page.getByRole('dialog',{name:'Install RailWatch',exact:true});const title=install.getByRole('heading',{name:'Install RailWatch',exact:true});await expect(title).toBeVisible();const box=await title.boundingBox();assert.ok(box.width>130&&box.height<65,'Install title remains readable instead of wrapping vertically');await page.screenshot({path:'build/railwatch-qa/install-help-'+theme+'.png',animations:'disabled'});await install.getByRole('button',{name:'Close Dialog',exact:true}).click();}
       await page.goto(url+'/journeys');await page.getByRole('button',{name:'New Journey',exact:true}).click();
       const form=page.getByRole('dialog');await expect(form.getByLabel('Travel Date',{exact:true})).toHaveValue('');await form.getByRole('button',{name:'Tatkal',exact:true}).click();await expect(form.getByText('Choose a travel date to see when booking opens.')).toBeVisible();await form.getByRole('button',{name:'Normal',exact:true}).click();
       await form.getByLabel('From',{exact:true}).fill('MDU');await form.getByLabel('To',{exact:true}).fill('MS');await form.getByRole('button',{name:'Swap route',exact:true}).click();await expect(form.getByLabel('From',{exact:true})).toHaveValue('MS');
