@@ -3,6 +3,7 @@ import {materializeLegacyWorkspace} from "./workspace-storage";
 import {nextAccountBatch,ACCOUNT_BATCH_SIZE} from "./reminder-planning";
 import {readPlanningView,type CalendarView,type DashboardView} from "./planning-views";
 import { setJourneySnooze } from "./notification-controls";
+import {readCurrentNotifications,clearCurrentNotifications} from "./current-notifications";
 import {createAccountToken,consumeAccountToken} from "./account-tokens";
 import { beginTelegramLogin,completeTelegramLogin,loginCredentialHash } from "./telegram-login";
 import { pollTelegram } from "./telegram-polling";
@@ -28,6 +29,27 @@ const users:string[]=[];
 async function fixture(){if(!new URL(process.env.DATABASE_URL!).pathname.endsWith("_test"))throw new Error("Use an isolated test database.");await prisma.appSettings.upsert({where:{id:"global"},create:{id:"global"},update:{bookingWindowDays:60,remindersEnabled:true,whatsappEnabled:true}});const u=await prisma.user.create({data:{email:`${randomUUID()}@railwatch.invalid`}});users.push(u.id);return {user:u,...await loadWorkspace(u.id)};}
 afterEach(async()=>{vi.useRealTimers();vi.unstubAllEnvs();if(users.length)await prisma.user.deleteMany({where:{id:{in:users.splice(0)}}});});
 describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{timeout:15000},()=>{
+  it("shows current reminders without provider history and never restores cleared content",async()=>{
+    const f=await fixture(),other=await fixture(),now=new Date(`${todayIST()}T09:00:00+05:30`);
+    const journey:Journey={id:"current-bell",from:"A",to:"B",date:addDays(todayIST(now),60),departure:"20:00",train:"",pnr:"",travelClass:"",windowDays:60,originOffset:0,status:"needs_booking",notes:""};
+    for(const account of [f,other])await saveWorkspace(account.user.id,{...account.planner,journeys:[journey],settings:{...account.planner.settings,bookingSchedule:[{daysBefore:0,time:"08:00"}]}},account.revision);
+    await prisma.railJob.create({data:{userId:f.user.id,key:"old-inbox",kind:"IN_APP",state:"SENT",dueAt:now,payload:encryptSecret(JSON.stringify({message:"Old history must not return",journeyId:journey.id}))}});
+    await processRailWatch(now);
+    const current=await readCurrentNotifications(f.user.id),foreign=await readCurrentNotifications(other.user.id);
+    expect(current.count).toBe(1);expect(current.items[0].message).toContain("Book A to B");expect(foreign.count).toBe(1);
+    await clearCurrentNotifications(f.user.id,foreign.items[0].id);expect((await readCurrentNotifications(other.user.id)).count).toBe(1);expect((await readCurrentNotifications(f.user.id)).count).toBe(1);
+    await clearCurrentNotifications(f.user.id,current.items[0].id);expect((await readCurrentNotifications(f.user.id)).items).toEqual([]);
+    const cleared=await prisma.railNotification.findUniqueOrThrow({where:{id:current.items[0].id}});expect(cleared.payload).toBeNull();expect(cleared.dismissedAt).not.toBeNull();
+    await processRailWatch(now);expect((await readCurrentNotifications(f.user.id)).count).toBe(0);expect(await prisma.railNotification.count({where:{userId:f.user.id}})).toBe(1);
+    await clearCurrentNotifications(other.user.id);expect((await readCurrentNotifications(other.user.id)).count).toBe(0);
+  });
+  it("defers bell content through quiet hours and ignores historical reminder times",async()=>{
+    const f=await fixture(),now=new Date(`${todayIST()}T09:00:00+05:30`);
+    const journey:Journey={id:"quiet-bell",from:"A",to:"B",date:addDays(todayIST(now),60),departure:"20:00",train:"",pnr:"",travelClass:"",windowDays:60,originOffset:0,status:"needs_booking",notes:""};
+    await saveWorkspace(f.user.id,{...f.planner,journeys:[journey],settings:{...f.planner.settings,bookingSchedule:[{daysBefore:2,time:"08:00"},{daysBefore:0,time:"08:00"},{daysBefore:0,time:"11:00"}],quietHours:{enabled:true,start:"09:00",end:"10:00"}}},f.revision);
+    await processRailWatch(now);expect((await readCurrentNotifications(f.user.id)).count).toBe(0);
+    await processRailWatch(new Date(`${todayIST(now)}T10:00:00+05:30`));expect((await readCurrentNotifications(f.user.id)).count).toBe(1);
+  });
   it("filters desktop lists and counts by travel window and the account week, without exposing another account",async()=>{
     vi.stubEnv("RAILWATCH_NORMALIZED_STORAGE","true");
     const f=await fixture(),other=await fixture(),today=todayIST(),start=addDays(today,-weekday(today));

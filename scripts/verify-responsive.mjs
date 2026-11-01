@@ -67,7 +67,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await drawer.getByRole('button',{name:'Preferences',exact:true}).click();await drawer.locator('summary').filter({hasText:'Normal booking reminders'}).click();
         assert.ok(await drawer.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Custom reminder controls fit mobile');await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
 
-        await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(0);
+        await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(1);
         if(width===390&&theme==='light') {
           await mobileNav.getByRole('button',{name:'More',exact:true}).click();
           await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User Settings',exact:false}).click();

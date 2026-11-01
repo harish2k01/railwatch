@@ -25,7 +25,7 @@ try{
   for(const path of ['/rebuild','/design-preview','/today','/trips','/api/journeys','/api/internal/pnr-sync'])assert.equal((await b.request.get(url+path)).status(),404,'Retired route '+path);
   await page.goto(url+"/login");await page.getByLabel(new RegExp("^Name$",'i'),{exact:true}).fill('RailWatch test');await page.getByLabel(new RegExp("^Email$",'i'),{exact:true}).fill(email);await page.getByLabel(new RegExp("^Password$",'i'),{exact:true}).fill(password);await page.getByRole('button',{name:new RegExp("^Create$",'i'),exact:true}).click();await expect(page).toHaveURL(url+'/');await signup(b,`other-${randomUUID()}@example.invalid`);
   await page.goto(`${url}/`);await page.getByRole('heading',{name:/^Hello,/}).waitFor();
-  await expect(page.getByRole("button",{name:/^Notifications/})).toHaveCount(0);
+  await expect(page.getByRole("button",{name:/^Notifications/})).toHaveCount(1);
   await nav('Calendar');await expect(page.locator('[class*="calendarWeek"] span').first()).toHaveText('Sun');await nav('Dashboard');
   // Profile changes are scoped to the current account and rotate sessions on password change.
   assert.equal((await api('/api/railwatch/profile','patch',{name:'Foreign',userId:'another-user'})).status(),400);

@@ -30,7 +30,8 @@ try{
   await page.getByRole('button',{name:'Next page',exact:true}).click();await expect(page.getByRole('button',{name:'First page',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'First page',exact:true}).click();await expect(page.getByRole('button',{name:'Next page',exact:true})).toBeVisible();
   await page.screenshot({path:'build/railwatch-qa/reminder-recovery.png',fullPage:true,animations:'disabled'});
-  for(const ctx of [visitor,admin,regular])assert.equal((await api(ctx,'/api/railwatch/notifications')).status(),404);
+  assert.equal((await api(visitor,'/api/railwatch/notifications')).status(),401);
+  for(const ctx of [admin,regular])assert.deepEqual(await read(ctx,'/api/railwatch/notifications'),{items:[],count:0});
   const connectionSummary=await read(admin,'/api/railwatch/connections');assert.equal('notifications' in connectionSummary,false);assert.equal('jobs' in connectionSummary,false);
   const baselineHistoryWorkspace=await read(admin,'/api/railwatch/workspace');
   const historyJourney={id:'notification-fixture',from:'MDU',to:'MS',date:'2026-12-03',departure:'20:00',train:'',pnr:'',travelClass:'',windowDays:60,originOffset:0,status:'needs_booking',notes:''};
@@ -40,6 +41,20 @@ try{
   await page.goto(url+'/journeys?journey='+historyJourney.id);await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Notification History',exact:true})).toHaveCount(0);
   await page.getByRole('dialog').getByRole('button',{name:'Close Dialog',exact:true}).click();assert.equal(new URL(page.url()).searchParams.has('journey'),false);
+  // Synthetic current content is separate from the legacy provider/recovery rows above.
+  for(let n=0;n<2;n++)await deliveryDb.query('INSERT INTO "RailNotification" (id,"userId",key,payload,"dueAt") VALUES ($1,$2,$1,$3,now())',['bell-'+n,deliveryOwner,JSON.stringify({message:'Current booking reminder '+n,journeyId:historyJourney.id})]);
+  assert.equal((await api(regular,'/api/railwatch/notifications','post',{action:'clear',id:'bell-0'})).status(),200);assert.equal((await read(admin,'/api/railwatch/notifications')).count,2);
+  await page.reload();await page.getByRole('button',{name:'Notifications, 2 current',exact:true}).click();
+  const bell=page.getByRole('dialog',{name:'Notifications',exact:true});await expect(bell).toBeVisible();await expect(bell.getByRole('button',{name:'Current booking reminder 0',exact:true})).toBeVisible();
+  await page.screenshot({path:'build/railwatch-qa/notifications-desktop.png',animations:'disabled'});
+  await bell.getByRole('button',{name:'Close notifications',exact:true}).press('Escape');await expect(bell).toBeHidden();await expect(page.getByRole('button',{name:'Notifications, 2 current',exact:true})).toBeFocused();await page.getByRole('button',{name:'Notifications, 2 current',exact:true}).click();
+  await bell.getByRole('button',{name:'Current booking reminder 0',exact:true}).click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await page.getByRole('dialog').getByRole('button',{name:'Close Dialog',exact:true}).click();
+  await page.getByRole('button',{name:'Notifications, 2 current',exact:true}).click();await bell.getByRole('button',{name:'Clear notification: Current booking reminder 0',exact:true}).click();await expect(bell.getByText('Current booking reminder 0',{exact:true})).toHaveCount(0);await bell.getByRole('button',{name:'Close notifications',exact:true}).click();await page.reload();assert.equal((await read(admin,'/api/railwatch/notifications')).count,1);
+  for(const theme of ['light','dark']){const currentWorkspace=await read(admin,'/api/railwatch/workspace');currentWorkspace.planner.settings.theme=theme;assert.equal((await api(admin,'/api/railwatch/workspace','put',currentWorkspace)).status(),200);await page.setViewportSize({width:390,height:844});await page.reload();await page.getByRole('button',{name:'Notifications, 1 current',exact:true}).click();await expect(bell).toBeVisible();const bounds=await bell.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=390,'Notification panel fits mobile');await page.screenshot({path:'build/railwatch-qa/notifications-mobile-'+theme+'.png',animations:'disabled'});await bell.getByRole('button',{name:'Close notifications',exact:true}).click();}
+  await page.getByRole('button',{name:'Notifications, 1 current',exact:true}).click();await bell.getByRole('button',{name:'Clear all',exact:true}).click();await expect(bell.getByText('You’re all caught up.',{exact:true})).toBeVisible();await bell.getByRole('button',{name:'Close notifications',exact:true}).click();await page.setViewportSize({width:1440,height:1000});await page.reload();assert.deepEqual(await read(admin,'/api/railwatch/notifications'),{items:[],count:0});assert.equal((await deliveryDb.query('SELECT count(*) FROM "RailNotification" WHERE "userId"=$1 AND payload IS NOT NULL',[deliveryOwner])).rows[0].count,'0');
+  await page.route('**/api/railwatch/notifications',route=>route.fulfill({status:503,json:{error:{message:'Temporary test outage'}}}));
+  await page.getByRole('button',{name:'Notifications',exact:true}).click();await expect(bell.getByRole('alert')).toContainText('Could not load notifications');
+  await page.unroute('**/api/railwatch/notifications');await bell.getByRole('button',{name:'Reload notifications',exact:true}).click();await expect(bell.getByText('You’re all caught up.',{exact:true})).toBeVisible();await bell.getByRole('button',{name:'Close notifications',exact:true}).click();
   const signedOutJourney=await browser.newContext(),signInJourney=await signedOutJourney.newPage();await signInJourney.goto(url+'/journeys?journey='+historyJourney.id);await expect(signInJourney).toHaveURL(url+'/login?next='+encodeURIComponent('/journeys?journey='+historyJourney.id));
   await signInJourney.getByLabel('Email',{exact:true}).fill(email);await signInJourney.getByLabel('Password',{exact:true}).fill(password);await signInJourney.getByRole('button',{name:'Sign in',exact:true}).click();await expect(signInJourney.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await signedOutJourney.close();
   await p2.goto(url+'/journeys?journey='+historyJourney.id);await expect(p2.getByRole('alert').filter({hasText:'unavailable for your account'})).toContainText('unavailable for your account');await expect(p2.getByRole('dialog')).toHaveCount(0);
@@ -54,7 +69,7 @@ try{
   await notificationPreferences.getByRole('button',{name:'Save Preferences',exact:true}).click();
   await expect.poll(async()=>(await read(admin,'/api/railwatch/workspace')).planner.settings.quietHours).toEqual({enabled:true,start:'22:00',end:'07:00'});
   await notificationPreferences.getByRole('button',{name:'Close User Settings',exact:true}).click();
-  await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(1);
   const latestHistoryWorkspace=await read(admin,'/api/railwatch/workspace');assert.equal((await api(admin,'/api/railwatch/workspace','put',{...latestHistoryWorkspace,planner:baselineHistoryWorkspace.planner})).status(),200);
   await deliveryDb.query('DELETE FROM "RailJob" WHERE "userId"=$1 AND id LIKE $2',[deliveryOwner,'recovery-%']);await deliveryDb.end();
   await page.goto(url+'/admin/users');
