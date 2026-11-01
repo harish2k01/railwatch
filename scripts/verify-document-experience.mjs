@@ -31,7 +31,25 @@ try{
   for(const theme of ['light','dark']){
     state=(await(await api('/api/railwatch/workspace')).json()).data;state.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',state)).status(),200);
     for(const width of [390,1482]){
-      await page.setViewportSize({width,height:844});await page.goto(url+'/tickets');await page.getByRole('button',{name:/^View ticket/}).first().click();
+      await page.setViewportSize({width,height:844});await page.goto(url+'/tickets');
+      if(width>600){
+        await expect(page.getByRole('heading',{name:'Ticket Vault',exact:true})).toBeVisible();
+        const search=page.getByLabel('Search Tickets',{exact:true}),reload=page.getByRole('button',{name:'Refresh tickets',exact:true});
+        await expect(reload).toBeVisible();
+        await expect.poll(async()=>{const toolbar=await search.locator('..').boundingBox(),card=await page.getByRole('article').first().boundingBox();return card.y-toolbar.y-toolbar.height;}).toBeGreaterThanOrEqual(15);
+        assert.ok((await reload.boundingBox()).height>=44,'Reload has a full control target');
+        await page.screenshot({path:'build/railwatch-qa/vault-consistency-'+theme+'.png',animations:'disabled'});
+        const primaryStyle=await page.getByRole('button',{name:'New Journey',exact:true}).evaluate(el=>({background:getComputedStyle(el).backgroundColor,weight:getComputedStyle(el).fontWeight}));
+        await page.goto(url+'/journeys');
+        await expect(page.getByRole('button',{name:/^Open journey/}).first()).toBeVisible();
+        const controls=[page.getByRole('button',{name:'New Journey',exact:true}),page.getByRole('button',{name:'Select Travel Date Range',exact:true}),page.getByRole('combobox',{name:'Sort Journeys',exact:true})];
+        const sizes=await Promise.all(controls.map(control=>control.evaluate(el=>({height:el.getBoundingClientRect().height,font:getComputedStyle(el).fontSize}))));
+        assert.ok(sizes.every(size=>size.height>=44&&size.height<46&&size.font==='14px'),'Equivalent desktop controls share height and type size: '+JSON.stringify(sizes));
+        assert.equal(await page.getByRole('heading',{name:'My Journeys',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight),'750');
+        assert.deepEqual(await controls[0].evaluate(el=>({background:getComputedStyle(el).backgroundColor,weight:getComputedStyle(el).fontWeight})),primaryStyle,'Primary actions share theme colour and weight across pages');
+        await page.screenshot({path:'build/railwatch-qa/journeys-consistency-'+theme+'.png',animations:'disabled'});await page.goto(url+'/tickets');
+      }
+      await page.getByRole('button',{name:/^View ticket/}).first().click();
       const dialog=page.getByRole('dialog',{name:'Ticket',exact:true});await expect(dialog.locator('canvas[data-rendered-page="1"]')).toBeVisible();
       await expect(dialog.getByLabel('Page number',{exact:true})).toHaveAttribute('max','2');await dialog.getByLabel('Page number',{exact:true}).fill('1.5');await expect(dialog.getByLabel('Page number',{exact:true})).toHaveValue('1');
       await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');
