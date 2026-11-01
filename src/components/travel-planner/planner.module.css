@@ -117,7 +117,7 @@
 .modal,.profileDrawer{overflow-x:hidden;overscroll-behavior:contain}.field{min-width:0}.field input,.field textarea{min-width:0;max-width:100%;box-sizing:border-box}.field input[type=date],.field input[type=time]{width:100%;min-inline-size:0}
 @media(max-width:600px){.modalHead{padding-top:16px}.profileDrawer{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
 
-.sidebarInstall button{width:100%;white-space:normal;overflow-wrap:anywhere;font-size:12px}
+.sidebarInstall>button{width:100%;white-space:normal;overflow-wrap:anywhere;font-size:12px}
 
 @media(max-width:600px){.desktopFilterReset{display:none}}
 
@@ -173,3 +173,8 @@
 .operationStats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
 
 .journeyLinkActions{padding:10px 24px 0}
+
+.dashboardColumn .weekGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(min-width:1280px){.dashboardColumn .weekGrid{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
+.dashboardColumn .weekDay{padding:12px 4px}
