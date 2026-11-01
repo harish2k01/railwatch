@@ -94,6 +94,8 @@ try{
   assert.equal((await api('/api/railwatch/workspace','put',timeOffState)).status(),200);const timeOffRevision=(await(await api('/api/railwatch/workspace')).json()).data.revision;await page.reload();
   await expect(page.getByRole('button',{name:'Upcoming',exact:true})).toHaveAttribute('aria-pressed','true');
   const timeOff=page.getByRole('region',{name:'Your Time Off',exact:true});
+  const typeColumns=await timeOff.locator('summary > span:last-of-type').evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().x));
+  assert.ok(Math.max(...typeColumns)-Math.min(...typeColumns)<2,'Company and personal labels share one desktop column');
   await expect(timeOff.getByText('Past break',{exact:true})).toHaveCount(0);await expect(timeOff.getByText('Ongoing leave',{exact:true})).toBeVisible();
   await timeOff.locator('summary').filter({hasText:'Ongoing leave'}).click();await expect(timeOff.locator('details[open] > div > div')).toHaveCount(3);
   await page.getByRole('button',{name:'Past',exact:true}).click();await expect(timeOff.getByText('Past break',{exact:true})).toBeVisible();await expect(timeOff.getByText('Ongoing leave',{exact:true})).toHaveCount(0);
