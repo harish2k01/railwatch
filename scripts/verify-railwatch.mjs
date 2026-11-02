@@ -1,5 +1,6 @@
 import {verifyResponsive} from "./verify-responsive.mjs";
 import {verifyAccountScale} from "./verify-account-scale.mjs";
+import {verifyCalendarExperience} from "./verify-calendar-experience.mjs";
 import { chromium,expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdir,readFile } from 'node:fs/promises';
@@ -103,6 +104,7 @@ try{
   assert.equal((await(await api('/api/railwatch/workspace')).json()).data.revision,timeOffRevision,'Browsing time off must not save or remove records');
   for(const theme of ['dark','light']){const themed=(await(await api('/api/railwatch/workspace')).json()).data;themed.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',themed)).status(),200);await page.setViewportSize({width:390,height:844});await page.reload();await expect(page.getByRole('heading',{name:'Time off',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Upcoming',exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.getByText('Past break',{exact:true})).toHaveCount(0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'Time off has no horizontal overflow');await page.screenshot({path:'build/railwatch-qa/time-off-mobile-'+theme+'.png',animations:'disabled'});}
   await page.setViewportSize({width:1440,height:1000});await page.reload();await expect(page.getByRole('heading',{name:'Your Time Off',exact:true})).toBeVisible();await page.screenshot({path:'build/railwatch-qa/time-off-desktop.png',animations:'disabled'});
+  await verifyCalendarExperience({page,api,url,today});
   await verifyAccountScale({page,api,url});
   await verifyResponsive({page,api,url,otherApi:(path,method,data)=>probe(b,path,method,data)});
   await nav('Open Profile Menu');await page.getByRole('menuitem',{name:'Sign Out'}).click();await expect(page).toHaveURL(`${url}/login`);assert.equal((await a.request.get(`${url}/api/railwatch/workspace`)).status(),401);
