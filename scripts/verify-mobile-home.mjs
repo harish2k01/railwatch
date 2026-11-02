@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expect} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 
 /** Checks sparse and populated phone trip cards without retaining fixture changes. */
 export async function verifyMobileHome({page,api,url,theme}){
