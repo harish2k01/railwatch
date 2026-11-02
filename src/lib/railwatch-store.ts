@@ -20,13 +20,12 @@ export function validateWorkspace(value: unknown): Planner {
   for (const items of [planner.journeys, planner.rules, planner.holidays]) if (new Set(items.map(x => x.id)).size !== items.length) throw new ApiError(400,"Duplicate record identifiers.");
   if (planner.journeys.some(j => j.from.toLowerCase() === j.to.toLowerCase())) throw new ApiError(400,"Choose different departure and arrival stations.");
   for (const r of planner.rules) if (r.linkedRuleId) { const linked = planner.rules.find(x => x.id === r.linkedRuleId); if (!linked || linked.id === r.id || linked.linkedRuleId !== r.id || linked.from.toLowerCase() !== r.to.toLowerCase() || linked.to.toLowerCase() !== r.from.toLowerCase()) throw new ApiError(400,"Linked routines must have opposite routes and reciprocal links."); }
-  if (planner.settings.whatsappEnabled && !/^\+?[1-9]\d{7,14}$/.test(planner.settings.whatsappNumber)) throw new ApiError(400,"Add an international WhatsApp number before enabling reminders.");
   const days = planner.settings.bookingWindowDays;
   return plannerSchema.parse({ ...planner, journeys: planner.journeys.map(j => ({...j,windowDays:days,originOffset:0,bookingDateOverride:undefined})), rules:planner.rules.map(r=>({...r,windowDays:days})) });
 }
 /** Applies administrator feature policy and the current account connection details. */
 export function applyAccountSettings(planner:Planner,policy:FeaturePolicy,phoneNumber:string,telegram:{chatId:string|null;enabled:boolean;providerId:string}|null=null,telegramProviderId?:string):Planner {
-return {...planner,settings:{...planner.settings,telegramChatId:policy.telegramEnabled&&policy.remindersEnabled?telegramRecipient(telegram,telegramProviderId):"",telegramProviderId:telegramProviderId??"",telegramEnabled:Boolean(policy.telegramEnabled&&policy.remindersEnabled&&telegramRecipient(telegram,telegramProviderId)),weekStartsOn:policy.weekStartsOn,routineHorizonMode:policy.routineHorizonMode,routineMonthsAhead:policy.routineMonthsAhead,routineTicketCount:policy.routineTicketCount,bookingWindowDays:policy.bookingWindowDays,whatsappNumber:phoneNumber,whatsappEnabled:planner.settings.whatsappEnabled&&policy.remindersEnabled&&policy.whatsappEnabled&&Boolean(phoneNumber)},journeys:planner.journeys.map(j=>({...j,windowDays:policy.bookingWindowDays,originOffset:0,bookingDateOverride:undefined})),rules:planner.rules.map(r=>({...r,windowDays:policy.bookingWindowDays}))};
+return {...planner,settings:{...planner.settings,telegramChatId:policy.telegramEnabled&&policy.remindersEnabled?telegramRecipient(telegram,telegramProviderId):"",telegramProviderId:telegramProviderId??"",telegramEnabled:Boolean(policy.telegramEnabled&&policy.remindersEnabled&&telegramRecipient(telegram,telegramProviderId)),weekStartsOn:policy.weekStartsOn,routineHorizonMode:policy.routineHorizonMode,routineMonthsAhead:policy.routineMonthsAhead,routineTicketCount:policy.routineTicketCount,bookingWindowDays:policy.bookingWindowDays,whatsappNumber:phoneNumber,whatsappEnabled:false},journeys:planner.journeys.map(j=>({...j,windowDays:policy.bookingWindowDays,originOffset:0,bookingDateOverride:undefined})),rules:planner.rules.map(r=>({...r,windowDays:policy.bookingWindowDays}))};
 }
 /** Locks the account row so workspace and attachment changes are serialized. */
 async function lock(tx: Prisma.TransactionClient, userId: string) { await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`; }
@@ -54,7 +53,7 @@ export async function saveWorkspace(userId: string, value: unknown, revision: nu
   const input=plannerSchema.parse(value);
   if(partial){await loadWorkspaceMetadata(userId);const mode=await prisma.railWorkspace.findUnique({where:{userId},select:{storageVersion:true}});if(mode?.storageVersion===2)return saveNormalizedPatch(userId,input,revision,base,policy,telegramProviderId);}
   if(input.settings.emailEnabled&&!policy.remindersEnabled)throw new ApiError(403,"Booking reminders are disabled by the administrator.","FEATURE_DISABLED");
-  if(input.settings.whatsappEnabled&&(!policy.whatsappEnabled||!policy.remindersEnabled))throw new ApiError(403,"WhatsApp reminders are disabled by the administrator.","FEATURE_DISABLED");
+  if(input.settings.whatsappEnabled&&(!policy.whatsappEnabled||!policy.remindersEnabled))throw new ApiError(403,"WhatsApp reminders are not available.","FEATURE_DISABLED");
   let deletedFiles=0;const result=await prisma.$transaction(async tx => {
     await lock(tx,userId); const user=await tx.user.findUniqueOrThrow({where:{id:userId}});const telegram=await tx.railTelegram.findUnique({where:{userId}});
     let planner=validateWorkspace(applyAccountSettings(input,policy,user.phoneNumber??"",telegram,telegramProviderId));

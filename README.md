@@ -27,13 +27,13 @@ Linked routines appear together, with a separate recurrence, next scheduled date
 
 ## Deployment and providers
 
-[Deployment guide](docs/railwatch-deployment.md) covers GHCR releases, manual Kubernetes hosting, secrets, backups, WhatsApp setup, and Google Calendar OAuth. Providers can be configured later.
+[Deployment guide](docs/railwatch-deployment.md) covers GHCR releases, manual Kubernetes hosting, secrets, backups, and Google Calendar OAuth. Providers can be configured later.
 
 [Ticket reader](docs/ticket-reader.md) covers viewing, search, zoom, and opening the original.
 
 [Booking and cancellation reminders](docs/booking-reminders.md) explains normal/Tatkal dates, custom reminder schedules, cancellation follow-ups, and device notifications.
 
-The dashboard is at `/`; journeys, calendar, routines, holidays, tickets, and admin pages have their own routes. User Settings manages profile details, phone number, preferences, connections, and passwords. Admin Settings separates booking rules, calendar and routines, integrations, email delivery, user access, reminder delivery, and feature availability. Administrators control shared booking rules and features, configure encrypted Telegram/Google/WhatsApp credentials in the app, create or invite users, and manage roles and access. Each account has a private workspace. Reminders arrive through enabled delivery channels without a separate notification inbox. Journey reminder controls offer snooze/resume; optional quiet hours are configured under Preferences. See [notification controls](docs/notification-controls.md).
+The dashboard is at `/`; journeys, calendar, routines, holidays, tickets, and admin pages have their own routes. User Settings manages profile details, phone number, preferences, connections, and passwords. Admin Settings separates booking rules, calendar and routines, integrations, email delivery, user access, reminder delivery, and feature availability. Administrators control shared booking rules and features, configure encrypted Telegram/Google credentials in the app, create or invite users, and manage roles and access. Each account has a private workspace. Reminders arrive through enabled delivery channels without a separate notification inbox. Journey reminder controls offer snooze/resume; optional quiet hours are configured under Preferences. See [notification controls](docs/notification-controls.md).
 
 Set `APP_URL` to the public base URL at runtime so invitation links, password resets, and Google OAuth use the deployed hostname. The first account becomes administrator. Existing RailWatch installations can apply the checked-in Prisma migrations; a fresh installation starts with an empty database.
 

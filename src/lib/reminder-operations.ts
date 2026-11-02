@@ -22,7 +22,7 @@ export function operationAlerts(input:{succeededAt:Date|null;startedAt:Date|null
 
 /** Reads durable heartbeat and bounded queue aggregates for administrators and monitoring. */
 export async function reminderHealth(now=new Date()) {
-  const external={kind:{not:"IN_APP"}};
+  const external={kind:{in:["EMAIL","PUSH","TELEGRAM"]}};
   const eligible={...external,state:{in:["PENDING","FAILED"]},attempts:{lt:5}};
   const [heartbeat,counts,oldest,failures,scheduled,due,overdue,next,channels]=await Promise.all([
     prisma.railOperations.findUnique({where:{id:"scheduler"}}),
@@ -78,5 +78,5 @@ export function reminderMetrics(health:Awaited<ReturnType<typeof reminderHealth>
     railwatch_reminder_oldest_due_age_seconds:health.oldestDueAt?Math.max(0,(now.getTime()-health.oldestDueAt.getTime())/1000):0,
   };
   return Object.entries(values).map(([name,value])=>`# TYPE ${name} ${name.endsWith('_total')?'counter':'gauge'}\n${name} ${value}`).join('\n')+'\n# TYPE railwatch_reminder_provider_failures gauge\n'+
-    ["EMAIL","PUSH","TELEGRAM","WHATSAPP"].map(kind=>`railwatch_reminder_provider_failures{channel="${kind}"} ${health.providerFailures[kind]??0}`).join('\n')+'\n';
+    ["EMAIL","PUSH","TELEGRAM"].map(kind=>`railwatch_reminder_provider_failures{channel="${kind}"} ${health.providerFailures[kind]??0}`).join('\n')+'\n';
 }
