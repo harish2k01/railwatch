@@ -1,4 +1,4 @@
-import {expect} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 import assert from 'node:assert/strict';
 
 /** Exercises calendar status cues and empty-day creation against synthetic account data. */
