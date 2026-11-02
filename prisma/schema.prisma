@@ -38,6 +38,7 @@ model User {
   railFiles         RailFile[]
   railJourneys      RailJourney[]
   railJobs          RailJob[]
+  railNotifications RailNotification[]
   railReminderPauses RailReminderPause[]
   railGoogle        RailGoogle?
   railTelegram RailTelegram?
@@ -161,6 +162,21 @@ model RailFile {
 
   @@id([userId, id])
   @@index([userId, createdAt])
+}
+
+// Current bell content is separate from provider delivery and retry records.
+// Dismissed rows retain only their identity so a later sweep cannot restore them.
+model RailNotification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key         String
+  payload     String?
+  dueAt       DateTime
+  dismissedAt DateTime?
+  createdAt   DateTime @default(now())
+  @@unique([userId, key])
+  @@index([userId, dismissedAt, createdAt])
 }
 
 model RailJob {
