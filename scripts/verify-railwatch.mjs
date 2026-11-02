@@ -1,7 +1,8 @@
 import {verifyResponsive} from "./verify-responsive.mjs";
 import {verifyAccountScale} from "./verify-account-scale.mjs";
-import {verifyCalendarExperience} from "./verify-calendar-experience.mjs";
-import { chromium,expect } from '@playwright/test';
+import {verifyCalendarExperience} from './verify-calendar-experience.mjs';
+import {chromium} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 import { randomUUID } from 'node:crypto';
 import { mkdir,readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
