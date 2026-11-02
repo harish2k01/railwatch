@@ -23,7 +23,7 @@ Never commit populated secrets. Run Prisma migrations before rollout, then verif
 
 ## Accounts And Shared Settings
 
-The first account becomes administrator. Admin Settings controls signup availability, booking-window days, reminders, WhatsApp, Google Calendar, ticket uploads, and calendar exports for every account. Disabled features disappear from User Settings; provider actions are also blocked on the server.
+The first account becomes administrator. Admin Settings controls signup availability, booking-window days, reminders, Google Calendar, ticket uploads, and calendar exports for every account. Disabled features disappear from User Settings; provider actions are also blocked on the server.
 
 Admin Settings / User Management supports invitations, temporary-password accounts, role changes, and account disabling. Temporary-password users must choose their own password before accessing plans. Invitations expire after 24 hours and can be used once. Configure SMTP in Admin Settings or through `SMTP_URL` and `EMAIL_FROM`. Without SMTP, administrators can copy and share the invitation link.
 
@@ -32,12 +32,6 @@ Users manage username, email, phone, preferences, connections, and passwords in 
 ## App Integrations
 
 Configure providers in Admin Settings / Integrations. Credentials are encrypted in PostgreSQL and never returned by the settings API. Empty secret fields retain stored values; the Remove Configuration action in each provider menu disable the provider, including environment fallback. Updates apply immediately without restarting pods. Environment variables remain supported when no in-app override is stored. Back up the database and encryption key together.
-
-### WhatsApp
-
-In Meta, configure WhatsApp Business Cloud API, a registered business sender, an authorized access token, and an approved template. Enter the access token, sender Phone Number ID (not the recipient number), supported Graph API version, template name, and language in RailWatch. The template must have three body parameters: route, travel date, and booking-opening date/time. Meta permissions and template approval are completed outside RailWatch.
-
-Users add their own international number under User Settings / Profile and opt into reminders under Connections. They do not need Meta developer credentials. The administrator must enable reminders and WhatsApp. Saved configuration indicates credentials are present; it does not prove that Meta accepted them or that a message was delivered. Verify live delivery after setup. A retry may duplicate a message if Meta accepted it but its response was lost.
 
 ### Google Calendar
 
