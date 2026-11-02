@@ -2,7 +2,7 @@ import {verifyMobileHome} from "./verify-mobile-home.mjs";
 import {verifyDesktopJourneys} from "./verify-desktop-journeys.mjs";
 import assert from 'node:assert/strict';
 import { createECDH, randomBytes } from 'node:crypto';
-import { expect } from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 
 /** Exercises the populated test account at phone, tablet and desktop widths in both themes. */
 export async function verifyResponsive({page,api,url,otherApi}) {
