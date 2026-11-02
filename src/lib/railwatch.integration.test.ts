@@ -156,7 +156,9 @@ describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{time
     await prisma.railPush.create({data:{userId:healthy.user.id,endpointHash:randomUUID(),subscription:encryptSecret("{}")}});const result=await processRailWatch(now);expect(result.planningFailures).toBe(1);expect(await prisma.railJob.count({where:{userId:healthy.user.id,state:"SENT"}})).toBe(1);
   });
   it("persists a fair account sweep across bounded batches and wraps without requiring a live cursor row",async()=>{
-    const seeded=await Promise.all(Array.from({length:ACCOUNT_BATCH_SIZE+3},()=>fixture()));
+    // Seed without competing for the pool; this test verifies sweep fairness, not transaction admission.
+    const seeded:Awaited<ReturnType<typeof fixture>>[]=[];
+    for(let index=0;index<ACCOUNT_BATCH_SIZE+3;index++)seeded.push(await fixture());
     await prisma.railOperations.upsert({where:{id:"scheduler"},create:{id:"scheduler",accountCursor:null},update:{accountCursor:null}});
     try{const first=await nextAccountBatch();expect(first.accounts).toHaveLength(ACCOUNT_BATCH_SIZE);expect(first.cursor).not.toBeNull();await prisma.railOperations.update({where:{id:"scheduler"},data:{accountCursor:first.cursor}});const second=await nextAccountBatch();const seen=new Set([...first.accounts,...second.accounts].map(row=>row.userId));for(const account of seeded)expect(seen.has(account.user.id)).toBe(true);expect(second.cursor).toBeNull();await prisma.railOperations.update({where:{id:"scheduler"},data:{accountCursor:"zzzz-deleted-account"}});expect((await nextAccountBatch()).accounts).toHaveLength(ACCOUNT_BATCH_SIZE);}finally{await prisma.railOperations.update({where:{id:"scheduler"},data:{accountCursor:null}});}
   },60000);
