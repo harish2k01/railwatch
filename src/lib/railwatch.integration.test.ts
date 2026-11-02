@@ -3,6 +3,7 @@ import {materializeLegacyWorkspace} from "./workspace-storage";
 import {nextAccountBatch,ACCOUNT_BATCH_SIZE} from "./reminder-planning";
 import {readPlanningView,type CalendarView,type DashboardView} from "./planning-views";
 import { setJourneySnooze } from "./notification-controls";
+import { getFeaturePolicy } from "./settings";
 import {readCurrentNotifications,clearCurrentNotifications} from "./current-notifications";
 import {createAccountToken,consumeAccountToken} from "./account-tokens";
 import { beginTelegramLogin,completeTelegramLogin,loginCredentialHash } from "./telegram-login";
@@ -29,6 +30,13 @@ const users:string[]=[];
 async function fixture(){if(!new URL(process.env.DATABASE_URL!).pathname.endsWith("_test"))throw new Error("Use an isolated test database.");await prisma.appSettings.upsert({where:{id:"global"},create:{id:"global"},update:{bookingWindowDays:60,remindersEnabled:true,whatsappEnabled:true}});const u=await prisma.user.create({data:{email:`${randomUUID()}@railwatch.invalid`}});users.push(u.id);return {user:u,...await loadWorkspace(u.id)};}
 afterEach(async()=>{vi.useRealTimers();vi.unstubAllEnvs();if(users.length)await prisma.user.deleteMany({where:{id:{in:users.splice(0)}}});});
 describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{timeout:15000},()=>{
+  it("retires WhatsApp despite legacy enabled flags and excludes its jobs from active operations",async()=>{
+    const f=await fixture(),now=new Date();expect((await getFeaturePolicy()).whatsappEnabled).toBe(false);
+    await expect(saveWorkspace(f.user.id,{...f.planner,settings:{...f.planner.settings,whatsappEnabled:true,whatsappNumber:"+919876543210"}},f.revision)).rejects.toMatchObject({status:403});
+    const job=await prisma.railJob.create({data:{userId:f.user.id,key:"retired-whatsapp",kind:"WHATSAPP",state:"PENDING",dueAt:now,payload:encryptSecret(JSON.stringify({journeyId:"retired"}))}});
+    expect((await reminderHealth(now)).queue.channels.WHATSAPP).toBeUndefined();
+    await processRailWatch(now);expect((await prisma.railJob.findUniqueOrThrow({where:{id:job.id}})).state).toBe("CANCELLED");
+  });
   it("shows current reminders without provider history and never restores cleared content",async()=>{
     const f=await fixture(),other=await fixture(),now=new Date(`${todayIST()}T09:00:00+05:30`);
     const journey:Journey={id:"current-bell",from:"A",to:"B",date:addDays(todayIST(now),60),departure:"20:00",train:"",pnr:"",travelClass:"",windowDays:60,originOffset:0,status:"needs_booking",notes:""};

@@ -5,16 +5,15 @@ import { reminderJobs } from "./railwatch-jobs";
 import { EMPTY_PLANNER,type Journey } from "./travel-planner";
 const j:Journey={id:"j",from:"A",to:"B",date:"2026-12-01",windowDays:60,originOffset:0,departure:"20:00",train:"",pnr:"1234567890",travelClass:"",status:"needs_booking",notes:""};
 describe("account planner policies",()=>{
-  it("rejects duplicate ids, invalid routes, and WhatsApp without a recipient",()=>{
+  it("rejects duplicate ids and invalid routes",()=>{
     expect(()=>validateWorkspace({...EMPTY_PLANNER,journeys:[j,j]})).toThrow("Duplicate");
     expect(()=>validateWorkspace({...EMPTY_PLANNER,journeys:[{...j,to:"a"}]})).toThrow("different");
-    expect(()=>validateWorkspace({...EMPTY_PLANNER,settings:{...EMPTY_PLANNER.settings,whatsappEnabled:true}})).toThrow("international");
   });
   it("enforces shared booking days on tickets and plans",()=>{expect(validateWorkspace({...EMPTY_PLANNER,settings:{...EMPTY_PLANNER.settings,bookingWindowDays:30},journeys:[j]}).journeys[0].windowDays).toBe(30);});
   it("queues immutable reminder identities and respects overrides/archive/status",()=>{
     const now=new Date("2026-10-01T15:00:00Z");const planner={...EMPTY_PLANNER,journeys:[j]};
     expect(reminderJobs(planner,now,undefined,["phone"])).toHaveLength(3);
-    expect(new Set(reminderJobs({...planner,settings:{...planner.settings,whatsappEnabled:true,whatsappNumber:"+919876543210"}},now,undefined,["phone"]).map(j=>j.key)).size).toBe(6);
+    expect(reminderJobs({...planner,settings:{...planner.settings,whatsappEnabled:true,whatsappNumber:"+919876543210"}},now,undefined,["phone"])).toEqual(reminderJobs(planner,now,undefined,["phone"]));
     for(const patch of [{status:"booked" as const},{archivedAt:"2026-10-01"},{reminderOverride:{mode:"off" as const,times:[],clock:planner.settings.reminderClock}}])expect(reminderJobs({...planner,journeys:[{...j,...patch}]},now)).toEqual([]);
     expect(reminderJobs(planner,new Date("2026-10-04T00:00:00Z"),undefined,["phone"])).toHaveLength(3);
     expect(reminderJobs(planner,new Date("2026-11-03T00:00:00Z"))).toEqual([]);

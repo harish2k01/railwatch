@@ -7,7 +7,7 @@ current state; it never triggers delivery.
 Schedules less than 24 hours overdue keep automatic bounded retries. Older
 scheduled reminders are held as `MISSED` (including plans created after their reminder time), with recovery limited to the preceding
 30 days and journeys that still need action. They appear in the user's notification
-inbox without a burst of old push/email/Telegram/WhatsApp messages. Changing the
+inbox without a burst of old push/email/Telegram messages. Changing the
 journey, disabling reminders, removing a device or changing its recipient invalidates
 the old job. Daily cancellation reminders resume on the current day's schedule.
 

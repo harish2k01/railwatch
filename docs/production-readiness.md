@@ -35,7 +35,7 @@ The operational items above require evidence in the current installation. A succ
 
 Dashboard and Kanban replaced the proposed Today/Trips table. Holidays & Leave remains a separate page. Telegram is the chosen first external reminder channel; Discord is not an outstanding requirement. Week start and booking-window controls are shared administrator settings. Routine horizon defaults to six months. Browser push is opt-in per device and uses outgoing-only scheduled delivery. Automatic ticket booking remains outside scope.
 
-PNR providers, offline ticket access and Tatkal-specific planning were optional follow-up ideas, not blockers for the planning/reminder core. PDF import, originally optional, is now implemented. Google Calendar and WhatsApp adapters exist, but their external setup and actual live delivery must be verified when they are enabled.
+PNR providers, offline ticket access and Tatkal-specific planning were optional follow-up ideas, not blockers for the planning/reminder core. PDF import, originally optional, is now implemented. Google Calendar is available; its external setup and live synchronization must be verified when enabled.
 
 Standalone PWA installation metadata, mobile navigation and an offline reconnect screen are implemented. No private account data or ticket PDFs are cached by the worker. Physical Android/iPhone installation, keyboard and safe-area checks remain acceptance work after rollout; see mobile-pwa.md and ux-review.md.
 
