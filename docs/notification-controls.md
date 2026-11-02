@@ -1,6 +1,6 @@
 # Reminder controls
 
-Reminders arrive through opted-in device push, Telegram, WhatsApp, or email. The notification bell shows current booking and cancellation reminders, including when no external delivery channel is enabled. Selecting a reminder opens its journey. There is no delivery-history page; existing /notifications bookmarks redirect to My Journeys.
+Reminders arrive through opted-in device push, Telegram, or email. The notification bell shows current booking and cancellation reminders, including when no external delivery channel is enabled. Selecting a reminder opens its journey. There is no delivery-history page; existing /notifications bookmarks redirect to My Journeys.
 
 Clear an individual reminder or use **Clear all** to remove its message across devices. Clearing erases the stored message content. A minimal deduplication key remains so the scheduler cannot restore a cleared reminder. Future reminder times create separate notifications. The bell refreshes when opened, when the app becomes visible, and once a minute while visible.
 

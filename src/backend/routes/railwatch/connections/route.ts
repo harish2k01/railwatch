@@ -5,7 +5,6 @@ import {z} from "zod";
 import {requireUser} from "@/lib/auth";
 import {prisma} from "@/lib/db";
 import {ApiError,assertSameOrigin,jsonData,parseJson,routeError} from "@/lib/http";
-import {whatsappReady} from "@/lib/railwatch-providers";
 import {googleReady} from "@/lib/railwatch-google";
 
 /** Returns account connection readiness without exposing delivery records or provider secrets. */
@@ -21,7 +20,7 @@ export async function GET(request:Request){try{
     telegramPairingPending:Boolean(current&&telegram?.linkTokenHash&&telegram.linkExpiresAt&&telegram.linkExpiresAt>new Date()),
     telegramLoginReady:policy.telegramEnabled&&telegramLoginConfigured(config),telegramBotUsername:config.telegram?.botUsername??"",
     telegramReady:policy.telegramEnabled&&telegramConfigured(config),telegram:current&&telegram?.chatId?{enabled:telegram.enabled,username:telegram.username}:null,
-    policy,whatsappReady:policy.whatsappEnabled&&await whatsappReady(),googleReady:policy.googleCalendarEnabled&&await googleReady(),google});
+    policy,googleReady:policy.googleCalendarEnabled&&await googleReady(),google});
 }catch(error){return routeError(error,request);}}
 
 /** Updates only the authenticated account's current Google Calendar connection. */
