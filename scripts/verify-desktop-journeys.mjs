@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expect} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 
 /** Exercises the approved desktop workspace against owned server-side date and cursor filters. */
 export async function verifyDesktopJourneys(page,api,url){
