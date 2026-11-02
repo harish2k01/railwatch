@@ -1,4 +1,5 @@
-import {chromium,expect} from '@playwright/test';
+import {chromium} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 
