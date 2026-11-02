@@ -149,7 +149,7 @@
 
 /* The phone workspace has its own shell, screens and one document scroll owner. */
 .mobileBrand{display:flex;align-items:center;gap:9px;background:none;border:0;color:var(--ink);font-weight:750;font-size:18px;min-height:44px;padding:0}
-.mobileDialogBack{display:none}
+
 @media(max-width:768px){
  .app[data-mobile=true]{--accent:#7046c7;display:block;min-height:100dvh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
  .app[data-mobile=true][data-theme=dark]{--accent:#c2a6ff}
@@ -161,7 +161,7 @@
  .modal[open],.modal:not(.wideModal)[open],.profileDrawer[open]{position:fixed;inset:0;margin:0;width:100%;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);background:var(--bg);overflow-y:auto;overflow-x:hidden}
  .modalHead,.profileDrawer>header{position:sticky;top:0;z-index:3;background:var(--bg);padding:12px 16px;border-bottom:1px solid var(--line)}
  .modalHead h2,.profileDrawer>header h2{font-size:19px;line-height:1.4}.modalHead p,.profileDrawer>header p{font-size:12px}
- .mobileDialogBack{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:0;background:none;color:var(--ink)}.modalHead>div{flex:1;min-width:0}.modalHead>.iconButton{min-width:44px}
+ .modalHead>div{flex:1;min-width:0}.modalHead>.iconButton{min-width:44px}
  .modal .form,.profileDrawer .drawerBody{padding:20px 16px}.modal .formGrid{grid-template-columns:1fr;gap:18px}
  .modal .formFooter{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);z-index:2}
  .modal .formFooter .help{display:none}.modal .formFooter button{min-height:48px}.modal .field input:not([type=checkbox]),.modal .field textarea{font-size:16px;min-height:48px}

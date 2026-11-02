@@ -61,7 +61,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         for(const tab of await drawer.getByRole('navigation',{name:'Settings sections'}).getByRole('button').all()){const box=await tab.boundingBox();assert.ok(box.x>=bounds.x&&box.x+box.width<=bounds.x+bounds.width+1,'Settings sections fit phone');}
         await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
         await page.goto(url+'/journeys');await page.getByRole('button',{name:/Open journey/}).first().click();
-        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);
+        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Back',exact:true})).toHaveCount(0);await expect(summary.getByRole('button',{name:'Close Dialog',exact:true})).toHaveCount(1);await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);
         assert.ok((await summary.boundingBox()).width>=width-1,'Journey summary fills phone');
         await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
         await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await drawer.getByRole('button',{name:'Preferences',exact:true}).click();await drawer.locator('summary').filter({hasText:'Normal booking reminders'}).click();
@@ -80,8 +80,8 @@ export async function verifyResponsive({page,api,url,otherApi}) {
           await pdf.getByRole('button',{name:'Zoom in',exact:true}).click();
           assert.ok(await pdf.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Zoom stays within PDF scroll surface');
           await pdf.getByRole('button',{name:'Document actions',exact:true}).click();await pdf.getByRole('menuitem',{name:'Fit Width',exact:true}).click();
-          await pdf.getByRole('button',{name:'Back',exact:true}).click();
-          await page.getByRole('button',{name:/^Ticket Actions For/}).first().click();await page.getByRole('menuitem',{name:'Journey details',exact:true}).click();await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await summary.getByRole('button',{name:'Back',exact:true}).click();
+          await pdf.getByRole('button',{name:'Close Dialog',exact:true}).click();
+          await page.getByRole('button',{name:/^Ticket Actions For/}).first().click();await page.getByRole('menuitem',{name:'Journey details',exact:true}).click();await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
           await mobileNav.getByRole('link',{name:'Journeys',exact:true}).click();
           await page.getByRole('button',{name:/Open journey/}).first().click();
           await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
@@ -94,8 +94,8 @@ export async function verifyResponsive({page,api,url,otherApi}) {
           await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
           await summary.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await summary.getByLabel('Notes',{exact:true}).fill('Unsaved mobile edit');
           page.removeAllListeners('dialog');let guarded=false;page.on('dialog',async d=>{guarded=true;await d.dismiss();});
-          await summary.getByRole('button',{name:'Back',exact:true}).click();assert.equal(guarded,true);await expect(summary).toBeVisible();
-          page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await summary.getByRole('button',{name:'Back',exact:true}).click();
+          await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();assert.equal(guarded,true);await expect(summary).toBeVisible();
+          page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
           await page.getByRole('button',{name:'Journey filters',exact:true}).click();
           await expect(page.getByRole('combobox',{name:'Routine',exact:true})).toBeVisible();
           await page.getByLabel('Search Journeys',{exact:true}).fill('no-such-route-mobile-qa');
