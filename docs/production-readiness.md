@@ -1,19 +1,20 @@
 # Product scope and production readiness
 
-Reviewed against merged main on 2 October 2026. This is a current implementation audit, not a claim that every production gate has been met. The original design roadmap is available in Git history; obsolete preview documents and screens are not restored.
+This document describes implemented capabilities separately from deployment and operational acceptance gates. The items requiring installation-specific evidence are listed below.
 
-## Implemented core
+## Implemented capabilities
 
 - Private account workspaces, administrator/user roles, signup controls, invitations, temporary passwords, resets and atomic first-administrator creation.
 - Dedicated frontend, persistent backend and PostgreSQL; server-controlled feature availability and encrypted provider credentials.
 - Journey planning without requiring a PNR, booking state, automatic completion, archived cancellation history and linked recurring onward/return routines.
 - Configurable booking window, Sunday-first calendar, rolling routine horizon, holidays/leave, CSV import and iCalendar export.
-- In-app and Telegram reminders, deduplication, durable leases, bounded retries, delivery failure notifications and outbound Telegram polling.
+- Current notifications and opt-in device, email and Telegram reminders, deduplication, durable leases, bounded retries, delivery-failure diagnostics and outbound Telegram polling.
+- Normal and Tatkal plans with separate reminder schedules, configurable cancellation follow-ups and per-journey overrides.
 - Local PDF text/QR/OCR extraction, account-owned PDF storage/viewing, seven-day original-file retention, and image extraction without storage.
 - Email ownership verification and opt-in SMTP booking reminders, SMTP invitations/reset/test delivery, branded HTML, structured API/provider/scheduler logs, and release/version endpoints.
 - PR unit/database/browser tests, CodeQL, build checks and immutable release images.
 
-## Remaining from the original plan
+## Validation and remaining work
 
 Subtle interface motion is implemented for page headings, dialogs, menus, drawers,
 new list items and control feedback. Motion never delays actions, does not replace
@@ -23,7 +24,7 @@ Tab and view changes also fade without remounting forms, including calendar and 
 | Area | Current limitation and next work |
 | --- | --- |
 | Reminder recovery | Recent outage misses are recorded and visible; administrators can queue audited, eligibility-checked retries. Broader recovery retention/policies remain future work. See reminder-operations.md. |
-| Reminder control | Current notification bell with content removal on clear, external delivery channels, journey snooze/resume, and opt-in IST quiet hours. Encrypted internal delivery records support retries and diagnostics; no user notification history is exposed. See notification-controls.md. |
+| Reminder control | Current notification bell with content removal on clear, external delivery channels, journey snooze/resume, and opt-in IST quiet hours. Encrypted internal delivery records support retries and diagnostics; clearing current notifications removes their content. See notification-controls.md. |
 | Large accounts | Journey lists and Ticket Vault have encrypted indexed search and full-account counts. Dashboard uses aggregates and short previews, Calendar uses paged visible ranges with exact day counts, and Routines load without occurrence history. Staged normalized storage supports narrow partial saves and scheduler account sweeps. Daily reconciliation, routine changes, full exports and Google Calendar still load complete account data; production latency/lateness targets remain to be agreed. See account-scale.md and workspace-storage.md. |
 | Calendar and planning | CSV holiday import, ICS export and a month agenda exist. ICS holiday import, broader overflow accessibility and actionable duplicate/overlap/leave-conflict suggestions remain. |
 | Editing and navigation | Journey summaries and guarded item editors exist. Individual journey links and account/admin settings guards are implemented. Physical-device acceptance remains. |
@@ -31,17 +32,15 @@ Tab and view changes also fade without remounting forms, including calendar and 
 
 The operational items above require evidence in the current installation. A successful build or unit test is not proof of backup recoverability or provider delivery.
 
-## Decisions that superseded the original design
+## Product boundaries
 
-Dashboard and Kanban replaced the proposed Today/Trips table. Holidays & Leave remains a separate page. Telegram is the chosen first external reminder channel; Discord is not an outstanding requirement. Week start and booking-window controls are shared administrator settings. Routine horizon defaults to six months. Browser push is opt-in per device and uses outgoing-only scheduled delivery. Automatic ticket booking remains outside scope.
+Dashboard, journey board/list and Holidays & Leave support daily planning. Week start, booking-window rules and the routine planning horizon are shared administrator settings. Reminder preferences remain configurable per account and journey. Automatic ticket booking is outside scope.
 
-PNR providers, offline ticket access and Tatkal-specific planning were optional follow-up ideas, not blockers for the planning/reminder core. PDF import, originally optional, is now implemented. Google Calendar is available; its external setup and live synchronization must be verified when enabled.
+Journey planning does not require a live PNR provider. Original PDFs require a connection to the RailWatch account; the service worker does not cache private files. Google Calendar requires administrator OAuth setup and individual account authorization, with live synchronization verified when enabled.
 
-Standalone PWA installation metadata, mobile navigation and an offline reconnect screen are implemented. No private account data or ticket PDFs are cached by the worker. Physical Android/iPhone installation, keyboard and safe-area checks remain acceptance work after rollout; see mobile-pwa.md and ux-review.md.
+## Data compatibility
 
-## Cleanup boundaries
-
-No interactive prototype route, demo workspace seed or browser-persisted prototype planner ships with the app. Negative tests for retired routes and synthetic ticket fixtures remain intentional regression coverage. Database migrations, schema compatibility, backup import and workspace normalization are retained to protect saved data. Test mocks, form placeholders, local development defaults and request AsyncLocalStorage are not prototype features.
+Database migrations, schema compatibility, backup import and workspace normalization protect saved data. Synthetic tickets and regression fixtures remain in automated tests.
 
 ## Email delivery and ownership
 

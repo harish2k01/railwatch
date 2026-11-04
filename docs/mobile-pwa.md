@@ -50,7 +50,7 @@ Platform reference: https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-a
 
 ## Journey links and settings edits
 
-Journey dialogs provide **Copy Journey Link** and journey reminder controls. Reminder email buttons, Telegram buttons and device notifications open `/journeys?journey=<id>`; signing in retains this destination. Links always resolve against the signed-in account, including journeys outside the currently loaded list. An unavailable or another account's journey displays a generic error without revealing its details.
+Reminder email buttons, Telegram buttons and device notifications open `/journeys?journey=<id>`; signing in retains this destination. Links always resolve against the signed-in account, including journeys outside the currently loaded list. An unavailable or another account's journey displays a generic error without revealing its details.
 
 
 Profile, preferences, security and administrator/provider forms warn before closing, switching sections, following links, browser history navigation or reloading with edits. Successful saves clear only the saved form; failed saves retain its warning and values. Settings inputs and credentials are never written to local storage for this protection.
