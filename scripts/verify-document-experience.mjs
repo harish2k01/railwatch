@@ -1,4 +1,5 @@
-import {chromium,expect} from '@playwright/test';
+import {chromium} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 
@@ -36,6 +37,7 @@ try{
         await expect(page.getByRole('heading',{name:'Ticket Vault',exact:true})).toBeVisible();
         const search=page.getByLabel('Search Tickets',{exact:true}),reload=page.getByRole('button',{name:'Refresh tickets',exact:true});
         await expect(reload).toBeVisible();
+        await expect(page.getByRole('article').first()).toBeVisible({timeout:30000});
         await expect.poll(async()=>{const toolbar=await search.locator('..').boundingBox(),card=await page.getByRole('article').first().boundingBox();return card.y-toolbar.y-toolbar.height;}).toBeGreaterThanOrEqual(15);
         assert.ok((await reload.boundingBox()).height>=44,'Reload has a full control target');
         await page.screenshot({path:'build/railwatch-qa/vault-consistency-'+theme+'.png',animations:'disabled'});

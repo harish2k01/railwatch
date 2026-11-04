@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expect} from '@playwright/test';
+import {expect} from './browser-expect.mjs';
 
 /** Exercise bounded lists and edits beyond the first page without losing existing plans. */
 export async function verifyAccountScale({page,api,url}) {
