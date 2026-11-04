@@ -2,15 +2,13 @@ import { Prisma } from "@prisma/client";
 import { ApiError } from "@/lib/http";
 import { stableHash } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
+import { CLIENT_ADDRESS_HEADER } from "@/lib/client-address";
 
 type BucketRow = { count: number; resetAt: Date };
 
-/** Resolves the client address through the trusted request headers. */
+/** Resolves the client address the frontend gateway derived from the reverse proxy. */
 function clientAddress(request: Request) {
-  return request.headers.get("cf-connecting-ip")
-    ?? request.headers.get("x-real-ip")
-    ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? "unknown";
+  return request.headers.get(CLIENT_ADDRESS_HEADER) ?? "unknown";
 }
 
 /** Hashes the resolved client address for private rate-limit accounting. */

@@ -49,9 +49,9 @@ Ticket extraction reads PDF text and QR codes, and uses local browser OCR for sc
 
 ## Releases
 
-Every PR needs exactly one label: `major`, `minor`, or `patch`. After merge, validation runs before release reconciliation assigns the next version to each merged PR in order. The release workflow publishes that exact commit to GHCR with `vX.Y.Z`, `X.Y.Z`, full commit-SHA, and latest aliases. The `image.json` release asset records the digest for manual deployment. Retries reuse an existing commit image. Apply the migrations for each release; ordinary upgrades preserve the existing database.
+Every PR needs exactly one label: `major`, `minor`, or `patch`. After merge, validation runs before release reconciliation assigns the next version to each merged PR in order. The release workflow publishes that exact commit to GHCR with `vX.Y.Z`, `X.Y.Z`, full commit-SHA, and latest aliases. The `image.json` release asset records the digest, and the newest release is committed to the homelab-ops chart for Argo CD to deploy. Retries reuse an existing commit image. Apply the migrations for each release; ordinary upgrades preserve the existing database.
 
-Deployment charts and Argo CD definitions remain local until GitOps deployment is enabled.
+The deployment chart and Argo CD Application live in [homelab-ops](https://github.com/harish2k01/homelab-ops/tree/main/charts/railwatch).
 
 ## Ticket files and retention
 

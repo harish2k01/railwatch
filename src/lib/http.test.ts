@@ -16,6 +16,11 @@ describe("API request handling", () => {
     expect(() => assertSameOrigin(cross)).toThrow(ApiError);
   });
 
+  it("rejects opaque origins with a 403 instead of an internal error", () => {
+    const opaque = new Request("https://app.example.com/api/test", { headers: { host: "app.example.com", origin: "null" } });
+    expect(() => assertSameOrigin(opaque)).toThrow(expect.objectContaining({ status: 403, code: "INVALID_ORIGIN" }));
+  });
+
   it("parses and validates bounded JSON bodies", async () => {
     const request = new Request("https://app.example.com/api/test", { method: "POST", body: JSON.stringify({ name: "Ticket" }), headers: { "content-type": "application/json" } });
     await expect(parseJson(request, z.object({ name: z.string().min(2) }))).resolves.toEqual({ name: "Ticket" });

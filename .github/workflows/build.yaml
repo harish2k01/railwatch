@@ -16,18 +16,22 @@ concurrency:
 defaults:
   run:
     shell: bash
+
+# Checks, browser tests and the container build run in parallel on homelab runners
+# (fork PRs use GitHub-hosted runners). The label check needs no homelab slot.
 jobs:
   release-label:
-    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v8
         with:
           script: |
             const selected = context.payload.pull_request.labels.filter(label => ["major", "minor", "patch"].includes(label.name));
             if (selected.length !== 1) core.setFailed("Add exactly one release label: major, minor, or patch.");
-  verify:
-    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
-    timeout-minutes: 40
+
+  checks:
+    runs-on: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:18-alpine
@@ -47,18 +51,9 @@ jobs:
       CRON_SECRET: local-ci-worker-secret
       APP_URL: http://127.0.0.1:3102
       RUN_DB_TESTS: "1"
-      RUN_E2E: "1"
     steps:
       - uses: actions/checkout@v6
-      - name: Install workflow tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup-workspace
       - name: Configure and verify CI PostgreSQL
         env:
           CI_POSTGRES_PORT: ${{ job.services.postgres.ports['5432'] }}
@@ -70,8 +65,45 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:coverage
-      - run: npm run build
-      - run: npx playwright install --with-deps chromium
+
+  e2e:
+    runs-on: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: railwatch_ci_test
+        ports: ["5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:local-ci-only@127.0.0.1:5432/railwatch_ci_test
+      APP_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      CRON_SECRET: local-ci-worker-secret
+      APP_URL: http://127.0.0.1:3102
+      RUN_E2E: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-workspace
+      - name: Configure and verify CI PostgreSQL
+        env:
+          CI_POSTGRES_PORT: ${{ job.services.postgres.ports['5432'] }}
+        run: node scripts/prepare-ci-database.mjs
+      - run: npm run prisma:generate
+      - run: npm run prisma:migrate:deploy
+      # Download the browser while the production build compiles.
+      - name: Build and install Chromium
+        run: |
+          npx playwright install --with-deps chromium > playwright-install.log 2>&1 &
+          browsers=$!
+          npm run build
+          wait "$browsers" || { cat playwright-install.log; exit 1; }
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: always()
@@ -80,9 +112,16 @@ jobs:
           path: |
             build/railwatch-qa
           retention-days: 7
+
+  container:
+    runs-on: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || 'railwatch-runner' }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
         with:
           driver-opts: network=host
+      # Reads the layer cache published by releases; pull requests never write it.
       - name: Build container
         uses: docker/build-push-action@v7
         with:
@@ -90,3 +129,17 @@ jobs:
           push: false
           build-args: APP_VERSION=pr-${{ github.event.pull_request.number }}
           tags: ghcr.io/${{ github.repository }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+
+  # Required status check: passes only when every parallel job succeeded.
+  verify:
+    needs: [checks, e2e, container]
+    # Skip on cancelled runs so a superseded run never posts a failing required check.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "Job results: $RESULTS"
+          [ "$(jq -r 'all(. == "success")' <<< "$RESULTS")" = true ]

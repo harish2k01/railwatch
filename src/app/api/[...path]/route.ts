@@ -1,6 +1,7 @@
 // Same-origin API gateway only. All application logic and secrets live in the backend.
 import {randomUUID} from "node:crypto";
 import {logger} from "@/lib/logger";
+import {forwardClientAddress} from "@/lib/client-address";
 export const dynamic = "force-dynamic";
 /** Streams same-origin API traffic to the private backend with correlated timing and failure logs. */
 async function proxy(request: Request) {
@@ -22,6 +23,7 @@ async function proxy(request: Request) {
     const headers = new Headers(request.headers);
     headers.set("x-request-id",requestId);
     for (const name of ["host", "connection", "transfer-encoding", "content-length", "x-forwarded-host", "x-forwarded-proto"]) headers.delete(name);
+    forwardClientAddress(request.headers, headers);
     const response = await fetch(url, {
       method: request.method, headers, redirect: "manual", cache: "no-store",
       ...(request.body ? { body: request.body, duplex: "half" as const } : {}), signal: AbortSignal.timeout(300_000),
