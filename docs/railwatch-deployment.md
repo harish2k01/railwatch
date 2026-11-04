@@ -6,9 +6,11 @@ The dashboard is at `/`, authentication at `/login`, and each section has its ow
 
 Run `docker compose up --build` for PostgreSQL, migrations, a frontend on port 3000, and a persistent backend. Compose credentials are for development only; its named volume persists across updates. Alternatively configure `.env` from `.env.example`, install dependencies, generate Prisma, apply migrations, and run `npm run dev`. The backend scheduler runs automatically; no external cron or worker is required. See [service architecture](service-architecture.md).
 
-## Manual Kubernetes Deployment
+## Kubernetes Deployment
 
-Pin `ghcr.io/harish2k01/railwatch` to the digest in the release's `image.json` asset. The homelab deployment uses namespace `railwatch`, PostgreSQL 18 with database/user `railwatch`, separate frontend and backend replicas, a backend scheduler, and daily database backups. Deployment manifests remain local until GitOps is enabled.
+The homelab deployment is the `charts/railwatch` Helm chart in [homelab-ops](https://github.com/harish2k01/homelab-ops/tree/main/charts/railwatch), synced by the `railwatch` Argo CD Application. It uses namespace `railwatch`, PostgreSQL 18 with database/user `railwatch`, separate frontend and backend replicas, a backend scheduler, and daily database backups.
+
+After each release publishes its image, `container.yaml` calls homelab-ops' reusable `update-version.yaml`, which commits the release tag and digest to the chart. Argo CD then runs `prisma migrate deploy` as a Sync hook before rolling out the new pods. Only the newest release is deployed. This needs the `GH_APP_ID` and `GH_APP_PRIVATE_KEY` repository secrets for the GitHub App that may push to homelab-ops. The `image.json` release asset still records each digest for manual pinning or rollback.
 
 The public URL is `https://railwatch.k8s.harish2k01.xyz`. The HTTPRoute references `traefik/traefik-gateway`, listener `websecure`, and path prefix `/`. The existing `wildcard-k8s-tls` certificate covers this hostname; no additional certificate or Caddy site is required.
 
@@ -19,7 +21,7 @@ Set runtime `APP_URL` to the public HTTPS URL. Supply an externally managed `rai
 - `APP_ENCRYPTION_KEY`: base64 of 32 random bytes. Preserve and back up this key separately.
 - Independent random `CRON_SECRET` and `RATE_LIMIT_SALT` values.
 
-Never commit populated secrets. Run Prisma migrations before rollout, then verify readiness, backend scheduler execution, and HTTPS. Supply registry credentials if the GHCR package is private. Backups contain encrypted plans and ticket files; restoration also requires the original encryption key. Supplement daily cluster-storage backups with an off-cluster copy and a restore test.
+Never commit populated secrets. The chart's migration hook applies Prisma migrations before rollout; after a release, verify readiness, backend scheduler execution, and HTTPS. Supply registry credentials if the GHCR package is private. Backups contain encrypted plans and ticket files; restoration also requires the original encryption key. Supplement daily cluster-storage backups with an off-cluster copy and a restore test.
 
 ## Accounts And Shared Settings
 
