@@ -53,13 +53,17 @@ try{
       }
       await page.getByRole('button',{name:/^View ticket/}).first().click();
       const dialog=page.getByRole('dialog',{name:'Ticket',exact:true});await expect(dialog.locator('canvas[data-rendered-page="1"]')).toBeVisible();
+      const viewport=dialog.getByLabel('Ticket document',{exact:true});
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);
       await expect(dialog.getByLabel('Page number',{exact:true})).toHaveAttribute('max','2');await dialog.getByLabel('Page number',{exact:true}).fill('1.5');await expect(dialog.getByLabel('Page number',{exact:true})).toHaveValue('1');
       await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');
       const before=await dialog.locator('.page').first().boundingBox();await dialog.getByRole('button',{name:'Zoom in',exact:true}).click();await expect.poll(async()=>(await dialog.locator('.page').first().boundingBox()).width).toBeGreaterThan(before.width);
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeGreaterThan(1);
       await dialog.getByRole('button',{name:'Find in ticket',exact:true}).click();await dialog.getByRole('searchbox',{name:'Find in document'}).fill('searchable');await expect(dialog.getByText('1 of 1',{exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Close search',exact:true}).click();
       await dialog.getByRole('button',{name:'Document actions',exact:true}).click();await dialog.getByRole('menuitem',{name:'Fit Width',exact:true}).click();
       if(width>600){const full=(await dialog.locator('.page').first().boundingBox()).width;await dialog.getByRole('button',{name:'Toggle page thumbnails',exact:true}).click();await expect(dialog.getByRole('complementary',{name:'Page thumbnails'})).toBeVisible();await expect.poll(async()=>(await dialog.locator('.page').first().boundingBox()).width).toBeLessThan(full);await dialog.getByRole('button',{name:'Toggle page thumbnails',exact:true}).click();}
       await dialog.locator('.page').last().scrollIntoViewIfNeeded();await expect(dialog.locator('.page').last().locator('canvas')).toHaveAttribute('data-rendered-page','2');
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);
       assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Reader owns horizontal zoom scrolling');
       await dialog.getByLabel('Page number',{exact:true}).fill('1');await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');await page.screenshot({path:`build/railwatch-qa/reader-${width}-${theme}.png`,animations:'disabled'});
       await dialog.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
