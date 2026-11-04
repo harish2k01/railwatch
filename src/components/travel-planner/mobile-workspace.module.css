@@ -2,3 +2,5 @@
 @media(prefers-reduced-motion:no-preference){.screen{animation:mobileEnter 160ms ease-out}.navigation a,.navigation button{transition:background-color 140ms ease,color 140ms ease}.row:active,.tripOpen:active{opacity:.8}@keyframes mobileEnter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}}
 
 .list>div:not(.ticket)+div:not(.ticket){border-top:1px solid var(--line)}.screen h1{font-weight:650}.screen h2{font-weight:650}
+
+.tripTop{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px}.tripStatus{font-size:13px;line-height:1.5;padding:3px 9px;border-radius:8px;background:var(--soft);color:var(--ink)}.compactTrip{padding:16px;gap:12px}.compactTrip .tripOpen{gap:12px}

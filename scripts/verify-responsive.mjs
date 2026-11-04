@@ -1,3 +1,4 @@
+import {verifyMobileHome} from "./verify-mobile-home.mjs";
 import {verifyDesktopJourneys} from "./verify-desktop-journeys.mjs";
 import assert from 'node:assert/strict';
 import { createECDH, randomBytes } from 'node:crypto';
@@ -25,6 +26,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);
         const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
         assert.ok(dimensions.scroll<=dimensions.width+1,`${theme} ${width}px ${path}: document overflows`);
+        if(path==='/'&&width===390)await verifyMobileHome({page,api,url,theme});
         if(path==='/routines'&&width===390){
           const edit=page.getByRole('button',{name:/^Edit routine /}).first();await expect(edit).toBeVisible();
           await expect.poll(async()=>{const target=await edit.boundingBox();return Boolean(target&&target.width>=44&&target.height>=44);},{message:'Mobile routine edit target fits touch after entry motion'}).toBe(true);
