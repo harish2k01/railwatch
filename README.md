@@ -69,7 +69,7 @@ SMTP authentication can succeed even when a sender address is rejected. The Send
 
 ## Product scope and readiness
 
-The current application implements the planning and reminder core. [Production readiness](docs/production-readiness.md) records remaining work and decisions that replaced the original design plan. Demo data and interactive prototype routes are not part of the shipped app. Synthetic data remains only in test fixtures.
+RailWatch supports journey planning, account-owned tickets and scheduled reminders. [Production readiness](docs/production-readiness.md) records operational validation and known limitations. Synthetic data is confined to automated test fixtures.
 
 ### Email booking reminders
 

@@ -37,6 +37,7 @@ try{
         await expect(page.getByRole('heading',{name:'Ticket Vault',exact:true})).toBeVisible();
         const search=page.getByLabel('Search Tickets',{exact:true}),reload=page.getByRole('button',{name:'Refresh tickets',exact:true});
         await expect(reload).toBeVisible();
+        await expect(page.getByRole('article').first()).toBeVisible({timeout:30000});
         await expect.poll(async()=>{const toolbar=await search.locator('..').boundingBox(),card=await page.getByRole('article').first().boundingBox();return card.y-toolbar.y-toolbar.height;}).toBeGreaterThanOrEqual(15);
         assert.ok((await reload.boundingBox()).height>=44,'Reload has a full control target');
         await page.screenshot({path:'build/railwatch-qa/vault-consistency-'+theme+'.png',animations:'disabled'});
@@ -52,24 +53,28 @@ try{
       }
       await page.getByRole('button',{name:/^View ticket/}).first().click();
       const dialog=page.getByRole('dialog',{name:'Ticket',exact:true});await expect(dialog.locator('canvas[data-rendered-page="1"]')).toBeVisible();
+      const viewport=dialog.getByLabel('Ticket document',{exact:true});
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);
       await expect(dialog.getByLabel('Page number',{exact:true})).toHaveAttribute('max','2');await dialog.getByLabel('Page number',{exact:true}).fill('1.5');await expect(dialog.getByLabel('Page number',{exact:true})).toHaveValue('1');
       await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');
       const before=await dialog.locator('.page').first().boundingBox();await dialog.getByRole('button',{name:'Zoom in',exact:true}).click();await expect.poll(async()=>(await dialog.locator('.page').first().boundingBox()).width).toBeGreaterThan(before.width);
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeGreaterThan(1);
       await dialog.getByRole('button',{name:'Find in ticket',exact:true}).click();await dialog.getByRole('searchbox',{name:'Find in document'}).fill('searchable');await expect(dialog.getByText('1 of 1',{exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Close search',exact:true}).click();
       await dialog.getByRole('button',{name:'Document actions',exact:true}).click();await dialog.getByRole('menuitem',{name:'Fit Width',exact:true}).click();
       if(width>600){const full=(await dialog.locator('.page').first().boundingBox()).width;await dialog.getByRole('button',{name:'Toggle page thumbnails',exact:true}).click();await expect(dialog.getByRole('complementary',{name:'Page thumbnails'})).toBeVisible();await expect.poll(async()=>(await dialog.locator('.page').first().boundingBox()).width).toBeLessThan(full);await dialog.getByRole('button',{name:'Toggle page thumbnails',exact:true}).click();}
       await dialog.locator('.page').last().scrollIntoViewIfNeeded();await expect(dialog.locator('.page').last().locator('canvas')).toHaveAttribute('data-rendered-page','2');
+      await expect.poll(()=>viewport.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);
       assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Reader owns horizontal zoom scrolling');
       await dialog.getByLabel('Page number',{exact:true}).fill('1');await expect(dialog.locator('.textLayer').first()).toContainText('RailWatch searchable ticket');await page.screenshot({path:`build/railwatch-qa/reader-${width}-${theme}.png`,animations:'disabled'});
-      await dialog.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
+      await dialog.getByRole('button',{name:'Close Dialog',exact:true}).click();
       await page.goto(url+'/journeys');await page.getByRole('button',{name:/^Open journey/}).first().click();
       if(width<600)await page.getByRole('dialog').getByRole('button',{name:'Edit Journey',exact:true}).click();
-      const ticketEditor=page.getByRole('dialog');await expect(ticketEditor.locator('[data-ticket-details]')).not.toHaveAttribute('open','');await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeHidden();await page.screenshot({path:'build/railwatch-qa/ticket-details-'+width+'-'+theme+'.png',animations:'disabled'});await ticketEditor.locator('[data-ticket-details]>summary').click();await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeVisible();await ticketEditor.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
+      const ticketEditor=page.getByRole('dialog');await expect(ticketEditor.locator('[data-ticket-details]')).not.toHaveAttribute('open','');await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeHidden();await page.screenshot({path:'build/railwatch-qa/ticket-details-'+width+'-'+theme+'.png',animations:'disabled'});await ticketEditor.locator('[data-ticket-details]>summary').click();await expect(ticketEditor.getByLabel('PNR',{exact:true})).toBeVisible();await ticketEditor.getByRole('button',{name:'Close Dialog',exact:true}).click();
       if(width>600){await page.getByRole('button',{name:'Install RailWatch',exact:true}).click();const install=page.getByRole('dialog',{name:'Install RailWatch',exact:true});const title=install.getByRole('heading',{name:'Install RailWatch',exact:true});await expect(title).toBeVisible();const box=await title.boundingBox();assert.ok(box.width>130&&box.height<65,'Install title remains readable instead of wrapping vertically');await page.screenshot({path:'build/railwatch-qa/install-help-'+theme+'.png',animations:'disabled'});await install.getByRole('button',{name:'Close Dialog',exact:true}).click();}
       await page.goto(url+'/journeys');await page.getByRole('button',{name:'New Journey',exact:true}).click();
       const form=page.getByRole('dialog');await expect(form.getByLabel('Travel Date',{exact:true})).toHaveValue('');await form.getByRole('button',{name:'Tatkal',exact:true}).click();await expect(form.getByText('Choose a travel date to see when booking opens.')).toBeVisible();await form.getByRole('button',{name:'Normal',exact:true}).click();
       await form.getByLabel('From',{exact:true}).fill('MDU');await form.getByLabel('To',{exact:true}).fill('MS');await form.getByRole('button',{name:'Swap route',exact:true}).click();await expect(form.getByLabel('From',{exact:true})).toHaveValue('MS');
-      assert.ok((await form.boundingBox()).width<700,'Create journey remains compact');await page.screenshot({path:`build/railwatch-qa/create-${width}-${theme}.png`,animations:'disabled'});await form.getByRole('button',{name:width<600?'Back':'Close Dialog',exact:true}).click();
+      assert.ok((await form.boundingBox()).width<700,'Create journey remains compact');await page.screenshot({path:`build/railwatch-qa/create-${width}-${theme}.png`,animations:'disabled'});await form.getByRole('button',{name:'Close Dialog',exact:true}).click();
     }
   }
   assert.deepEqual(errors,[]);console.log('Passed: continuous searchable PDF reader, real zoom, text layer, page scrolling, compact creation, empty dates, route swap, mobile and both themes.');
