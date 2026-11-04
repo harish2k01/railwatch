@@ -36,15 +36,7 @@ jobs:
       RUN_DB_TESTS: "1"
     steps:
       - uses: actions/checkout@v6
-      - name: Install workflow tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup-workspace
       - name: Configure and verify CI PostgreSQL
         env:
           CI_POSTGRES_PORT: ${{ job.services.postgres.ports['5432'] }}
@@ -56,11 +48,13 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test:coverage
-      - run: npm run build
+      # No separate production build: the publish job's container build compiles the app
+      # and fails the release on any build error.
 
+  # Release planning only calls the GitHub API, so it runs on a GitHub-hosted runner.
   plan:
     needs: verify
-    runs-on: railwatch-runner
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: read
@@ -71,10 +65,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Install workflow tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -101,3 +91,6 @@ jobs:
     with:
       tag: ${{ matrix.target.tag }}
       sha: ${{ matrix.target.sha }}
+    secrets:
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}

@@ -1,0 +1,21 @@
+name: Set up RailWatch workspace
+description: Installs runner tools, Node.js 24 and locked npm dependencies.
+runs:
+  using: composite
+  steps:
+    - name: Install workflow tools
+      shell: bash
+      run: |
+        # GitHub-hosted images already include these; ephemeral ARC runners do not.
+        if ! command -v gh >/dev/null || ! command -v make >/dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates curl git gh jq unzip python3 build-essential
+        fi
+    # No setup-node npm cache: restoring it from GitHub took ~4 minutes on ARC runners,
+    # longer than npm ci downloading the same packages directly.
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+    - name: Install dependencies
+      shell: bash
+      run: npm ci --no-audit --no-fund
