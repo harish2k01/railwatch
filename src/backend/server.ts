@@ -8,6 +8,10 @@ import { prisma } from "@/lib/db";
 import { routeError } from "@/lib/http";
 import { logger } from "@/lib/logger";
 import { randomUUID } from "node:crypto";
+import { setDefaultResultOrder } from "node:dns";
+
+// The homelab cluster has no IPv6 egress; try IPv4 provider addresses first.
+setDefaultResultOrder("ipv4first");
 
 /** Builds the persistent HTTP backend, adapts Web API routes, and records correlated request outcomes. */
 export function createBackend() {

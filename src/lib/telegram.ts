@@ -9,7 +9,9 @@ export const /** Hashes one-time Telegram credentials before storage. */ tokenHa
 export const /** Hashes a Telegram chat identifier without persisting its raw value. */ telegramChatHash=(providerId:string,chatId:string)=>tokenHash(`${providerId}:${chatId}`);
 /** Makes a bounded Telegram Bot API request without logging bot tokens or raw messages. */
 export async function telegramRequest<T>(token:string,method:"getMe"|"deleteWebhook"|"getUpdates"|"sendMessage",body:object={}):Promise<T>{
- let response:Response;try{response=await fetch(`https://api.telegram.org/bot${token}/${method}`,{method:"POST",redirect:"error",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});}catch{throw new ApiError(502,"Telegram could not be reached. Try again.","TELEGRAM_UNAVAILABLE");}
+ const send=()=>fetch(`https://api.telegram.org/bot${token}/${method}`,{method:"POST",redirect:"error",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+ // Retry one network failure for reads; a lost sendMessage response may already have delivered the message.
+ let response:Response;try{response=await send();}catch{if(method==="sendMessage")throw new ApiError(502,"Telegram could not be reached. Try again.","TELEGRAM_UNAVAILABLE");try{response=await send();}catch{throw new ApiError(502,"Telegram could not be reached. Try again.","TELEGRAM_UNAVAILABLE");}}
  const data=await response.json().catch(()=>null);
  if(!response.ok||!data?.ok){
   const status=Number(data?.error_code??response.status);
