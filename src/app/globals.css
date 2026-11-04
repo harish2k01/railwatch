@@ -1,8 +1,80 @@
 @import "tailwindcss";
 
+/*
+ * Signal design tokens. Components read these (directly or through the aliases in
+ * planner.module.css); the workspace switches theme with data-theme on its root.
+ * Brand orange is reserved for actions and selection; each journey stage has its own hue.
+ */
 :root {
-  --background: #f7f8f5;
-  --foreground: #0f172a;
+  --rw-ground: #f6f5f2;
+  --rw-surface: #ffffff;
+  --rw-surface-2: #f1efeb;
+  --rw-line: #e2dfd9;
+  --rw-text: #141821;
+  --rw-muted: #5b6472;
+  --rw-brand: #c2410c;
+  --rw-brand-hover: #9a3412;
+  --rw-brand-ink: #ffffff;
+  --rw-brand-soft: #ffedd5;
+  --rw-brand-soft-ink: #9a3412;
+  --rw-focus: rgb(194 65 12 / 0.22);
+  --rw-open: #3b82f6;
+  --rw-open-bg: #e0ecff;
+  --rw-open-ink: #1d4ed8;
+  --rw-booked: #16a34a;
+  --rw-booked-bg: #dcfce7;
+  --rw-booked-ink: #166534;
+  --rw-attention: #d97706;
+  --rw-attention-bg: #fef3c7;
+  --rw-attention-ink: #92400e;
+  --rw-cancel-bg: #fee2e2;
+  --rw-cancel-ink: #b91c1c;
+  --rw-timeoff: #9333ea;
+  --rw-timeoff-bg: #f3e8ff;
+  --rw-timeoff-ink: #6b21a8;
+  --rw-danger: #dc2626;
+  /* The sidebar stays dark in both themes. */
+  --rw-sidebar: #10151e;
+  --rw-sidebar-raised: #1a2230;
+  --rw-sidebar-line: #232b38;
+  --rw-sidebar-text: #c3cad6;
+  --rw-sidebar-muted: #98a2b3;
+  --rw-sidebar-strong: #eef1f5;
+  --rw-sidebar-active: #2a1a10;
+  --rw-sidebar-active-ink: #ffc59e;
+
+  --background: var(--rw-ground);
+  --foreground: var(--rw-text);
+}
+
+[data-theme="dark"] {
+  --rw-ground: #0b0f17;
+  --rw-surface: #141a24;
+  --rw-surface-2: #1a2230;
+  --rw-line: #232b38;
+  --rw-text: #eef1f5;
+  --rw-muted: #98a2b3;
+  --rw-brand: #ff8a3d;
+  --rw-brand-hover: #ff9d5c;
+  --rw-brand-ink: #1a0e05;
+  --rw-brand-soft: #2a1a10;
+  --rw-brand-soft-ink: #ffc59e;
+  --rw-focus: rgb(255 138 61 / 0.28);
+  --rw-open: #60a5fa;
+  --rw-open-bg: #13243d;
+  --rw-open-ink: #93c5fd;
+  --rw-booked: #4ade80;
+  --rw-booked-bg: #12301f;
+  --rw-booked-ink: #86efac;
+  --rw-attention: #fbbf24;
+  --rw-attention-bg: #2a2210;
+  --rw-attention-ink: #fbbf24;
+  --rw-cancel-bg: #2d1416;
+  --rw-cancel-ink: #fca5a5;
+  --rw-timeoff: #c084fc;
+  --rw-timeoff-bg: #2a1d3b;
+  --rw-timeoff-ink: #d8b4fe;
+  --rw-danger: #f87171;
 }
 
 @theme inline {
@@ -63,8 +135,8 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: #334155;
-  box-shadow: 0 0 0 3px rgb(15 23 42 / 0.12);
+  border-color: var(--rw-brand);
+  box-shadow: 0 0 0 3px var(--rw-focus);
 }
 
 main > section,
@@ -99,9 +171,10 @@ main article,
 
 /* A dialog owns the only scroll surface while open; preserve the page position. */
 html:has(dialog[open]), body:has(dialog[open]) { overflow: hidden; }
-html:has([data-theme="dark"]), body:has([data-theme="dark"]) { background: #1c222a; color-scheme: dark; }
-html:has([data-theme="light"]), body:has([data-theme="light"]) { background: #fff; color-scheme: light; }
+/* html and body sit outside the themed workspace, so they repeat the Signal ground colours. */
+html:has([data-theme="dark"]), body:has([data-theme="dark"]) { background: #0b0f17; color-scheme: dark; }
+html:has([data-theme="light"]), body:has([data-theme="light"]) { background: #f6f5f2; color-scheme: light; }
 
 /* Match the standalone phone safe area and overscroll to its workspace surface. */
-html:has([data-mobile="true"][data-theme="dark"]),body:has([data-mobile="true"][data-theme="dark"]){background:#0c1015}
-html:has([data-mobile="true"][data-theme="light"]),body:has([data-mobile="true"][data-theme="light"]){background:#eef2f5}
+html:has([data-mobile="true"][data-theme="dark"]),body:has([data-mobile="true"][data-theme="dark"]){background:#0b0f17}
+html:has([data-mobile="true"][data-theme="light"]),body:has([data-mobile="true"][data-theme="light"]){background:#f6f5f2}

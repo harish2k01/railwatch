@@ -113,7 +113,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   useEffect(()=>{if(viewRevision<=revision||saving)return;let live=true;void apiRequest<AccountWorkspace>("/api/railwatch/workspace?partial=1",{cache:"no-store"}).then(value=>{if(live){setRemote(JSON.stringify(value.planner));setRevision(value.revision);}}).catch(e=>{if(live)setError(e.message);});return()=>{live=false;};},[viewRevision,revision,saving]);
   const workspaceBase=useMemo(()=>{const rows=new Map(loaded.planner.journeys.map(j=>[j.id,j]));const context=tab==="home"? [...(dashboard.data?.attention??[]),...(dashboard.data?.upcoming??[]),...(dashboard.data?.bookingSoon??[])]:tab==="calendar"?[...(calendar.data?.journeys??[]),...(selectedDay.data?.journeys??[])]:pageItems;for(const j of context)if(!saving||!rows.has(j.id))rows.set(j.id,j);return {...loaded.planner,journeys:[...rows.values()]};},[loaded.planner,pageItems,saving,tab,dashboard.data,calendar.data,selectedDay.data]);
   const planner=workspaceBase;
-  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute("content",planner.settings.theme==="dark"?(mobile?"#0c1015":"#1c222a"):(mobile?"#eef2f5":"#ffffff"));},[planner.settings.theme,mobile]);
+  useEffect(()=>{document.querySelector('meta[name="theme-color"]')?.setAttribute("content",planner.settings.theme==="dark"?"#0b0f17":"#f6f5f2");},[planner.settings.theme,mobile]);
   const sorted = [...planner.journeys].sort((a, b) => (sort === "booking" ? bookingDay(a).localeCompare(bookingDay(b)) : a.date.localeCompare(b.date)) || a.from.localeCompare(b.from));
   const filtered=listView?pageItems.map(j=>planner.journeys.find(row=>row.id===j.id)??j):sorted;
 
