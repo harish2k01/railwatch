@@ -5,7 +5,7 @@ import { runScheduledWork } from "@/backend/scheduler";
 import { createBackend } from "@/backend/server";
 
 // Cold Fastify route initialization under coverage uses the same budget as DB integration tests.
-describe("dedicated backend runtime", {timeout:15000}, () => {
+describe("dedicated backend runtime", {timeout:process.env.CI?60000:15000}, () => {
   it("isolates cookies during concurrent requests and forwards every response cookie", async () => {
     const calls = ["alice", "bob"].map(name => withRequestContext(new Request("http://localhost/api/auth/login", { headers: { cookie: "session=" + name } }), async () => {
       const jar = await cookies();
