@@ -12,6 +12,16 @@ defaults:
   run:
     shell: bash
 jobs:
+  # The advisory check needs only the lockfile, so it runs on a GitHub-hosted runner in seconds.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - run: npm audit --package-lock-only --audit-level=high
+
   verify:
     runs-on: railwatch-runner
     timeout-minutes: 40
@@ -41,7 +51,6 @@ jobs:
         env:
           CI_POSTGRES_PORT: ${{ job.services.postgres.ports['5432'] }}
         run: node scripts/prepare-ci-database.mjs
-      - run: npm audit --audit-level=high
       - run: npm run prisma:generate
       - run: npm run prisma:migrate:deploy
       - run: npm run test:release
@@ -53,7 +62,7 @@ jobs:
 
   # Release planning only calls the GitHub API, so it runs on a GitHub-hosted runner.
   plan:
-    needs: verify
+    needs: [audit, verify]
     runs-on: ubuntu-latest
     permissions:
       contents: write
