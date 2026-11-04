@@ -21,7 +21,8 @@ export function assertSameOrigin(request: Request) {
   if (!origin) throw new ApiError(403, "A same-origin request is required.", "INVALID_ORIGIN");
 
   const expectedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? new URL(request.url).host;
-  if (new URL(origin).host !== expectedHost) {
+  // Opaque origins such as "null" are not URLs; reject them instead of failing the request.
+  if (!URL.canParse(origin) || new URL(origin).host !== expectedHost) {
     throw new ApiError(403, "The request origin is not allowed.", "INVALID_ORIGIN");
   }
 }
