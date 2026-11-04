@@ -4,6 +4,10 @@ on:
     inputs:
       tag: { required: true, type: string }
       sha: { required: true, type: string }
+    secrets:
+      # GitHub App allowed to commit deployment values to homelab-ops.
+      GH_APP_ID: { required: false }
+      GH_APP_PRIVATE_KEY: { required: false }
 permissions:
   contents: write
   packages: write
@@ -13,6 +17,9 @@ defaults:
 jobs:
   publish:
     runs-on: railwatch-runner
+    outputs:
+      digest: ${{ steps.promote.outputs.digest }}
+      latest: ${{ steps.promote.outputs.latest }}
     env:
       RELEASE_TAG: ${{ inputs.tag }}
       RELEASE_SHA: ${{ inputs.sha }}
@@ -81,6 +88,7 @@ jobs:
             org.opencontainers.image.version=${{ inputs.tag }}
             org.opencontainers.image.revision=${{ inputs.sha }}
       - name: Promote semantic aliases and record immutable image
+        id: promote
         env:
           EXISTING_DIGEST: ${{ steps.existing.outputs.digest }}
           BUILD_DIGEST: ${{ steps.build.outputs.digest }}
@@ -94,6 +102,21 @@ jobs:
           if [ "$latest" = "$RELEASE_TAG" ]; then
             docker buildx imagetools create -t "$IMAGE:latest" "$IMAGE@$digest"
           fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "latest=$([ "$latest" = "$RELEASE_TAG" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           jq -n --arg tag "$RELEASE_TAG" --arg sha "$RELEASE_SHA" --arg image "$IMAGE" --arg digest "$digest" '{tag:$tag,sha:$sha,image:$image,digest:$digest,reference:($image+"@"+$digest)}' > image.json
           gh release upload "$RELEASE_TAG" image.json --clobber --repo "$GITHUB_REPOSITORY"
           echo "Published $IMAGE@$digest ($RELEASE_TAG)" >> "$GITHUB_STEP_SUMMARY"
+  # Only the newest release is deployed; Argo CD syncs the committed digest and runs migrations first.
+  update-homelab:
+    needs: publish
+    if: needs.publish.outputs.latest == 'true'
+    uses: harish2k01/homelab-ops/.github/workflows/update-version.yaml@main
+    with:
+      app_name: railwatch
+      image_tag: ${{ inputs.tag }}
+      image_digest: ${{ needs.publish.outputs.digest }}
+      runner: railwatch-runner
+    secrets:
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}

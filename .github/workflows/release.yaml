@@ -91,3 +91,6 @@ jobs:
     with:
       tag: ${{ matrix.target.tag }}
       sha: ${{ matrix.target.sha }}
+    secrets:
+      GH_APP_ID: ${{ secrets.GH_APP_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
