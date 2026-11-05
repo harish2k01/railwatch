@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "RailWatch", statusBarStyle: "black" },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#161b22" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#0b0f17" };
 
 /** Applies the application metadata, fonts, and shared root document. */
 export default function RootLayout({
