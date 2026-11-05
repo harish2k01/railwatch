@@ -219,6 +219,14 @@
 .accountText{display:grid;min-width:0}
 .accountText b{font-size:13px;font-weight:600;color:var(--rw-sidebar-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .accountText small{font-size:12px;color:var(--rw-sidebar-muted)}
+/* Calendar filters as one legend row, and Needs a decision (design gaps C1, C2). */
+.calendarToggles{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.legendToggle i{width:10px;height:10px;min-height:0;border-radius:3px;padding:0;border:0}
+.calendarDecision{display:grid;gap:10px;margin-bottom:14px;padding:16px 18px;border-radius:16px;border:1px solid var(--rw-attention);background:var(--rw-surface)}
+.calendarDecision h2{font-size:15px;font-weight:700;color:var(--rw-attention-ink)}
+.calendarDecisionRow{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.calendarDecisionRow>span{flex:1 1 260px;display:grid;gap:2px}
+.calendarDecisionRow small{color:var(--rw-muted);font-size:13px}
 /* Settings: section list beside the docked section content on desktop (design gap S1). */
 .profileDocked{inset:66px 0 0 auto;height:calc(100dvh - 66px);width:min(620px,calc(100vw - 640px));min-width:420px;box-shadow:none}
 .settingsWithPanel{padding-right:min(640px,calc(100vw - 620px))}
