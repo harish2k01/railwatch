@@ -1,37 +1,82 @@
 "use client";
 
-import { ArrowRight, Bell, CheckCheck, Clock3, MapPin, Plus, Repeat2, Ticket, TrainFront } from "lucide-react";
-import { addDays, bookingDay, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
+import { ArrowRight, CheckCheck, Paperclip, Plus } from "lucide-react";
+import { addDays, bookingDay, bookingTimeLabel, daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
 import type { DashboardView } from "@/lib/planning-views";
+import { stationLabel } from "@/lib/journey-display";
 
 import { STATUS } from "./forms";
 import s from "./planner.module.css";
+import t from "./today.module.css";
 
-/** Renders actionable journey metrics, booking deadlines, and upcoming travel. */
-export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate }: { planner: Planner; today: string; data: DashboardView; openJourney: (j: Journey) => void; createJourney: () => void; go: (tab: "journeys" | "calendar" | "routines" | "holidays", status?: Journey["status"]) => void; chooseDate: (date: string) => void }) {
-  const {upcoming,bookingSoon,totals,week}=data;
-  const attention=data.attention.map(j=>({j,label:j.status==="cancellation_needed"?"Cancellation to confirm":"Booking is open"}));
-  const holidays = planner.holidays.filter(h => h.date >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0,3);
-  const total=totals.upcoming;
-  return <div className={s.dashboard}>
-    <div className={s.metricGrid}>
-      {[{label:"Ready to book",value:totals.ready,hint:"Booking windows are open",icon:Bell,tone:"purple"}, {label:"Tickets booked",value:totals.booked,hint:"For upcoming journeys",icon:Ticket,tone:"mint"}, {label:"Completed journeys",value:totals.completed,hint:"Available in your history",icon:CheckCheck,tone:"pink"}, {label:"Tickets to cancel",value:totals.toCancel,hint:"Cancellation needs confirmation",icon:Ticket,tone:"amber"}].map(m => <button key={m.label} className={s.metricCard} onClick={() => go("journeys", m.label === "Completed journeys" ? "completed" : m.label === "Tickets to cancel" ? "cancellation_needed" : m.label === "Tickets booked" ? "booked" : "needs_booking")}><div><span className={`${s.metricIcon} ${s[m.tone]}`}><m.icon size={21}/></span><span className={s.metricLabel}>{m.label}</span></div><strong>{m.value}</strong><small>{m.hint}</small></button>)}
-    </div>
-    <div className={s.dashboardGrid}>
-      <div className={s.dashboardColumn}>
-      <section className={s.dashboardPanel}><header><div><span className={s.eyebrow}>Your next steps</span><h2>Needs Attention <span>{totals.attention}</span></h2></div><button className={s.textButton} onClick={() => go("journeys")}>{totals.attention>attention.length?"View all journeys":"View journeys"} <ArrowRight size={15}/></button></header>
-        {attention.length ? <div className={`${s.dashboardList} ${s.attentionList}`}>{attention.map(({j,label}) => <button key={`${j.id}-${label}`} className={s.dashboardRow} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date,{month:"short"})}</small></span><div><b>{j.from} <ArrowRight size={13}/> {j.to}</b><small>{label}</small></div><Chevron /></button>)}</div> : <div className={s.dashboardEmpty}><CheckCheck size={26}/><h3>You’re All Caught Up</h3><p>{total ? "No bookings or cancellations need attention right now." : "Add a journey or routine to see your next booking dates here."}</p><button className={s.textButton} onClick={createJourney}><Plus size={15}/>Plan a journey</button></div>}
-      </section>
-      <section className={s.dashboardPanel}><header><div><span className={s.eyebrow}>On the horizon</span><h2>Upcoming journeys</h2></div><TrainFront size={20}/></header><div className={s.dashboardList}>{upcoming.slice(0,4).map(j => <button className={s.dashboardRow} key={j.id} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date,{month:"short"})}</small></span><div><b>{j.from} <ArrowRight size={13}/> {j.to}</b><small>{formatDay(j.date,{weekday:"long"})} · {STATUS[j.status]}</small></div><Chevron/></button>)}{!upcoming.length && <p className={s.panelEmpty}>Your upcoming journeys will appear here.</p>}</div></section>
-      </div>
-      <div className={s.dashboardColumn}>
-      <section className={s.dashboardPanel}><header><div><span className={s.eyebrow}>Plan ahead</span><h2>Next booking openings</h2></div><Clock3 size={20}/></header><div className={s.dashboardList}>{bookingSoon.slice(0,4).map(j => <button className={s.dashboardRow} key={j.id} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{bookingDay(j).slice(-2)}</b><small>{formatDay(bookingDay(j),{month:"short"})}</small></span><div><b>{j.from} <ArrowRight size={13}/> {j.to}</b><small>Travel · {formatDay(j.date,{day:"numeric",month:"short",year:"numeric"})}</small></div><Chevron/></button>)}{!bookingSoon.length && <p className={s.panelEmpty}>No future booking openings. Add a journey or check the journeys ready to book.</p>}</div></section>
-      <section className={s.weekPanel}><header><div><span className={s.eyebrow}>The next seven days</span><h2>Your travel week</h2></div><button className={s.textButton} onClick={() => go("calendar")}>View calendar <ArrowRight size={15}/></button></header><div className={s.weekGrid}>{Array.from({length:7},(_,i)=>{const date=addDays(today,i);const count=week[date]?.journeys??0;const openings=week[date]?.bookings??0;const cancellations=week[date]?.cancellations??0;const off=planner.holidays.filter(h=>h.date===date);return <button key={date} className={`${s.weekDay} ${i===0?s.weekToday:""}`} aria-label={`View ${formatDay(date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}: ${count} journeys, ${openings} booking openings, ${cancellations} cancellations pending${off.length?", time off":""}`} onClick={()=>chooseDate(date)}><small>{i===0?"Today":formatDay(date,{weekday:"short"})}</small><b>{Number(date.slice(-2))}</b><span>{count?`${count} ${count===1?"journey":"journeys"}`:cancellations?`${cancellations} to cancel`:openings?`${openings} booking ${openings===1?"opening":"openings"}`:off.length?"Time off":"No plans"}</span>{count>0&&openings>0&&<small>{openings} booking {openings===1?"opening":"openings"}</small>}</button>;})}</div></section>
-      </div>
-    </div>
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekdayList = (days: number[]) => days.length === 7 ? "Every day" : `Every ${days.map((d) => DAYS[d]).join(", ")}`;
 
-    <div className={s.dashboardBottom}><section className={s.dashboardPanel}><header><div><span className={s.eyebrow}>Make room for a break</span><h2>Upcoming time off</h2></div><button className={s.textButton} onClick={()=>go("holidays")}>View all <ArrowRight size={15}/></button></header>{holidays.map(h=><div className={s.timeOffRow} key={h.id}><MapPin size={17}/><div><b>{h.name}</b><small>{h.type==="company"?"Company holiday":"Personal leave"}</small></div><span>{formatDay(h.date)}</span></div>)}{!holidays.length&&<p className={s.panelEmpty}>Add your company holidays or personal leave to plan ahead.</p>}</section><section className={`${s.dashboardPanel} ${s.routineCallout}`}><span className={s.metricIcon}><Repeat2 size={24}/></span><h2>Give Regular Travel A Routine</h2><p>{planner.rules.length?`${planner.rules.filter(r=>!r.paused).length} active routines keep your travel plans up to date.`:"Choose your route and schedule once. We’ll create your upcoming journeys."}</p><button className={s.secondary} onClick={()=>go("routines")}>Manage routines <ArrowRight size={15}/></button></section></div>
+/** Today page (plan 2.3): next trip, what to do next, the week ahead, routines and time off. */
+export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus }: { planner: Planner; today: string; data: DashboardView; openJourney: (j: Journey) => void; createJourney: () => void; go: (tab: "journeys" | "calendar" | "routines" | "holidays", status?: Journey["status"]) => void; chooseDate: (date: string) => void; setStatus?: (j: Journey, status: Journey["status"]) => void }) {
+  const { upcoming, bookingSoon, totals, week } = data;
+  const next = upcoming[0];
+  const holidays = planner.holidays.filter((h) => h.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  const routines = planner.rules.filter((r) => !r.paused).slice(0, 2);
+  // Only non-zero counts are shown (plan 2.3: hide zero counts).
+  const counts = [
+    { label: "Ready to book", value: totals.ready, status: "needs_booking" as const },
+    { label: "Tickets to cancel", value: totals.toCancel, status: "cancellation_needed" as const },
+    { label: "Tickets booked", value: totals.booked, status: "booked" as const },
+  ].filter((c) => c.value > 0);
+  return <div className={t.today}>
+    {counts.length > 0 && <div className={t.counts} aria-label="Journey counts">{counts.map((c) => <button key={c.label} type="button" className={t.count} onClick={() => go("journeys", c.status)}>{c.label} <strong>{c.value}</strong></button>)}</div>}
+    <div className={t.grid}>
+      <div className={t.column}>
+        {next ? <section className={t.card} aria-labelledby="today-next">
+          <header className={t.cardHead}><h2 id="today-next">Next trip · {daysBetween(today, next.date) === 0 ? "today" : `in ${daysBetween(today, next.date)} day${daysBetween(today, next.date) === 1 ? "" : "s"}`}</h2><span className={`${s.badge} ${next.status === "booked" ? s.badgeGreen : next.status === "cancellation_needed" ? s.badgeAmber : s.badgePurple}`}>{STATUS[next.status]}</span></header>
+          <p className={t.route}><b title={next.from}>{stationLabel(next.from)}</b><span aria-hidden="true" className={t.track} /><b title={next.to}>{stationLabel(next.to)}</b></p>
+          <p className={t.muted}>{formatDay(next.date, { weekday: "short", day: "numeric", month: "short" })}{next.departureConfirmed && next.departure ? ` · ${next.departure} IST` : ""}{planner.rules.find((r) => r.id === next.ruleId)?.name ? ` · ${planner.rules.find((r) => r.id === next.ruleId)!.name}` : ""}</p>
+          {next.status === "booked" && !next.attachments?.length && <div className={t.nudge}><span>No ticket attached. Add it now so the train, coach and PNR are here on the day.</span><button type="button" className={s.secondary} onClick={() => openJourney(next)}><Paperclip size={15} />Attach ticket</button></div>}
+          <div className={t.actions}><button type="button" className={s.primary} onClick={() => openJourney(next)}>Open journey</button></div>
+        </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} /><h3>No trips coming up</h3><p>Add a journey or routine to see your next trip here.</p><button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a journey</button></div></section>}
+
+        <section className={t.section}>
+          <header className={t.sectionHead}><h2>Do next{totals.attention > 0 && <> <span>{totals.attention}</span></>}</h2>{totals.attention > data.attention.length && <button className={s.textButton} onClick={() => go("journeys")}>View all <ArrowRight size={15} /></button>}</header>
+          {data.attention.length ? <div className={t.list}>{data.attention.map((j) => <div key={j.id} className={t.item}>
+            <button type="button" className={`${s.dashboardRow} ${t.itemMain}`} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><div><b>{stationLabel(j.from)} <ArrowRight size={13} /> {stationLabel(j.to)}</b><small>{j.status === "cancellation_needed" ? "Cancellation to confirm" : "Booking is open"}</small></div></button>
+            {setStatus && (j.status === "cancellation_needed"
+              ? <button type="button" className={s.secondary} onClick={() => { if (confirm("Have you cancelled this ticket through IRCTC?")) setStatus(j, "cancelled"); }}>Confirm cancellation</button>
+              : <button type="button" className={s.secondary} onClick={() => setStatus(j, "booked")}>Mark booked</button>)}
+          </div>)}</div> : <p className={t.muted}>You’re all caught up. Nothing needs booking or cancelling right now.</p>}
+        </section>
+
+        <section className={t.section}>
+          <header className={t.sectionHead}><h2>Upcoming journeys</h2></header>
+          {upcoming.length ? <div className={t.list}>{upcoming.slice(0, 4).map((j) => <button key={j.id} type="button" className={s.dashboardRow} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><div><b>{stationLabel(j.from)} <ArrowRight size={13} /> {stationLabel(j.to)}</b><small>{formatDay(j.date, { weekday: "long" })} · {STATUS[j.status]}</small></div></button>)}</div> : <p className={t.muted}>Your upcoming journeys will appear here.</p>}
+        </section>
+      </div>
+
+      <div className={t.column}>
+        <section className={t.card} aria-labelledby="today-openings">
+          <header className={t.cardHead}><h2 id="today-openings">Next booking openings</h2></header>
+          {bookingSoon.length ? <div className={t.list}>{bookingSoon.slice(0, 4).map((j) => <button key={j.id} type="button" className={s.dashboardRow} onClick={() => openJourney(j)}><span className={s.dateTile}><b>{bookingDay(j).slice(-2)}</b><small>{formatDay(bookingDay(j), { month: "short" })}</small></span><div><b>{stationLabel(j.from)} <ArrowRight size={13} /> {stationLabel(j.to)}</b><small>Opens {bookingTimeLabel(j)} · travel {formatDay(j.date, { day: "numeric", month: "short" })}</small></div></button>)}</div> : <p className={t.muted}>No booking openings coming up.</p>}
+        </section>
+
+        <section className={t.card} aria-labelledby="today-week">
+          <header className={t.cardHead}><h2 id="today-week">This week</h2><button className={s.textButton} onClick={() => go("calendar")}>Calendar <ArrowRight size={15} /></button></header>
+          <ul className={t.week}>{Array.from({ length: 7 }, (_, i) => {
+            const date = addDays(today, i), day = week[date], off = planner.holidays.filter((h) => h.date === date);
+            const parts = [...off.map((h) => h.name), day?.journeys ? `${day.journeys} ${day.journeys === 1 ? "journey" : "journeys"}` : "", day?.bookings ? "Booking opens" : "", day?.cancellations ? `${day.cancellations} to cancel` : ""].filter(Boolean);
+            return <li key={date}><button type="button" onClick={() => chooseDate(date)} aria-label={`View ${formatDay(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}><span className={i === 0 ? t.todayLabel : t.muted}>{i === 0 ? "Today" : formatDay(date, { weekday: "short", day: "numeric" })}</span><span className={parts.length ? undefined : t.muted}>{parts.join(" · ") || "Nothing planned"}</span></button></li>;
+          })}</ul>
+        </section>
+
+        {routines.length > 0 && <section className={t.card} aria-labelledby="today-routines">
+          <header className={t.cardHead}><h2 id="today-routines">{routines.length === 1 ? routines[0].name : "Routines"}</h2><button className={s.textButton} onClick={() => go("routines")}>Manage <ArrowRight size={15} /></button></header>
+          {routines.map((r) => <div key={r.id} className={t.line}><span>{stationLabel(r.from)} → {stationLabel(r.to)}</span><span className={t.muted}>{weekdayList(r.weekdays)}</span></div>)}
+        </section>}
+
+        <section className={t.card} aria-labelledby="today-off">
+          <header className={t.cardHead}><h2 id="today-off">Coming up off</h2><button className={s.textButton} onClick={() => go("holidays")}>Time off <ArrowRight size={15} /></button></header>
+          {holidays.length ? holidays.map((h) => <div key={h.id} className={t.line}><span>{h.name}</span><span className={t.muted}>{formatDay(h.date, { weekday: "short", day: "numeric", month: "short" })}</span></div>) : <p className={t.muted}>Add company holidays or leave to plan around them.</p>}
+        </section>
+      </div>
+    </div>
   </div>;
 }
-/** Renders the shared forward navigation indicator. */
-function Chevron(){return <ArrowRight className={s.rowArrow} size={16}/>;}
