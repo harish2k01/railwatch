@@ -26,7 +26,7 @@ export async function verifyDesktopJourneys(page,api,url){
     await trigger.click();let picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByLabel('From date',{exact:true}).fill(day(40));await picker.getByLabel('To date',{exact:true}).fill(day(50));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
     await trigger.click();picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByLabel('From date',{exact:true}).fill(day(50));await picker.getByLabel('To date',{exact:true}).fill(day(40));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker.getByRole('alert')).toContainText('End date');await page.keyboard.press('Escape');await expect(picker).toHaveCount(0);await expect(trigger).toBeFocused();
     await preset('All dates');await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(6);
-    await workspace.getByRole('button',{name:'Cancellation pending',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
+    await workspace.getByRole('button',{name:'To cancel',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
     await workspace.getByRole('button',{name:'All journeys',exact:true}).click();await workspace.getByRole('button',{name:'Board',exact:true}).click();await expect(workspace.getByRole('article')).toHaveCount(6);
     await workspace.getByRole('region',{name:'Booked column',exact:true}).getByRole('article').first().dragTo(cancelled);
     await expect(cancelled.getByRole('article')).toHaveCount(1);
