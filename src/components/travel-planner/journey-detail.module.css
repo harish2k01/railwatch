@@ -49,4 +49,4 @@
 .grid{gap:12px}
 .grid div{padding:12px 14px;background:var(--rw-ground)}
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
-.head{padding-right:52px}
+.head{padding-right:64px;scroll-margin-top:88px}
