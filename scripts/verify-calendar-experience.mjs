@@ -24,7 +24,7 @@ export async function verifyCalendarExperience({page,api,url,today}){
       const revision=(await(await api('/api/railwatch/workspace')).json()).data.revision;
       await page.getByRole('button',{name:`Plan journey on ${day(20)}`,exact:true}).click();
       const form=page.getByRole('dialog');await expect(form.getByRole('heading',{name:'New journey',exact:true})).toBeVisible();await expect(form.getByLabel('Travel date',{exact:true})).toHaveValue(day(20));await expect(form.getByRole('button',{name:'Plan travel',exact:true})).toHaveCount(0);await form.getByRole('button',{name:'Close dialog',exact:true}).click();
-      await booked.click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toHaveValue('BKG');await page.getByRole('dialog').getByRole('button',{name:'Close dialog',exact:true}).click();
+      await booked.click();await expect(page.getByRole('dialog').getByRole('list',{name:'Journey stages'})).toBeVisible();await expect(page.getByRole('dialog')).toContainText('BKG');await page.getByRole('dialog').getByRole('button',{name:'Close dialog',exact:true}).click();
       assert.equal((await(await api('/api/railwatch/workspace')).json()).data.revision,revision,'Calendar browsing must not save data');
       await page.setViewportSize({width:390,height:844});await page.goto(url+'/calendar');await page.getByLabel('Choose date',{exact:true}).fill(day(10));await expect(page.getByRole('region',{name:'Day agenda',exact:true}).getByText('Planned',{exact:true})).toBeVisible();
       await page.screenshot({path:`build/railwatch-qa/calendar-agenda-mobile-${theme}.png`,animations:'disabled'});
