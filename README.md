@@ -41,6 +41,8 @@ Planned or booked trips on time off appear under Needs a decision on Today and o
 
 ## Tickets and history
 
+**Import tickets** on the Tickets page reads up to 30 IRCTC e-ticket PDFs on the device, matches each to a journey (PNR, then route, on the travel date) and shows it as Matched, Check or New journey. Confirming uploads the originals and saves every attached or created journey in one workspace commit; a failed save removes the uploaded files.
+
 Ticket extraction reads PDF text and QR codes, and uses local browser OCR for scanned PDFs and ticket images. English recognition assets ship with the app; recognition does not send ticket pixels to an external service. Review detected details before applying them. Completed journeys appear in History and archived cancellations retain entered ticket details. Original PDFs are deleted seven days after cancellation or completion.
 
 ## Verify
