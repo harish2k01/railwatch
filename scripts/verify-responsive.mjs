@@ -179,7 +179,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   const manifest=await(await page.request.get(url+'/manifest.webmanifest')).json();assert.equal(manifest.display,'standalone');
   await page.evaluate(()=>navigator.serviceWorker.ready);
   const cache=await page.evaluate(async()=>{const keys=await caches.keys();return Promise.all(keys.filter(key=>key.startsWith('railwatch-')).map(async key=>(await(await caches.open(key)).keys()).map(request=>new URL(request.url).pathname)));});
-  assert.deepEqual(cache.flat(),['/offline.html']);
+  assert.deepEqual(cache.flat(),['/offline.html','/offline-reader.js']);
   await page.context().setOffline(true);await page.goto(url+'/journeys');await expect(page.getByRole('heading',{name:'You’re offline',exact:true})).toBeVisible();await page.context().setOffline(false);await page.goto(url+'/');
   console.log('Passed: responsive routes in light/dark themes, dedicated mobile navigation, journey lists, More screen, full-screen settings, day agenda, unsaved-change guard, standalone manifest and offline-only cache.');
 }
