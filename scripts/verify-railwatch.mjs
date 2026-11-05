@@ -98,9 +98,9 @@ try{
   const timeOff=page.getByRole('region',{name:'Upcoming',exact:true});
   
   await expect(timeOff.getByText('Past break',{exact:true})).toHaveCount(0);await expect(timeOff.getByText('Ongoing leave',{exact:true})).toBeVisible();
-  await timeOff.locator('summary').filter({hasText:'Ongoing leave'}).click();await expect(timeOff.locator('details[open] > div > div')).toHaveCount(3);
-  await page.getByRole('button',{name:'Past',exact:true}).click();await expect(timeOff.getByText('Past break',{exact:true})).toBeVisible();await expect(timeOff.getByText('Ongoing leave',{exact:true})).toHaveCount(0);
-  await page.getByRole('button',{name:'Upcoming',exact:true}).click();
+  await timeOff.getByRole('button',{name:'Actions for Ongoing leave',exact:true}).click();await expect(page.getByRole('menuitem',{name:/^Remove /})).toHaveCount(3);await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Show past time off',exact:true}).click();const pastOff=page.getByRole('region',{name:'Past',exact:true});await expect(pastOff.getByText('Past break',{exact:true})).toBeVisible();await expect(pastOff.getByText('Ongoing leave',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Show upcoming time off',exact:true}).click();
   assert.equal((await(await api('/api/railwatch/workspace')).json()).data.revision,timeOffRevision,'Browsing time off must not save or remove records');
   for(const theme of ['dark','light']){const themed=(await(await api('/api/railwatch/workspace')).json()).data;themed.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',themed)).status(),200);await page.setViewportSize({width:390,height:844});await page.reload();await expect(page.getByRole('heading',{name:'Time off',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Show past time off',exact:true})).toBeVisible();await expect(page.getByText('Past break',{exact:true})).toHaveCount(0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'Time off has no horizontal overflow');await page.screenshot({path:'build/railwatch-qa/time-off-mobile-'+theme+'.png',animations:'disabled'});}
   await page.setViewportSize({width:1440,height:1000});await page.reload();await expect(page.getByRole('heading',{name:'Upcoming',exact:true})).toBeVisible();await page.screenshot({path:'build/railwatch-qa/time-off-desktop.png',animations:'disabled'});
