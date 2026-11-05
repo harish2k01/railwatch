@@ -4,7 +4,7 @@ RailWatch exposes a same-origin manifest with standalone display, regular/maskab
 
 ## Phone workspace
 
-At widths up to 768 pixels, RailWatch uses dedicated phone screens with Home, Journeys, Tickets and More in the bottom navigation. The desktop dashboard and Kanban remain available at larger widths.
+At widths up to 768 pixels, RailWatch uses dedicated phone screens with Today, Journeys, Calendar and More in the bottom navigation; More holds Time off, Routines, Tickets, Settings and User settings. The desktop dashboard and Kanban remain available at larger widths.
 
 Home prioritizes the next trip, booking openings and cancellation actions. Journeys uses searchable status lists with date/routine filters, sorting and additional-page controls. Tickets opens the original PDF directly; its action menu also opens journey details or downloads the ticket. More contains Calendar, Routines, Holidays & Leave, User Settings, administrator pages when permitted. Installation is at the bottom of More.
 
