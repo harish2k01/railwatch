@@ -1,6 +1,6 @@
 # Journey workspace
 
-The desktop My Journeys page has Active, History and Archive sections. Active supports a Kanban board and a compact list with the same search, sort, routine and date filters. History and Archive use the list layout. Opening a card or route opens the existing journey editor; secondary archive/restore actions are in its action menu.
+The desktop Journeys page has Active, History and Archive sections. Active supports a Kanban board, a compact list and a Timeline with the same search, sort, routine and date filters. History and Archive use the list layout. Opening a card or route opens the read-only journey panel (Edit is in its More journey actions menu); secondary archive/restore actions are in its action menu.
 
 ## Travel date range
 
@@ -10,9 +10,10 @@ The date range applies across Active, History and Archive. To find older journey
 
 ## Quick filters
 
-- Booking opens this week: planned journeys whose booking opening falls within the configured calendar week in IST, including normal and Tatkal bookings.
+- Booking opens soon: planned journeys whose booking opening falls within the configured calendar week in IST, including normal and Tatkal bookings.
+- No ticket: booked journeys with no ticket attached or recorded (server filter on the `hasTicket` index column).
 - Travelling this week: booked journeys travelling within that week.
-- Cancellation pending: journeys still marked To Cancel.
+- To cancel: journeys still marked To Cancel.
 
 The first day of the week follows the administrator's calendar setting. Quick filters combine with the travel-date window, search and routine filter. Dashboard shortcuts reset a previous desktop date window so the requested action is visible.
 
@@ -23,3 +24,7 @@ Cards show the route, travel date, confirmed departure when available, and booki
 An empty Cancelled column collapses into an expandable rail. It remains a drop target; a successful drop expands the populated column. Board dragging uses the existing revision checks and undo operation. List rows and column pages each load up to thirty records at a time, with explicit additional-page controls. Filter changes invalidate previous cursors.
 
 The dedicated mobile workspace remains separate. Both presentations use the same account authorization, stored journeys, ticket files and save logic.
+
+## Timeline
+
+Timeline uses the same paged `list` query, cursors and encrypted search as List. One-off journeys are grouped as This week, Next week, Week of … and Later in <month>; journeys created by a routine collapse under that routine. Each row has a four-step stage bar (planned, booking open, booked, travelled) and a No ticket pill. Grouping lives in `src/lib/journey-timeline.ts`. Board is still the default layout.

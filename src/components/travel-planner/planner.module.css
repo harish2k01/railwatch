@@ -206,3 +206,4 @@
 .icsPreview{display:grid;gap:8px;padding:14px;border-radius:12px;border:1px solid var(--rw-line);background:var(--rw-surface-2)}
 .icsPreview ul{margin:0;padding-left:18px;display:grid;gap:2px;font-size:14px}
 .icsActions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.systemHealth{display:grid;gap:8px;margin-bottom:18px}

@@ -1,0 +1,15 @@
+/* Booking day mode (plan 3.4, canvas: Booking day · desktop/mobile). */
+.day{display:grid;gap:22px}
+.day section{display:grid;gap:10px}
+.day h3{font-size:16px;font-weight:700}
+.hero{padding:22px;border-radius:18px;background:var(--rw-open-bg);color:var(--rw-open-ink);text-align:center;justify-items:center}
+.hero h2{font-size:18px;font-weight:700;color:var(--rw-text)}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.timer{display:grid;gap:4px;justify-items:center}
+.timer small{font-size:13px;font-weight:600}
+.timer b{font-size:52px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;color:var(--rw-text)}
+.check{display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--rw-brand)}
+.irctc{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-decoration:none}
+.outcomes{display:flex;flex-wrap:wrap;gap:8px}
+.outcomes button{flex:1 1 120px;min-height:48px}
