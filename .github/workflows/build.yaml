@@ -130,8 +130,8 @@ jobs:
     env:
       BUILDKIT_MIRROR_CONFIG: |
         [registry."docker.io"]
-          mirrors = ["docker-mirror.arc-systems.svc.cluster.local:5000"]
-        [registry."docker-mirror.arc-systems.svc.cluster.local:5000"]
+          mirrors = ["zot.zot.svc.cluster.local:5000"]
+        [registry."zot.zot.svc.cluster.local:5000"]
           http = true
     steps:
       - uses: actions/checkout@v6
