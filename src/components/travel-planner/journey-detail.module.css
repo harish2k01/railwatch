@@ -1,0 +1,33 @@
+/* Journey detail panel (plan 2.2, canvas: Journeys + detail, Journey detail · mobile). */
+.detail{display:flex;flex-direction:column;gap:22px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.head>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.head>div>span{align-self:flex-start;margin-top:4px}
+.kicker{font-size:13px;font-weight:600;color:var(--rw-muted)}
+.route{font-size:28px;font-weight:800;letter-spacing:-.02em;overflow-wrap:anywhere}
+.names{font-size:14px;color:var(--rw-muted)}
+.stages{list-style:none;margin:0;padding:16px;border-radius:16px;background:var(--rw-surface-2);border:1px solid var(--rw-line);display:grid;gap:14px}
+.stages li{display:flex;align-items:center;gap:12px}
+.dot{width:20px;height:20px;flex:none;border-radius:999px;display:grid;place-items:center;box-sizing:border-box;border:2px solid var(--rw-line)}
+.stages li[data-state=done] .dot{border:0;background:var(--rw-booked-bg);color:var(--rw-booked-ink)}
+.stages li[data-state=current] .dot{border-color:var(--rw-brand)}
+.stageLabel{flex:1;font-size:14px;font-weight:600}
+.note{font-size:13px;color:var(--rw-muted)}
+.warn{font-size:13px;color:var(--rw-attention-ink)}
+.section{display:grid;gap:10px}
+.section h3{font-size:16px;font-weight:700}
+.files{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.files button{display:inline-flex;align-items:center;gap:8px}
+.drop{display:grid;justify-items:center;gap:4px;padding:20px;border:1.5px dashed var(--rw-line);border-radius:14px;background:transparent;color:var(--rw-text);font:inherit;font-weight:600;cursor:pointer}
+.drop:hover,.drop:focus-visible{border-color:var(--rw-brand)}
+.drop small{font-weight:400;color:var(--rw-muted)}
+.grid{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid div{padding:12px;border-radius:12px;background:var(--rw-surface-2)}
+.grid dt{font-size:12px;font-weight:600;color:var(--rw-muted)}
+.grid dd{margin:4px 0 0;font-size:14px;overflow-wrap:anywhere}
+.grid dd[data-empty]{color:var(--rw-muted)}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.noteText{text-align:right;white-space:pre-wrap;overflow-wrap:anywhere}
+.link{background:none;border:0;padding:0;color:var(--rw-brand);font:inherit;font-weight:600;cursor:pointer}
+.sticky{position:sticky;bottom:0;padding:12px 0 4px;background:linear-gradient(transparent,var(--rw-surface) 30%)}
+.sticky button{width:100%;min-height:48px}
