@@ -135,7 +135,8 @@ jobs:
           path: release-plan.json
   publish:
     needs: plan
-    if: needs.plan.outputs.targets != '[]'
+    # Without !cancelled() a skipped verify (see gate) would also skip publish.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.targets != '[]' }}
     permissions:
       contents: write
       packages: write
