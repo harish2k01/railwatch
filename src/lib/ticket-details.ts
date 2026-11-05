@@ -1,6 +1,6 @@
 import { isDay, type Journey } from "./travel-planner";
 
-export type TicketDetails = Partial<Pick<Journey, "from" | "to" | "date" | "trainNumber" | "trainName" | "travelClass" | "pnr" | "coach" | "seat" | "berth" | "departure">>;
+export type TicketDetails = Partial<Pick<Journey, "from" | "to" | "date" | "trainNumber" | "trainName" | "travelClass" | "pnr" | "coach" | "seat" | "berth" | "departure" | "ticketStatus">>;
 /** Extracts validated ticket-field suggestions from QR JSON, printed text, or OCR. */
 export function parseTicketDetails(raw: string): TicketDetails {
   const text = raw.replace(/\r/g, "").replace(/[,;]\s*(?=(?:PNR|Train\s*(?:No|Number|Name)|From|To|Class|Journey\s*Date|Departure|Coach|Seat|Berth)\s*[:=])/gi,"\n").replace(/\b(TrainNo|TrainName|JourneyDate|DepartureTime|CoachNo|SeatNo|BerthType)\b/g, label=>label.replace(/([a-z])([A-Z])/g,"$1 $2")).replace(/\b(From|To|Class|Coach|Seat No|Berth Type|Train No|Train Name|Journey Date|Departure Time)\s*=/gi,"$1:"); const details: TicketDetails = {};
@@ -12,7 +12,7 @@ export function parseTicketDetails(raw: string): TicketDetails {
         /** Collects supported ticket fields from nested QR objects and the first passenger record. */
     function flatten(value:Record<string,unknown>,depth=0){if(depth>8)return;for(const [key,item] of Object.entries(value)){if(typeof item === "string"||typeof item === "number")normalized[normalizeKey(key)]=item;else if(item&&typeof item==="object"&&!Array.isArray(item))flatten(item as Record<string,unknown>,depth+1);else if(Array.isArray(item)&&item[0]&&typeof item[0]==="object")flatten(item[0] as Record<string,unknown>,depth+1);}}
     flatten(json);
-    const aliases: Record<keyof TicketDetails, string[]> = { from: ["from", "source", "boardingStation"], to: ["to", "destination"], date: ["date", "journeyDate", "travelDate"], trainNumber: ["trainNumber", "trainNo", "train_no"], trainName: ["trainName", "train_name"], travelClass: ["travelClass", "class"], pnr: ["pnr", "PNR", "pnrNumber", "pnrNo"], coach: ["coach", "coachNumber", "coachNo"], seat: ["seat", "seatNumber", "seatNo", "berthNumber", "berthNo"], berth: ["berth", "berthType"], departure: ["departure", "departureTime", "scheduledDeparture", "boardingTime"] };
+    const aliases: Record<Exclude<keyof TicketDetails, "ticketStatus">, string[]> = { from: ["from", "source", "boardingStation"], to: ["to", "destination"], date: ["date", "journeyDate", "travelDate"], trainNumber: ["trainNumber", "trainNo", "train_no"], trainName: ["trainName", "train_name"], travelClass: ["travelClass", "class"], pnr: ["pnr", "PNR", "pnrNumber", "pnrNo"], coach: ["coach", "coachNumber", "coachNo"], seat: ["seat", "seatNumber", "seatNo", "berthNumber", "berthNo"], berth: ["berth", "berthType"], departure: ["departure", "departureTime", "scheduledDeparture", "boardingTime"] };
     for (const [key, keys] of Object.entries(aliases)) { const value = keys.map(k => normalized[normalizeKey(k)]).find(v => typeof v === "string" || typeof v === "number"); if (value !== undefined) (details as Record<string, string>)[key] = String(value).trim(); }
   } else {
     const /** Returns the first matching ticket field from the parsed text. */ match = (pattern: RegExp) => text.match(pattern)?.[1]?.trim();
@@ -46,6 +46,9 @@ export function parseTicketDetails(raw: string): TicketDetails {
   if(details.date&&/^\d{2}-[A-Za-z]{3}-\d{4}$/.test(details.date)){const [day,month,year]=details.date.split("-");const number=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(month.toLowerCase())+1;details.date=`${year}-${String(number).padStart(2,"0")}-${day}`;}
   if (details.date && /^\d{2}[-\/]\d{2}[-\/]\d{4}$/.test(details.date)) { const [day, month, year] = details.date.split(/[-\/]/); details.date = `${year}-${month}-${day}`; }
   for(const key of ["from","to","trainName"] as const)if(details[key])details[key]=details[key]!.replace(/[,;]\s*$/,"").trim();
+  // Plan 3.2: booking status from the current-status column (else booking status); confirmed wins only when no RAC/WL is current.
+  const statusText=allocationSource.match(/current[ _]*status["\s]*[:=]["\s]*([A-Z]+)/i)?.[1]??text.match(/(?:Current Status|Booking Status)[^\n]*\n[^\n]*?\b(CNF|CONFIRMED|RAC|RLWL|PQWL|GNWL|TQWL|WL)\b/i)?.[1]??allocationSource.match(/\b(RAC|RLWL|PQWL|GNWL|TQWL|WL|CNF|CONFIRMED)\s*[/ ]*\d*/i)?.[1];
+  if(statusText){const v=statusText.toUpperCase();details.ticketStatus=v==="RAC"?"RAC":/WL$/.test(v)?"WL":v==="CNF"||v==="CONFIRMED"?"CNF":undefined;if(!details.ticketStatus)delete details.ticketStatus;}
   if (details.date && !isDay(details.date)) delete details.date;
   if (details.pnr && !/^\d{10}$/.test(details.pnr)) delete details.pnr;
   if (details.trainNumber && !/^\d{5}$/.test(details.trainNumber)) delete details.trainNumber;

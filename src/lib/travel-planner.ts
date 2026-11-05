@@ -27,7 +27,7 @@ export const journeySchema = z.object({
   bookingDateOverride: daySchema.optional(),
   bookingType: z.enum(["normal", "tatkal"]).optional(), tatkalClass: z.enum(["ac", "non_ac"]).optional(), trainOriginDate: daySchema.optional(),
   cancellationReminder: z.object({ enabled: z.boolean(), time: clock, schedule: reminderScheduleSchema.optional() }).optional(),
-  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(),
+  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), ticketStatus: z.enum(["CNF", "RAC", "WL"]).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(),
   completedAt:daySchema.optional(), cancelledAt: daySchema.optional(), archivedAt: daySchema.optional(), attachments: z.array(attachmentSchema).max(20).optional(),
   status: statusSchema, pnr: z.string().regex(/^$|^\d{10}$/), notes: z.string().max(1000),
 }).refine(j=>j.bookingType!=="tatkal"||Boolean(j.tatkalClass&&j.trainOriginDate&&j.trainOriginDate<=j.date),"Choose the Tatkal class and a train starting date on or before travel.");
