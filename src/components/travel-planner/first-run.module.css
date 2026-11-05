@@ -1,0 +1,15 @@
+/* First-run checklist (plan 2.9, canvas: First run). */
+.card{display:grid;gap:14px;padding:20px;border-radius:18px;background:var(--rw-surface);border:1px solid var(--rw-brand)}
+.card header{display:flex;align-items:center;justify-content:space-between}
+.card h2{font-size:18px;font-weight:800}
+.close{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;border:0;background:none;color:var(--rw-muted);cursor:pointer}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.steps li{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.num{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:999px;background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:800;font-size:13px}
+.steps li[data-done] .num{background:var(--rw-booked-bg);color:var(--rw-booked-ink)}
+.steps li[data-done] b{text-decoration:line-through;color:var(--rw-muted)}
+.text{flex:1 1 240px;display:grid;gap:2px;min-width:0}
+.text b{font-size:15px}
+.text small{font-size:13px;color:var(--rw-muted)}
+.action button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-surface);color:var(--rw-text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.skip{justify-self:start;border:0;background:none;color:var(--rw-muted);font:inherit;font-size:13px;cursor:pointer;padding:6px 0}
