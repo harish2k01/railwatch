@@ -257,3 +257,20 @@
 /* Docked journey panel: one header (the panel's own), as on the board; the dialog keeps its accessible title. */
 .dockedModal .modalHead{position:absolute;top:18px;right:18px;padding:0;border:0;background:none;z-index:1}
 .dockedModal .modalHead h2,.dockedModal .modalHead p{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Calendar as on the canvas board. */
+.calendarToolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.calendarPeriod{display:flex;align-items:center;gap:10px}
+.calendarPeriod h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.calendarViews{margin-left:auto;padding:4px;gap:4px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.calendarLayout{display:grid;grid-template-columns:minmax(0,3fr) minmax(260px,1fr);gap:24px;align-items:start}
+.calendarMain{min-width:0;display:grid;gap:12px}
+.calendarSide{display:grid;gap:16px}
+.calendarSide .calendarDecision{margin:0;border-color:#4a3a12}
+.calendarSync{display:grid;gap:10px;padding:20px;border-radius:16px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.calendarSync h2{font-size:16px;font-weight:700}
+.calendarSyncRow{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.linkButton{border:0;background:none;padding:0;color:var(--rw-brand);font:inherit;font-weight:600;cursor:pointer}
+.weekColumns{border-radius:16px;background:var(--rw-surface)}
+.weekColumn{min-height:560px;padding:12px}
+@media(max-width:1180px){.calendarLayout{grid-template-columns:minmax(0,1fr)}}

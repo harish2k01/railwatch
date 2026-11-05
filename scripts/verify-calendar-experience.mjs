@@ -13,7 +13,7 @@ export async function verifyCalendarExperience({page,api,url,today}){
     assert.equal((await api('/api/railwatch/workspace','put',fixture)).status(),200);
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);
-      await page.setViewportSize({width:1440,height:1000});await page.goto(url+'/calendar');await page.getByRole('button',{name:'Next month',exact:true}).click();
+      await page.setViewportSize({width:1440,height:1000});await page.goto(url+'/calendar');await page.getByRole('button',{name:'Month',exact:true}).click();await page.getByRole('button',{name:'Next month',exact:true}).click();
       const planned=page.getByRole('button',{name:'PLN → END · Planned',exact:true}),booked=page.getByRole('button',{name:'BKG → END · Booked',exact:true}),cancel=page.getByRole('button',{name:'CXL → END · To cancel',exact:true});
       await expect(planned).toBeVisible();await expect(booked).toBeVisible();await expect(cancel).toBeVisible();
       const background=locator=>locator.evaluate(el=>getComputedStyle(el).backgroundColor);
