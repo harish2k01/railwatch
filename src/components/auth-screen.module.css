@@ -16,3 +16,34 @@
 .brandPanel li{display:flex;gap:10px;align-items:center}
 .brandPanel li::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--rw-brand);flex:none}
 }
+/* Sign in as on the canvas board: dark, full-bleed brand panel and a frameless form. */
+.authPage{background:var(--rw-ground);color:var(--rw-text)}
+.authForm{display:grid;gap:18px}
+.formTitle{font-size:26px;font-weight:800}
+.labelRow{display:flex;justify-content:space-between;gap:8px}
+.field{gap:8px;font-size:13px;font-weight:600;color:var(--rw-sidebar-text)}
+.authInput{min-height:48px;padding:0 14px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-sidebar);color:var(--rw-text)}
+.authInput svg{display:none}
+.authInput input{font-size:15px;font-weight:500;color:var(--rw-text)}
+.authInput input:-webkit-autofill{-webkit-text-fill-color:var(--rw-text);box-shadow:0 0 0 1000px var(--rw-sidebar) inset}
+.primary{min-height:50px;font-size:15px;font-weight:700;background:var(--rw-brand);color:var(--rw-brand-ink)}
+.inlineLink{border:0;background:none;padding:0;color:var(--rw-brand);font:inherit;font-weight:600;cursor:pointer}
+.invite{text-align:center;font-size:14px;color:var(--rw-muted)}
+.authCard{background:var(--rw-surface);border-color:var(--rw-line);color:var(--rw-text);box-shadow:none}
+@media(min-width:960px){
+.authPage{grid-template-columns:1fr 1fr;gap:0;padding:0;align-items:stretch;place-items:stretch}
+.brandPanel{display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding:clamp(32px,6vw,80px);border-radius:0;background:#13111c;color:var(--rw-text)}
+.panelBrand{font-size:20px;font-weight:800}
+.panelBrand .brandMark{width:40px;height:40px;border-radius:12px}
+.panelBody{display:grid;gap:22px;max-width:460px}
+.brandPanel h2{font-size:clamp(34px,4vw,48px);line-height:1.1;letter-spacing:-.03em}
+.brandPanel ul{gap:14px;font-size:15px;color:#d4d8e0}
+.brandPanel li{align-items:flex-start;gap:12px}
+.brandPanel li::before{margin-top:7px}
+.brandPanel li[data-tone=open]::before{background:var(--rw-open)}
+.brandPanel li[data-tone=booked]::before{background:var(--rw-booked)}
+.brandPanel li[data-tone=off]::before{background:var(--rw-timeoff)}
+.brandPanel small{font-size:12px;color:var(--rw-muted)}
+.authCard{align-self:center;justify-self:center;width:100%;max-width:380px;padding:0;border:0;background:none}
+.authCard .authBrand,.authCard>p:last-child{display:none}
+}
