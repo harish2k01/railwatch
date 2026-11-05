@@ -4,3 +4,13 @@
 .list>div:not(.ticket)+div:not(.ticket){border-top:1px solid var(--line)}.screen h1{font-weight:650}.screen h2{font-weight:650}
 
 .tripTop{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px}.tripStatus{font-size:13px;line-height:1.5;padding:3px 9px;border-radius:8px;background:var(--soft);color:var(--ink)}.compactTrip{padding:16px;gap:12px}.compactTrip .tripOpen{gap:12px}
+
+/* Needs a decision on phones (plan 3.1). */
+.decision{display:grid;gap:8px;padding:14px;margin-bottom:16px;border-radius:16px;border:1px solid var(--rw-attention);background:var(--rw-attention-bg)}
+.decision h2{font-size:15px;font-weight:700;color:var(--rw-attention-ink)}
+.decisionRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.decisionTrip{flex:1 1 180px;display:grid;gap:2px;text-align:left;border:0;background:none;color:var(--rw-text);font:inherit;padding:4px 0}
+.decisionTrip small{color:var(--rw-muted);font-size:12px}
+.decisionActions{display:flex;gap:6px}
+.decisionActions button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-surface);color:var(--rw-text);font:inherit;font-size:13px;font-weight:700}
+.decisionActions button:first-child{background:var(--rw-brand);color:var(--rw-brand-ink);border-color:transparent}
