@@ -2,42 +2,91 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offlineCount, offlineEnabled, offlineSupported, setOfflineEnabled } from "@/lib/offline-tickets";
-import { ArrowRight, CalendarDays, Download, HeartPulse, KeyRound, Plug, Settings2, SlidersHorizontal, Upload, User, Users, Bell } from "lucide-react";
+import { DEFAULT_TATKAL_SCHEDULE, type Planner, type ReminderSchedule } from "@/lib/travel-planner";
+import { legacySchedule } from "./forms";
+import { PwaInstall } from "../pwa-install";
 import s from "./settings-hub.module.css";
 
-type Section = { label: string; hint: string; icon: typeof User };
+type Tab = "profile" | "preferences" | "connections" | "security";
 
-/** One Settings page for everyone (plan 2.8): your settings, your data and, for admins, the workspace. */
-export function SettingsHub({ admin, openSection, backup, restore, exportCalendar, syncOffline }: { syncOffline: () => Promise<number>; admin: boolean; openSection: (tab: "profile" | "preferences" | "connections" | "security") => void; backup: () => void; restore: (file: File) => void; exportCalendar: () => void }) {
-  const you: (Section & { tab: "profile" | "preferences" | "connections" | "security" })[] = [
-    { tab: "profile", label: "Profile", hint: "Name, username, email and phone", icon: User },
-    { tab: "preferences", label: "Reminders and preferences", hint: "When reminders arrive, quiet hours, theme and week start", icon: SlidersHorizontal },
-    { tab: "connections", label: "Channels", hint: "Telegram, email, device notifications and Google Calendar", icon: Bell },
-    { tab: "security", label: "Security", hint: "Password and sign-in", icon: KeyRound },
-  ];
-  const workspace: (Section & { href: string })[] = [
-    { href: "/settings/workspace", label: "Booking rules", hint: "Booking window, routines and features", icon: Settings2 },
-    { href: "/settings/workspace/members", label: "Members", hint: "Invite people and manage access", icon: Users },
-    { href: "/settings/workspace/integrations", label: "Integrations", hint: "Email delivery, Telegram and Google", icon: Plug },
-    { href: "/settings/workspace/health", label: "System health", hint: "Reminder delivery and scheduler", icon: HeartPulse },
-  ];
-  const row = (sec: Section) => <><sec.icon size={20} aria-hidden="true" /><span className={s.text}><b>{sec.label}</b><small>{sec.hint}</small></span><ArrowRight size={16} aria-hidden="true" /></>;
-  return <div className={s.hub}>
-    <section aria-labelledby="settings-you"><h2 id="settings-you">You</h2><div className={s.list}>{you.map((sec) => <button key={sec.tab} type="button" className={s.row} aria-label={sec.label} onClick={() => openSection(sec.tab)}>{row(sec)}</button>)}</div></section>
-    <OfflineTickets sync={syncOffline} />
-    <section aria-labelledby="settings-data"><h2 id="settings-data">Data</h2><div className={s.list}>
-      <button type="button" className={s.row} onClick={backup}>{row({ label: "Download backup", hint: "Everything in your workspace as one file", icon: Download })}</button>
-      <label className={s.row}>{row({ label: "Restore backup", hint: "Replace your workspace from a backup file", icon: Upload })}<input type="file" accept="application/json,.json" className={s.file} onChange={(e) => { const f = e.target.files?.[0]; if (f) restore(f); e.target.value = ""; }} /></label>
-      <button type="button" className={s.row} onClick={exportCalendar}>{row({ label: "Export calendar", hint: "An .ics file of your journeys and booking dates", icon: CalendarDays })}</button>
-    </div></section>
-    {admin && <section aria-labelledby="settings-workspace"><h2 id="settings-workspace">Workspace</h2><div className={s.list}>{workspace.map((sec) => <Link key={sec.href} href={sec.href} className={s.row} aria-label={sec.label}>{row(sec)}</Link>)}</div></section>}
+/** "20:00" style cells for one schedule: reminders the day before, and on the day (+N more). */
+function cells(schedule: ReminderSchedule) {
+  const before = schedule.filter(r => r.daysBefore >= 1).sort((a, b) => a.time.localeCompare(b.time)), day = schedule.filter(r => r.daysBefore === 0).sort((a, b) => a.time.localeCompare(b.time));
+  const fmt = (rows: ReminderSchedule) => rows.length ? `${rows[0].time}${rows.length > 1 ? ` · +${rows.length - 1} more` : ""}` : "—";
+  return [fmt(before), fmt(day)];
+}
+
+/** A switch styled as on the board. */
+function Switch({ on, label, onChange, disabled }: { on: boolean; label: string; onChange: (next: boolean) => void; disabled?: boolean }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} className={s.switch} onClick={() => onChange(!on)}><span /></button>;
+}
+
+/** Settings (plan 2.8, canvas Settings.dc.html): section nav, Reminders table, where reminders go, offline tickets, data. */
+export function SettingsHub({ admin, planner, saving, openSection, saveSettings, backup, restore, exportCalendar, syncOffline }: {
+  admin: boolean; planner: Planner; saving: boolean; openSection: (tab: Tab) => void; saveSettings: (next: Planner["settings"]) => void;
+  backup: () => void; restore: (file: File) => void; exportCalendar: () => void; syncOffline: () => Promise<number>;
+}) {
+  const st = planner.settings;
+  const normal = st.bookingSchedule ?? legacySchedule(st.reminderTimes, st.reminderClock);
+  const tatkal = st.tatkalSchedule ?? DEFAULT_TATKAL_SCHEDULE;
+  const nonAc = st.tatkalNonAcSchedule ?? DEFAULT_TATKAL_SCHEDULE.map(r => r.daysBefore ? r : { ...r, time: r.time.replace("09:", "10:") });
+  const rows: [string, string, ReminderSchedule][] = [["Normal", "opens 08:00", normal], ["Tatkal AC", "opens 10:00", tatkal], ["Tatkal non-AC", "opens 11:00", nonAc]];
+  const quiet = st.quietHours?.enabled ?? false;
+  const nav = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  return <div className={s.page}>
+    <div className={s.layout}>
+      <nav aria-label="Settings sections" className={s.nav}>
+        <span className={s.navGroup}>You</span>
+        <button type="button" className={s.navItem} onClick={() => openSection("profile")}>Profile</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-reminders")}>Reminders</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-channels")}>Channels</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-offline")}>Offline tickets</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-data")}>Data and backup</button>
+        <button type="button" className={s.navItem} onClick={() => openSection("security")}>Security</button>
+        {admin && <><span className={s.navGroup}>Workspace · admin</span>
+          <Link className={s.navItem} href="/settings/workspace">Booking rules</Link>
+          <Link className={s.navItem} href="/settings/workspace/members">Members</Link>
+          <Link className={s.navItem} href="/settings/workspace/integrations">Integrations</Link>
+          <Link className={s.navItem} href="/settings/workspace/health">System health</Link></>}
+      </nav>
+      <div className={s.content}>
+        <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
+          <h2 id="settings-reminders-h">Reminders</h2>
+          <span className={s.muted}>Normal booking opens {st.bookingWindowDays} days before travel (set by your admin). Times are IST.</span>
+          <div className={s.card}><table className={s.table}><thead><tr><th scope="col">Booking type</th><th scope="col">Day before</th><th scope="col">On the day</th><th scope="col"><span className={s.sr}>Edit</span></th></tr></thead><tbody>
+            {rows.map(([name, opens, schedule]) => { const [a, b] = cells(schedule); return <tr key={name}><td><strong>{name}</strong> <span className={s.muted}>· {opens}</span></td><td>{a}</td><td>{b}</td><td><button type="button" className={s.btn} aria-label={`Edit ${name} reminders`} onClick={() => openSection("preferences")}>Edit</button></td></tr>; })}
+            <tr><td><strong>Cancellation</strong></td><td colSpan={2}>{st.cancellationEnabled ? `Daily at ${st.cancellationTime} until confirmed` : "Off"}</td><td><button type="button" className={s.btn} aria-label="Edit cancellation reminders" onClick={() => openSection("preferences")}>Edit</button></td></tr>
+            <tr><td><strong>Chart check</strong> <span className={s.pill}>New</span></td><td colSpan={2}>4 hours before departure, for RAC and waitlist tickets</td><td /></tr>
+          </tbody></table></div>
+          <div className={s.card}><div className={s.toggleRow}><span><strong>Quiet hours</strong><span className={s.muted}>Hold non-urgent reminders overnight{quiet && st.quietHours ? ` (${st.quietHours.start}–${st.quietHours.end})` : ""}</span></span><Switch on={quiet} label="Quiet hours" disabled={saving} onChange={on => saveSettings({ ...st, quietHours: { start: st.quietHours?.start ?? "22:00", end: st.quietHours?.end ?? "07:00", enabled: on } })} /></div></div>
+        </section>
+        <section id="settings-channels" aria-labelledby="settings-channels-h" className={s.section}>
+          <h2 id="settings-channels-h">Where reminders go</h2>
+          <div className={s.card}>
+            <div className={s.toggleRow}><span><strong>This device</strong><span className={s.muted}>Push notifications with Snooze and Mark booked buttons</span></span><button type="button" className={s.btn} onClick={() => openSection("connections")}>Set up</button></div>
+            <div className={s.toggleRow}><span><strong>Telegram</strong><span className={s.muted}>{st.telegramEnabled ? "Connected" : "Pair with a one-time code"}</span></span><button type="button" className={s.btn} onClick={() => openSection("connections")}>{st.telegramEnabled ? "Manage" : "Connect"}</button></div>
+            <div className={s.toggleRow}><span><strong>Email</strong><span className={s.muted}>{st.emailEnabled ? "On" : "Verify your address first"}</span></span><button type="button" className={s.btn} onClick={() => openSection(st.emailEnabled ? "connections" : "profile")}>{st.emailEnabled ? "Manage" : "Verify"}</button></div>
+          </div>
+        </section>
+        <OfflineTickets sync={syncOffline} />
+        <section id="settings-data" aria-labelledby="settings-data-h" className={s.section}>
+          <h2 id="settings-data-h">Data and backup</h2>
+          <div className={s.card}>
+            <div className={s.toggleRow}><span><strong>Download backup</strong><span className={s.muted}>Everything in your workspace as one file</span></span><button type="button" className={s.btn} onClick={backup}>Download</button></div>
+            <div className={s.toggleRow}><span><strong>Restore backup</strong><span className={s.muted}>Replace your workspace from a backup file</span></span><label className={s.btn}>Choose file<input type="file" accept="application/json,.json" className={s.file} onChange={e => { const f = e.target.files?.[0]; if (f) restore(f); e.target.value = ""; }} /></label></div>
+            <div className={s.toggleRow}><span><strong>Export calendar</strong><span className={s.muted}>An .ics file of your journeys and booking dates</span></span><button type="button" className={s.btn} onClick={exportCalendar}>Export</button></div>
+            <div className={s.toggleRow}><span><strong>Install the app</strong><span className={s.muted}>Open RailWatch from your home screen or dock</span></span><PwaInstall /></div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>;
 }
 
 /** Opt-in offline tickets for this device (plan 3.6). */
 function OfflineTickets({ sync }: { sync: () => Promise<number> }) {
   const [on, setOn] = useState(false), [count, setCount] = useState(0), [busy, setBusy] = useState(false), [supported, setSupported] = useState(true);
-  useEffect(() => { let live = true; const s = offlineSupported(), e = s && offlineEnabled(); void offlineCount().then(n => { if (live) { setSupported(s); setOn(e); setCount(n); } }); return () => { live = false; }; }, []);
+  useEffect(() => { let live = true; const sup = offlineSupported(), e = sup && offlineEnabled(); void offlineCount().then(n => { if (live) { setSupported(sup); setOn(e); setCount(n); } }); return () => { live = false; }; }, []);
   async function toggle(next: boolean) { setOfflineEnabled(next); setOn(next); setBusy(true); try { if (next) await sync(); setCount(next ? await offlineCount() : 0); } finally { setBusy(false); } }
-  return <section aria-labelledby="settings-offline"><h2 id="settings-offline">Offline tickets</h2><div className={s.list}><label className={s.row}><span className={s.text}><b>Keep upcoming tickets on this device</b><small>{!supported ? "This browser can’t store tickets securely." : on ? `${count} ${count === 1 ? "ticket" : "tickets"} for the next 72 hours, encrypted on this device. Removed after travel and when you sign out.` : "Ticket PDFs for the next 72 hours, encrypted with a key that can’t leave this device. Open them from the offline page."}</small></span><input type="checkbox" checked={on} disabled={busy || !supported} onChange={e => void toggle(e.target.checked)} aria-label="Keep upcoming tickets on this device" /></label></div></section>;
+  return <section id="settings-offline" aria-labelledby="settings-offline-h" className={s.section}><h2 id="settings-offline-h">Offline tickets <span className={s.pill}>New</span></h2><div className={s.card}><div className={s.toggleRow}><span><strong>Keep upcoming tickets on this device</strong><span className={s.muted}>{!supported ? "This browser can’t store tickets securely." : on ? `${count} ${count === 1 ? "ticket" : "tickets"} for the next 3 days, encrypted, removed after travel. Opens with no signal.` : "Next 3 days, encrypted, removed after travel. Opens with no signal."}</span></span><Switch on={on} label="Keep upcoming tickets on this device" disabled={busy || !supported} onChange={next => void toggle(next)} /></div></div></section>;
 }

@@ -275,3 +275,4 @@
 .weekColumn{min-height:560px;padding:12px}
 @media(max-width:1180px){.calendarLayout{grid-template-columns:minmax(0,1fr)}}
 .wideModal:has(form[class*=split]){width:980px}
+.savedState{font-size:13px;color:var(--rw-muted)}
