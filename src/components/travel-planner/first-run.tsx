@@ -1,18 +1,19 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { CalendarDays, Check, Repeat2, Bell, Smartphone, X } from "lucide-react";
 import s from "./first-run.module.css";
 
 const KEY = "railwatch:first-run-dismissed";
 /** Reads a per-browser flag; storage can be unavailable (private mode), so failures mean "not dismissed". */
+const noop = () => () => {};
 const readDismissed = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } };
 
 /** First-run checklist for a new, empty workspace (plan 2.9): regular trip, time off, reminders, install. */
 export function FirstRun({ hasRoutine, hasTimeOff, routine, timeOff, reminders }: { hasRoutine: boolean; hasTimeOff: boolean; routine: () => void; timeOff: () => void; reminders: () => void }) {
-  const [dismissed, setDismissed] = useState(true);
-  useEffect(() => { setDismissed(readDismissed()); }, []);
-  if (dismissed) return null;
-  const close = () => { setDismissed(true); try { localStorage.setItem(KEY, "1"); } catch { /* per-browser only */ } };
+  // Server render and hydration assume dismissed, so the card never flashes before storage is read.
+  const stored = useSyncExternalStore(noop, readDismissed, () => true), [closed, setClosed] = useState(false);
+  if (stored || closed) return null;
+  const close = () => { setClosed(true); try { localStorage.setItem(KEY, "1"); } catch { /* per-browser only */ } };
   const steps = [
     { done: hasRoutine, icon: Repeat2, title: "Add your regular trip", hint: "RailWatch plans those journeys and reminds you before each booking window opens.", action: <button type="button" onClick={routine}>Set up a routine</button> },
     { done: hasTimeOff, icon: CalendarDays, title: "Add holidays and leave", hint: "Routines skip these days, and long weekends show up as trip ideas.", action: <button type="button" onClick={timeOff}>Import holidays</button> },
