@@ -231,3 +231,19 @@
 .profileDocked{inset:66px 0 0 auto;height:calc(100dvh - 66px);width:min(620px,calc(100vw - 640px));min-width:420px;box-shadow:none}
 .settingsWithPanel{padding-right:min(640px,calc(100vw - 620px))}
 @media(max-width:1180px){.settingsWithPanel{padding-right:0}.profileDocked{box-shadow:-15px 0 60px #0002}}
+/* Shell as on the canvas Sidebar and Today boards. */
+.pageActions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.navCount{margin-left:auto;display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 8px;border-radius:999px;background:var(--rw-brand);color:var(--rw-brand-ink);font-size:12px;font-weight:600}
+.profileSidebar{margin-top:auto;position:relative}
+.profileSidebar .sidebarAccount{width:100%;border:0;border-top:1px solid var(--rw-sidebar-line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:0}
+.profileSidebar .sidebarAccount:hover{background:var(--rw-sidebar-raised)}
+.profileMenuUp{top:auto;bottom:calc(100% + 8px);left:0;right:auto}
+/* Sidebar values from the canvas Sidebar board (desktop widths). */
+@media(min-width:1001px){
+.sidebar{width:240px;padding:20px 14px;gap:4px}
+.brandRow{padding:4px 8px 22px}
+.brand{font-size:19px;font-weight:800;letter-spacing:-.02em;padding:0;gap:10px}
+.brand>span{width:36px;height:36px;border-radius:10px}
+.navItem,.navActive{min-height:44px;padding:0 14px;gap:12px;border-radius:10px;font-size:14px;font-weight:500}
+.navActive{color:var(--rw-sidebar-strong);font-weight:600}
+}
