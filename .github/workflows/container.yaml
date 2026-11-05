@@ -29,6 +29,7 @@ jobs:
           mirrors = ["zot.zot.svc.cluster.local:5000"]
         [registry."zot.zot.svc.cluster.local:5000"]
           http = true
+      HOMELAB_NPM_REGISTRY: http://verdaccio.verdaccio.svc.cluster.local:4873/
     steps:
       - uses: actions/checkout@v6
         with:
@@ -81,7 +82,9 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          build-args: APP_VERSION=${{ inputs.tag }}
+          build-args: |
+            APP_VERSION=${{ inputs.tag }}
+            NPM_CONFIG_REGISTRY=${{ runner.environment == 'self-hosted' && env.HOMELAB_NPM_REGISTRY || 'https://registry.npmjs.org/' }}
           tags: ${{ env.IMAGE }}:sha-${{ inputs.sha }}
           # Reuse unchanged layers (npm ci, Prisma generate) and refresh the cache that
           # pull-request builds read.

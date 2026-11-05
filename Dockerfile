@@ -2,6 +2,8 @@ FROM node:24-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
 COPY package.json package-lock.json ./
+# npm registry for this build only (homelab CI passes Verdaccio); not kept in the final image.
+ARG NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
 RUN npm ci --ignore-scripts
 
 FROM node:24-alpine AS builder

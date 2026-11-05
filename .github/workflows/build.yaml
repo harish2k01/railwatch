@@ -133,6 +133,7 @@ jobs:
           mirrors = ["zot.zot.svc.cluster.local:5000"]
         [registry."zot.zot.svc.cluster.local:5000"]
           http = true
+      HOMELAB_NPM_REGISTRY: http://verdaccio.verdaccio.svc.cluster.local:4873/
     steps:
       - uses: actions/checkout@v6
       # Homelab runners pull Docker Hub base images through the in-cluster mirror.
@@ -146,7 +147,9 @@ jobs:
         with:
           context: .
           push: false
-          build-args: APP_VERSION=pr-${{ github.event.pull_request.number }}
+          build-args: |
+            APP_VERSION=pr-${{ github.event.pull_request.number }}
+            NPM_CONFIG_REGISTRY=${{ runner.environment == 'self-hosted' && env.HOMELAB_NPM_REGISTRY || 'https://registry.npmjs.org/' }}
           tags: ghcr.io/${{ github.repository }}:pr-${{ github.event.pull_request.number }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
 
