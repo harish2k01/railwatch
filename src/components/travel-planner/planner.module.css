@@ -247,3 +247,10 @@
 .navItem,.navActive{min-height:44px;padding:0 14px;gap:12px;border-radius:10px;font-size:14px;font-weight:500}
 .navActive{color:var(--rw-sidebar-strong);font-weight:600}
 }
+/* Calendar filter swatches use solid status colours (canvas: Calendar). */
+.legendToggle i[data-swatch]{width:10px;height:10px;border-radius:3px;box-sizing:border-box}
+.legendToggle i[data-swatch=booked]{background:var(--rw-booked)}
+.legendToggle i[data-swatch=needs_booking]{border:1.5px dashed var(--rw-muted)}
+.legendToggle i[data-swatch=bookings]{background:var(--rw-open)}
+.legendToggle i[data-swatch=cancellation_needed]{background:var(--rw-danger)}
+.legendToggle i[data-swatch=holidays]{background:var(--rw-timeoff)}
