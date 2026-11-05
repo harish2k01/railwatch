@@ -274,7 +274,7 @@
 .weekColumns{border-radius:16px;background:var(--rw-surface)}
 .weekColumn{min-height:560px;padding:12px}
 @media(max-width:1180px){.calendarLayout{grid-template-columns:minmax(0,1fr)}}
-.wideModal:has(form[class*=split]){width:980px}
+@media(min-width:1001px){.wideModal:has(form[class*=split]){width:980px}}
 .savedState{font-size:13px;color:var(--rw-muted)}
 /* The settings drawer is mounted inside the sidebar; keep the sidebar's nav rules off its tabs. */
 .sidebar .profileDrawer nav.profileTabs{display:flex;flex-direction:row;justify-content:flex-start;height:auto;margin:0;gap:8px;overflow:auto}
