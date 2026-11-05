@@ -74,7 +74,7 @@ try{
       await page.goto(url+'/journeys');await page.getByRole('button',{name:'New journey',exact:true}).click();
       const form=page.getByRole('dialog');await expect(form.getByLabel('Travel date',{exact:true})).toHaveValue('');await form.getByRole('combobox',{name:'Quota',exact:true}).click();await form.getByRole('option',{name:'Tatkal · AC (10:00)',exact:true}).click();await expect(form.getByText('Choose a travel date to see when booking opens.')).toBeVisible();await form.getByRole('combobox',{name:'Quota',exact:true}).click();await form.getByRole('option',{name:'Normal',exact:true}).click();
       await form.getByLabel('From',{exact:true}).fill('MDU');await form.getByLabel('To',{exact:true}).fill('MS');await form.getByRole('button',{name:'Swap route',exact:true}).click();await expect(form.getByLabel('From',{exact:true})).toHaveValue('MS');
-      assert.ok((await form.boundingBox()).width<700,'Create journey remains compact');await page.screenshot({path:`build/railwatch-qa/create-${width}-${theme}.png`,animations:'disabled'});await form.getByRole('button',{name:'Close dialog',exact:true}).click();
+      assert.ok((await form.boundingBox()).width<=(width>1000?980:width)+1,'Create journey stays within the board width (980px two-pane on desktop) and the screen');await page.screenshot({path:`build/railwatch-qa/create-${width}-${theme}.png`,animations:'disabled'});await form.getByRole('button',{name:'Close dialog',exact:true}).click();
     }
   }
   assert.deepEqual(errors,[]);console.log('Passed: continuous searchable PDF reader, real zoom, text layer, page scrolling, compact creation, empty dates, route swap, mobile and both themes.');
