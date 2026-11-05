@@ -22,6 +22,8 @@ An ordinary bookmark opens in a browser tab. Home-screen installation is the opt
 
 ## Offline and update behavior
 
+**Offline tickets** (Settings → Offline tickets, off by default) keep ticket PDFs for booked journeys in the next 72 hours on this device. Each PDF is encrypted with an AES-GCM key generated as non-extractable and stored in IndexedDB, so the raw key never leaves the browser key store. Tickets for journeys that have travelled or are no longer booked are removed on the next sync, and everything is deleted on sign-out or when the setting is turned off. When the network is unavailable, `/offline.html` lists those tickets and opens them locally. The service worker still caches only the offline page and its reader script.
+
 Only `/offline.html`, a public reconnect screen, is stored by the service worker. Account HTML, API responses, login credentials and PDF tickets are not added to Cache Storage. Navigation goes to the network first, so deployments do not require an old application shell to expire. Private tickets remain on the server and need connectivity; push subscriptions are stored encrypted in PostgreSQL. On worker updates, old RailWatch offline-document caches are removed and the worker is revalidated without HTTP caching.
 
 ## Device acceptance after deployment
