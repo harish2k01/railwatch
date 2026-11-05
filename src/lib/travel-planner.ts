@@ -69,7 +69,7 @@ export function weekday(day: string) { return new Date(`${day}T00:00:00Z`).getUT
 /** Returns the current date in the application travel timezone, Asia/Kolkata. */
 export function todayIST(now = new Date()) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(now); }
 /** Formats a calendar date for display using the requested date components. */
-export function formatDay(day: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", weekday: "short" }) { return new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "UTC" }).format(new Date(`${day}T00:00:00Z`)); }
+export function formatDay(day: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", weekday: "short" }) { const value = new Date(`${day}T00:00:00Z`); if (!day || Number.isNaN(value.getTime())) return ""; return new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "UTC" }).format(value); }
 /** Calculates the shared advance-booking date for a journey. */
 export function bookingDay(journey: Pick<Journey, "date" | "windowDays" | "originOffset" | "bookingDateOverride"> & Partial<Pick<Journey,"bookingType"|"tatkalClass"|"trainOriginDate">>) { return journey.bookingType === "tatkal" ? addDays(journey.trainOriginDate ?? journey.date, -1) : addDays(journey.date, -journey.windowDays); }
 /** Returns the normal or Tatkal booking-opening instant in IST. */
