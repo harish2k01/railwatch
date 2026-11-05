@@ -16,6 +16,7 @@ import { useViewMotion } from "./view-motion";
 import { PwaInstall } from "@/components/pwa-install";
 import { CalendarAgenda } from "./calendar-agenda";
 import { JourneyDetail } from "./journey-detail";
+import { parseHolidayICS } from "@/lib/holiday-ics";
 import { SettingsHub } from "./settings-hub";
 import { FirstRun } from "./first-run";
 import { stationLabel } from "@/lib/journey-display";
@@ -82,6 +83,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   const [statusFilter, setStatusFilter] = useState("all");
   const [mobileStatus, setMobileStatus] = useState("booked");
   const [calendarView, setCalendarView] = useState("month");
+  const [icsPreview, setIcsPreview] = useState<Omit<Planner["holidays"][number], "id">[] | null>(null);
   // Plan 2.6: journey status toggles double as the calendar legend.
   const [calendarStatuses, setCalendarStatuses] = useState<Record<string, boolean>>({ booked: true, needs_booking: true, cancellation_needed: true });
   const [editor, setEditor] = useState<Editor>(null);
@@ -196,8 +198,9 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       void commit({ ...planner, holidays: planner.holidays.filter(item => item.id !== id) }, "Time off removed.");
   }
   /** Parses a holiday import and adds validated entries to the current account. */
-  async function importHolidays(text: string) {
-    try { const holidays = [...planner.holidays]; const parsed = parseHolidayCSV(text);
+  /** Adds parsed holidays that aren't already present (same date and name). */
+  async function importHolidays(text: string, list?: Omit<Planner["holidays"][number], "id">[]) {
+    try { const holidays = [...planner.holidays]; const parsed = list ?? parseHolidayCSV(text);
       for (const h of parsed) if (!holidays.some(x => x.date === h.date && x.name.toLowerCase() === h.name.toLowerCase())) holidays.push({ ...h, id: crypto.randomUUID() });
       if (await commit({ ...planner, holidays }, `${holidays.length - planner.holidays.length} holidays imported.`)) close();
     } catch (e) { setError(e instanceof Error ? e.message : "Check the CSV file."); }
@@ -288,7 +291,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       {editor.type === "rule" && <RuleForm saving={saving} remindersEnabled={policy.remindersEnabled} rule={editor.rule} planner={planner} today={today} fail={setError} preview={previewRoutine} save={saveRoutine} />}
       {editor.type === "day" && <div className={s.form}>{selectedDay.pending&&<p role="status">Loading events…</p>}{selectedDay.error&&<><p role="alert">{selectedDay.error}</p><button className={s.reloadButton} aria-label="Refresh events" onClick={selectedDay.refresh}><RefreshCw size={18}/></button></>}{dayEvents.holidays.map(h=><p key={h.id}>{h.name}</p>)}{dayEvents.bookings.map(j=><button key={"b"+j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>Booking: {j.from} → {j.to}</button>)}{dayEvents.journeys.map(j=><button key={j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>{j.from} → {j.to} · {STATUS[j.status]}</button>)}{selectedDay.data?.nextCursor&&<button className={s.secondary} disabled={selectedDay.busy} onClick={()=>void selectedDay.more()}>Load more day events</button>}<button className={s.primary} onClick={()=>open({type:"journey",date:editor.date})}>Plan travel</button></div>}
       {editor.type === "holiday" && <form className={s.form} onSubmit={addHoliday}><Field label="Name"><input name="name" maxLength={100} placeholder="Holiday or personal plan" required /></Field><Field label="Type"><Select name="type"><option value="company">Company holiday</option><option value="leave">Personal leave / holiday</option></Select></Field><div className={s.formGrid}><Field label="Date"><input name="date" type="date" defaultValue={today} required /></Field><Field label="Through (Optional)"><input name="end" type="date" /></Field></div><button className={s.primary}>Add time off</button></form>}
-      {editor.type === "import" && <form className={s.form} onSubmit={e => { e.preventDefault(); importHolidays(String(new FormData(e.currentTarget).get("csv"))); }}><p className={s.help}>CSV columns: date,name,type. Types: company or leave. Dates use YYYY-MM-DD.</p><pre className={s.csvExample}>date,name,type{"\n"}2027-01-01,New Year,company</pre><Field label="Choose CSV file"><input type="file" accept=".csv,text/csv" onChange={async e => { const f = e.target.files?.[0]; if (!f) return; if (f.size > 1000000) { setError("Choose a CSV smaller than 1 MB."); return; } try { importHolidays(await f.text()); } catch { setError("Could not read the CSV file."); } }} /></Field><Field label="Or paste CSV"><textarea name="csv" rows={6} placeholder="date,name,type" required /></Field><button className={s.primary}>Import holidays</button></form>}
+      {editor.type === "import" && <form className={s.form} onSubmit={e => { e.preventDefault(); importHolidays(String(new FormData(e.currentTarget).get("csv"))); }}><p className={s.help}>Import a calendar (.ics) from Google or Outlook, or a CSV with columns: date,name,type. Types: company or leave. Dates use YYYY-MM-DD.</p><pre className={s.csvExample}>date,name,type{"\n"}2027-01-01,New Year,company</pre><Field label="Choose CSV or calendar (.ics) file"><input type="file" accept=".csv,text/csv,.ics,text/calendar" onChange={async e => { const f = e.target.files?.[0]; if (!f) return; if (f.size > 1000000) { setError("Choose a file smaller than 1 MB."); return; } try { const text = await f.text(); if (/\.ics$/i.test(f.name) || /BEGIN:VCALENDAR/i.test(text)) { try { setIcsPreview(parseHolidayICS(text)); } catch (err) { setError(err instanceof Error ? err.message : "Could not read the calendar file."); } } else importHolidays(text); } catch { setError("Could not read the file."); } }} /></Field>{icsPreview && <div className={s.icsPreview} role="region" aria-label="Calendar import preview"><b>{icsPreview.length} {icsPreview.length === 1 ? "day" : "days"} found</b><ul>{icsPreview.slice(0, 8).map(h => <li key={h.date + h.name}>{formatDay(h.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · {h.name}</li>)}{icsPreview.length > 8 && <li>and {icsPreview.length - 8} more</li>}</ul><div className={s.icsActions}><Select aria-label="Import as" value={icsPreview[0]?.type ?? "company"} onChange={e => setIcsPreview(icsPreview.map(h => ({ ...h, type: e.target.value as "company" | "leave" })))}><option value="company">Company holidays</option><option value="leave">Personal leave</option></Select><button type="button" className={s.primary} onClick={() => { const list = icsPreview; setIcsPreview(null); void importHolidays("", list); }}>Import {icsPreview.length} {icsPreview.length === 1 ? "day" : "days"}</button></div></div>}<Field label="Or paste CSV"><textarea name="csv" rows={6} placeholder="date,name,type" required /></Field><button className={s.primary}>Import holidays</button></form>}
     </div></Modal>}
   </div>;
 }
