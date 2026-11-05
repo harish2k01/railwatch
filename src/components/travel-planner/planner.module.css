@@ -209,3 +209,7 @@
 .systemHealth{display:grid;gap:8px;margin-bottom:18px}
 
 .pageEyebrow{display:block;margin-bottom:4px;font-size:13px;font-weight:600;color:var(--rw-muted)}
+/* Journey side panel on desktop Journeys (design gap J3). */
+.dockedModal{inset:auto;top:66px;right:0;bottom:0;left:auto;margin:0;width:440px;max-width:440px;max-height:none;height:calc(100dvh - 66px);border-radius:0;border-width:0 0 0 1px;box-shadow:-12px 0 40px #0003}
+.contentDocked{padding-right:464px}
+@media(max-width:1180px){.contentDocked{padding-right:0}}
