@@ -22,7 +22,40 @@ jobs:
           persist-credentials: false
       - run: npm audit --package-lock-only --audit-level=high
 
+  # The PR's checks already ran on this exact tree when the PR branch was up to date with
+  # main (the merge commit's tree equals the PR head's) and passed: skip the repeat.
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      skip_verify: ${{ steps.tree.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - id: tree
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          skip=false
+          if git rev-parse -q --verify HEAD^2 >/dev/null; then
+            pr_head=$(git rev-parse HEAD^2)
+            if [ "$(git rev-parse 'HEAD^{tree}')" = "$(git rev-parse "$pr_head^{tree}")" ]; then
+              ok=$(gh api "repos/$GITHUB_REPOSITORY/commits/$pr_head/check-runs?check_name=verify" --jq '[.check_runs[]|select(.conclusion=="success")]|length')
+              [ "$ok" -gt 0 ] && skip=true
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "Skip verify (PR already tested this tree): $skip" >> "$GITHUB_STEP_SUMMARY"
+
   verify:
+    needs: gate
+    if: needs.gate.outputs.skip_verify != 'true'
     runs-on: railwatch-runner
     timeout-minutes: 40
     services:
@@ -62,7 +95,8 @@ jobs:
 
   # Release planning only calls the GitHub API, so it runs on a GitHub-hosted runner.
   plan:
-    needs: [audit, verify]
+    needs: [audit, gate, verify]
+    if: ${{ !cancelled() && needs.audit.result == 'success' && needs.gate.result == 'success' && (needs.verify.result == 'success' || needs.verify.result == 'skipped') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -105,15 +139,11 @@ jobs:
     permissions:
       contents: write
       packages: write
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        target: ${{ fromJSON(needs.plan.outputs.targets) }}
+    # The planner returns only the newest release: one image build per run.
     uses: ./.github/workflows/container.yaml
     with:
-      tag: ${{ matrix.target.tag }}
-      sha: ${{ matrix.target.sha }}
+      tag: ${{ fromJSON(needs.plan.outputs.targets)[0].tag }}
+      sha: ${{ fromJSON(needs.plan.outputs.targets)[0].sha }}
     secrets:
       GH_APP_ID: ${{ secrets.GH_APP_ID }}
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}

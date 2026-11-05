@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { appendFile, writeFile } from "node:fs/promises";
 import { allPages, github } from "./github.mjs";
-import { planVersions, VERSION, compareVersions } from "./version.mjs";
+import { planVersions, VERSION, compareVersions, newestTarget, SUPERSEDED } from "./version.mjs";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 const releases = (await allPages("releases")).filter(
@@ -29,6 +29,7 @@ const plans = planVersions(latest?.tag_name || "v0.0.0", commitsWithPRs);
 // Validate the entire batch before creating anything. Reconcile all merges in order,
 // so GitHub concurrency replacing a pending run cannot lose a version bump.
 const dryRun = process.argv.includes("--dry-run");
+const newest = plans.at(-1)?.tag;
 for (const plan of dryRun ? [] : plans) {
   let existing;
   try {
@@ -50,26 +51,27 @@ for (const plan of dryRun ? [] : plans) {
       name: plan.tag,
       target_commitish: plan.sha,
       generate_release_notes: true,
-      body: `RailWatch release from #${plan.pr} (${plan.bump}).\n\nThe release workflow publishes the GHCR image after validation. The image metadata asset records its immutable digest and source commit.`,
+      body: `RailWatch release from #${plan.pr} (${plan.bump}).\n\n${plan.tag === newest ? "The release workflow publishes the GHCR image after validation. The image metadata asset records its immutable digest and source commit." : SUPERSEDED}`,
     },
   });
   console.log(`Created ${plan.tag} from #${plan.pr} at ${plan.sha}`);
 }
 // Reconcile only unfinished RailWatch publications; historical releases stay untouched.
 const unfinished = releases
-  .filter((r) => (r.body?.startsWith("RailWatch release from #") || r.body?.startsWith("RailWatch release from #")) && !r.assets.some((asset) => asset.name === "image.json"))
+  .filter((r) => r.body?.startsWith("RailWatch release from #") && !r.body.includes(SUPERSEDED) && !r.assets.some((asset) => asset.name === "image.json"))
   .map((r) => ({
     tag: r.tag_name,
     sha: git("rev-parse", `${r.tag_name}^{commit}`),
   }));
-const targets = [
+// Older unfinished releases are covered by the newest image, which contains their changes.
+const targets = newestTarget([
   ...new Map(
     [...unfinished, ...plans].map((target) => [
       target.tag,
       target,
     ]),
   ).values(),
-];
+]);
 await writeFile("release-plan.json", JSON.stringify(targets, null, 2));
 if (process.env.GITHUB_OUTPUT)
   await appendFile(

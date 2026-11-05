@@ -46,3 +46,10 @@ export function planVersions(previous, commits) {
   }
   return plans;
 }
+
+// Only the newest release is deployed, so a batch builds one image: the highest version.
+// Older releases in the batch keep their tag and notes but are marked superseded.
+export function newestTarget(targets) {
+  return targets.length ? [[...targets].sort((a, b) => compareVersions(a.tag, b.tag)).at(-1)] : [];
+}
+export const SUPERSEDED = "Superseded by a newer release in the same batch; no separate image was built.";
