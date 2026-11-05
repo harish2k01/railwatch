@@ -75,7 +75,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
           await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User settings',exact:false}).click();
           await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();
           await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
-          await mobileNav.getByRole('button',{name:'More',exact:true}).click();await page.getByRole('navigation',{name:'More destinations'}).getByRole('link',{name:'Tickets',exact:true}).click();
+          await page.getByRole('navigation',{name:'More destinations'}).getByRole('link',{name:'Tickets',exact:true}).click();
           const ticketRow=page.getByRole('button',{name:/^View ticket/}).first();await ticketRow.click();
           const pdf=page.getByRole('dialog',{name:'Ticket',exact:true});
           await expect(pdf.locator('canvas[data-rendered-page="1"]')).toBeVisible();
