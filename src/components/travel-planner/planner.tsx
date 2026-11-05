@@ -4,7 +4,7 @@ import {RoutineOverview} from "./routine-overview";
 import type {RoutineChangePreview} from "@/lib/routine-overview";
 import { settingsNavigationAllowed } from "./settings-guard";
 import { DesktopJourneys } from "./desktop-journeys";
-import type { JourneyQuickFilter } from "@/lib/journey-pages";
+import type { JourneyPages, JourneyQuickFilter } from "@/lib/journey-pages";
 import type { JourneyRange } from "./journey-date-range";
 import {MobileHome,MobileNavigation,MobileScreen,MobileJourneyRow,MobileWeek,useMobileWorkspace} from "./mobile-workspace";
 import m from "./mobile-workspace.module.css";
@@ -17,6 +17,7 @@ import { PwaInstall } from "@/components/pwa-install";
 import { CalendarAgenda } from "./calendar-agenda";
 import { JourneyDetail } from "./journey-detail";
 import { BookingDay } from "./booking-day";
+import { offlineEnabled, offlineTargets, syncOffline } from "@/lib/offline-tickets";
 import { TicketImport } from "./ticket-import";
 import { parseHolidayICS } from "@/lib/holiday-ics";
 import { SettingsHub } from "./settings-hub";
@@ -136,6 +137,10 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
 
   const ready = listView ? pages.data?.totals.ready ?? 0 : dashboard.data?.totals.ready ?? 0;
   const breaks = today ? findBreaks(planner, today) : [];
+  /** Refreshes this device's offline tickets from booked journeys in the next 72 hours (plan 3.6). */
+  const syncOfflineTickets=async()=>{if(!today||!offlineEnabled())return 0;const until=addDays(today,3);try{const page=await apiRequest<JourneyPages>(`/api/railwatch/journeys?view=list&range=all&status=booked&from=${today}&to=${until}`);return await syncOffline(offlineTargets(page.pages.all?.items??[],today,until));}catch{return 0;}};
+  useEffect(()=>{if(today&&offlineEnabled())void syncOfflineTickets();// eslint-disable-next-line react-hooks/exhaustive-deps
+  },[today,revision]);
   const activeDay = day || today;
   const dayEvents = selectedDate ? eventsFor(selectedDate) : {journeys:[],bookings:[],holidays:[]};
   const /** Resolves a routine identifier to its display name. */ ruleName = (j: Journey) => planner.rules.find(r => r.id === j.ruleId)?.name;
@@ -286,7 +291,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       {!mobile&&!moreVisible&&tab === "routines" && <RoutineOverview planner={planner} today={today} edit={rule=>open({type:"rule",rule})} toggle={rule=>{if(rule.paused||confirm("Pause this routine? Future unbooked journeys will be removed. Booked tickets and individual changes stay."))void routineAction(rule.paused?"resume":"pause",rule.paused?"Routine resumed.":"Routine paused.",rule.id);}} remove={removeRoutine}/>}
       {!mobile&&!moreVisible&&tab === "holidays" && <TimeOffOverview holidays={planner.holidays} today={today} remove={removeTimeOff} breaks={breaks} plan={date=>open({type:"journey",date})} journeys={planner.journeys} open={journey=>open({type:"journey",journey})} skip={skipTimeOff} keep={keepTimeOff}/>}
       {!mobile&&tab === "vault" && <><div className={s.vaultToolbar}><label className={s.search}><Search size={16}/><input aria-label="Search tickets" placeholder="Search tickets…" value={vaultSearch} onChange={e=>setVaultSearch(e.target.value)}/></label><button className={s.reloadButton} aria-label="Refresh tickets" title="Reload tickets" disabled={pages.busy} onClick={pages.refresh}><RefreshCw size={18}/></button></div><div className={s.vaultGrid}>{filtered.flatMap(j => (j.attachments ?? []).filter(file=>file.type==="application/pdf").map(file => <article className={s.vaultCard} key={file.id}><button className={s.vaultOpen} onClick={()=>setViewTicket(file)} aria-label={`View ticket ${j.from} to ${j.to}`}><span className={s.vaultDate}>{formatDay(j.date,{day:"numeric",month:"long",year:"numeric"})}</span><span className={s.vaultRoute} title={`${j.from} → ${j.to}`}>{stationLabel(j.from)}<ArrowRight size={16}/>{stationLabel(j.to)}</span></button><div className={s.cardActions}><button className={s.secondary} onClick={()=>setViewTicket(file)}>View ticket</button><ActionMenu label={`Ticket Actions For ${j.from} to ${j.to}`} actions={[{label:"Download ticket",onClick:()=>void downloadTicketFile(file).catch(e=>setError(e.message))}]}/></div></article>))}{!pages.pending&&!filtered.some(j=>j.attachments?.some(file=>file.type==="application/pdf")) && <section className={s.emptyPage}><Files size={32}/><h2>A Home For Your Tickets</h2><p>Upload a PDF from a booked journey. Images and QR codes only extract details and are not stored. PDFs are deleted seven days after cancellation or completion; journey history and entered details remain.</p></section>}</div>{pages.data?.pages.all?.nextCursor&&<button className={s.secondary} disabled={pages.busy} onClick={()=>void pages.more("all")}>Load more tickets</button>}</>}
-      {!moreVisible&&tab==="settings"&&<SettingsHub admin={account.role==="ADMIN"} openSection={section=>profileSettings.current?.open(section)} backup={()=>void backup()} restore={file=>void restore(file)} exportCalendar={exportCalendar}/>}
+      {!moreVisible&&tab==="settings"&&<SettingsHub syncOffline={syncOfflineTickets} admin={account.role==="ADMIN"} openSection={section=>profileSettings.current?.open(section)} backup={()=>void backup()} restore={file=>void restore(file)} exportCalendar={exportCalendar}/>}
       {!moreVisible&&(tab === "workspace" || tab === "users" || tab === "integrations" || tab === "operations") && account.role==="ADMIN" && <AdminPanel view={tab==="operations"?"operations":tab==="users"?"users":tab==="integrations"?"integrations":"settings"} currentUserId={account.id} notice={setNotice} refresh={refreshWorkspace}/>}
     </main></div>
     {mobile&&<MobileNavigation disabled={saving} tab={tab} more={moreOpen} openMore={()=>{if(settingsNavigationAllowed())setMoreOpen(!moreVisible);}} navigate={()=>setMoreOpen(false)}/>}
