@@ -13,7 +13,7 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const weekdayList = (days: number[]) => days.length === 7 ? "Every day" : `Every ${days.map((d) => DAYS[d]).join(", ")}`;
 
 /** Today page (plan 2.3): next trip, what to do next, the week ahead, routines and time off. */
-export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus }: { planner: Planner; today: string; data: DashboardView; openJourney: (j: Journey) => void; createJourney: () => void; go: (tab: "journeys" | "calendar" | "routines" | "holidays", status?: Journey["status"]) => void; chooseDate: (date: string) => void; setStatus?: (j: Journey, status: Journey["status"]) => void }) {
+export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus, skipTimeOff, keepTimeOff }: { planner: Planner; today: string; data: DashboardView; openJourney: (j: Journey) => void; createJourney: () => void; go: (tab: "journeys" | "calendar" | "routines" | "holidays", status?: Journey["status"]) => void; chooseDate: (date: string) => void; setStatus?: (j: Journey, status: Journey["status"]) => void; skipTimeOff?: (j: Journey) => void; keepTimeOff?: (j: Journey) => void }) {
   const { upcoming, bookingSoon, totals, week } = data;
   const next = upcoming[0];
   const holidays = planner.holidays.filter((h) => h.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
@@ -36,6 +36,9 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
           <div className={t.actions}><button type="button" className={s.primary} onClick={() => openJourney(next)}>Open journey</button></div>
         </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} /><h3>No trips coming up</h3><p>Add a journey or routine to see your next trip here.</p><button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a journey</button></div></section>}
 
+        {(data.conflicts?.length ?? 0) > 0 && <section className={t.decision} aria-labelledby="today-decision"><h2 id="today-decision">Needs a decision</h2>
+          {data.conflicts.map((j) => <div key={j.id} className={t.item}><button type="button" className={t.itemMain + " " + t.decisionTrip} onClick={() => openJourney(j)}><b>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>{STATUS[j.status]} on your time off{j.ruleId ? " · from a routine" : ""}</small></button>{skipTimeOff && <button type="button" className={s.primary} onClick={() => skipTimeOff(j)}>Skip this trip</button>}{keepTimeOff && <button type="button" className={s.secondary} onClick={() => keepTimeOff(j)}>Keep</button>}</div>)}
+        </section>}
         <section className={t.section}>
           <header className={t.sectionHead}><h2>Do next{totals.attention > 0 && <> <span>{totals.attention}</span></>}</h2>{totals.attention > data.attention.length && <button className={s.textButton} onClick={() => go("journeys")}>View all <ArrowRight size={15} /></button>}</header>
           {data.attention.length ? <div className={t.list}>{data.attention.map((j) => <div key={j.id} className={t.item}>
