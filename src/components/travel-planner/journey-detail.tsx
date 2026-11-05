@@ -28,7 +28,7 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
   const details: [string, string][] = [
     ["Train", [j.trainNumber, j.trainName || j.train].filter(Boolean).join(" · ")], ["PNR", j.pnr],
     ["Coach · berth", [j.coach, j.seat, j.berth].filter(Boolean).join(" · ")], ["Departs", j.departureConfirmed && j.departure ? `${j.departure} IST` : ""],
-    ["Class", j.travelClass],
+    ["Class", j.travelClass], ["Ticket status", j.ticketStatus === "CNF" ? "Confirmed" : j.ticketStatus ?? ""],
   ];
   const booked = j.status === "booked";
   const main = j.status === "cancellation_needed" ? { label: "Confirm cancellation", run: cancel }

@@ -8,7 +8,7 @@ describe("ticket extraction suggestions", () => {
   it("reads understandable QR JSON aliases", () => {
     expect(parseTicketDetails(JSON.stringify({ PNR: 1234567890, trainNo: "12637", trainName: "Express", seatNo: 42, berthType: "Lower", journeyDate: "01-12-2026" }))).toMatchObject({ pnr: "1234567890", trainNumber: "12637", trainName: "Express", seat: "42", berth: "Lower", date: "2026-12-01" });
   });
-  it("reads confirmed passenger allocations", () => { expect(parseTicketDetails("CNF/B1/42/LB")).toEqual({ coach: "B1", seat: "42", berth: "LB" }); });
+  it("reads confirmed passenger allocations", () => { expect(parseTicketDetails("CNF/B1/42/LB")).toEqual({ coach: "B1", seat: "42", berth: "LB", ticketStatus: "CNF" }); });
   it("discards invalid critical values and handles opaque QR payloads", () => {
     expect(parseTicketDetails(JSON.stringify({ pnr: "123", date: "2026-02-30", departure: "25:10", trainNumber: "ABCD" }))).toEqual({});
     expect(parseTicketDetails("opaque-encrypted-QR-payload")).toEqual({});
