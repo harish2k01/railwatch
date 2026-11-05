@@ -12,7 +12,7 @@ export const journeyQuerySchema=z.object({view:z.enum(["board","list","completed
 export type JourneyQuery=z.infer<typeof journeyQuerySchema>;
 export type JourneyQuickFilter=JourneyQuery["quick"];
 export type JourneyPage={items:Journey[];nextCursor:string|null;total:number};
-export type JourneyPages={revision:number;pages:Record<string,JourneyPage>;filteredTotals?:{board:number;completed:number;archive:number};totals:{board:number;completed:number;archive:number;booked:number;ready:number;toCancel:number}};
+export type JourneyPages={revision:number;pages:Record<string,JourneyPage>;filteredTotals?:{board:number;completed:number;archive:number};totals:{board:number;completed:number;archive:number;booked:number;ready:number;toCancel:number;noTicket:number;bookingWeek:number;travelWeek:number}};
 
 /** Builds the list index lazily for upgraded accounts and refreshes it at an IST day boundary. */
 export async function ensureJourneyIndex(userId:string,now=new Date()){
@@ -60,14 +60,17 @@ export async function readJourneyPages(userId:string,input:JourneyQuery,now=new 
     // Cross-section counts retain explicit dates and search without the current section constraint.
     let scope=journeyWhere(userId,input,now,true);if(input.q)scope=await matchSearch(tx,userId,scope,input.q);
     const where:Prisma.RailJourneyWhereInput={AND:[journeyWhere(userId,input,now),scope]};
-    const today=todayIST(now);
+    const today=todayIST(now),weekStart=addDays(today,-((weekday(today)-input.weekStartsOn+7)%7)),weekFrom=new Date(`${weekStart}T00:00:00+05:30`),weekTo=new Date(`${addDays(weekStart,7)}T00:00:00+05:30`);
     const [totals]=await tx.$queryRaw<JourneyPages["totals"][]>`SELECT
       (COUNT(*) FILTER (WHERE NOT archived AND status <> 'completed'))::int AS board,
       (COUNT(*) FILTER (WHERE NOT archived AND status = 'completed'))::int AS completed,
       (COUNT(*) FILTER (WHERE archived))::int AS archive,
       (COUNT(*) FILTER (WHERE NOT archived AND status = 'booked' AND date >= ${today}))::int AS booked,
       (COUNT(*) FILTER (WHERE NOT archived AND status = 'needs_booking' AND date >= ${today} AND "bookingAt" <= ${now}))::int AS ready,
-      (COUNT(*) FILTER (WHERE NOT archived AND status = 'cancellation_needed' AND date >= ${today}))::int AS "toCancel"
+      (COUNT(*) FILTER (WHERE NOT archived AND status = 'cancellation_needed' AND date >= ${today}))::int AS "toCancel",
+      (COUNT(*) FILTER (WHERE NOT archived AND status = 'booked' AND date >= ${today} AND NOT "hasTicket"))::int AS "noTicket",
+      (COUNT(*) FILTER (WHERE NOT archived AND status = 'needs_booking' AND "bookingAt" >= ${weekFrom} AND "bookingAt" < ${weekTo}))::int AS "bookingWeek",
+      (COUNT(*) FILTER (WHERE NOT archived AND status = 'booked' AND date >= ${weekStart} AND date <= ${addDays(weekStart,6)}))::int AS "travelWeek"
       FROM "RailJourney" WHERE "userId" = ${userId}`;
     const groups=await tx.railJourney.groupBy({by:["status"],where,_count:{_all:true}});
     const counts=new Map(groups.map(g=>[g.status,g._count._all]));

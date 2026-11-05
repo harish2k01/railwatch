@@ -10,7 +10,7 @@ import {addDays,daysBetween,isDay,todayIST,type Journey} from "./travel-planner"
 export const planningQuerySchema=z.object({view:z.enum(["dashboard","calendar"]),from:z.string().refine(isDay).optional(),to:z.string().refine(isDay).optional(),cursor:z.string().max(512).default("")});
 export type PlanningQuery=z.infer<typeof planningQuerySchema>;
 export type CalendarCounts=Record<string,{journeys:number;bookings:number;cancellations:number}>;
-export type DashboardView={revision:number;conflicts:Journey[];totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
+export type DashboardView={revision:number;conflicts:Journey[];totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number;noTicket?:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
 export type CalendarView={revision:number;journeys:Journey[];counts:CalendarCounts;total:number;nextCursor:string|null};
 /** Decrypts only the explicitly selected index records. */
 function decode(rows:{payload:string}[]){return rows.map(row=>JSON.parse(decryptSecret(row.payload)!) as Journey);}
@@ -39,7 +39,8 @@ export async function readPlanningView(userId:string,input:PlanningQuery,now=new
         (COUNT(*) FILTER (WHERE status='completed'))::int AS completed,
         (COUNT(*) FILTER (WHERE status='cancellation_needed' AND date>=${today}))::int AS "toCancel",
         (COUNT(*) FILTER (WHERE status='cancellation_needed' OR (status='needs_booking' AND date>=${today} AND "bookingAt"<=${now})))::int AS attention,
-        (COUNT(*) FILTER (WHERE date>=${today} AND (status='booked' OR (status='needs_booking' AND "bookingAt"<=${now}))))::int AS upcoming
+        (COUNT(*) FILTER (WHERE date>=${today} AND (status='booked' OR (status='needs_booking' AND "bookingAt"<=${now}))))::int AS upcoming,
+        (COUNT(*) FILTER (WHERE status='booked' AND date>=${today} AND NOT "hasTicket"))::int AS "noTicket"
         FROM "RailJourney" WHERE "userId"=${userId} AND NOT archived`;
       const open:Prisma.RailJourneyWhereInput={...active,date:{gte:today},status:"needs_booking",bookingAt:{lte:now}};
       const ready=await tx.railJourney.findMany({where:open,orderBy:[{date:"asc"},{id:"asc"}],take:30,select:{payload:true}});

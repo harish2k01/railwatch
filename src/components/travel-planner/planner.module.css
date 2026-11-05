@@ -209,3 +209,9 @@
 .systemHealth{display:grid;gap:8px;margin-bottom:18px}
 
 .pageEyebrow{display:block;margin-bottom:4px;font-size:13px;font-weight:600;color:var(--rw-muted)}
+/* Sidebar account (canvas: Sidebar). */
+.sidebarAccount{display:flex;align-items:center;gap:10px;margin-top:auto;padding:12px 8px;border-top:1px solid var(--rw-sidebar-line)}
+.accountAvatar{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:999px;background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:700;font-size:13px}
+.accountText{display:grid;min-width:0}
+.accountText b{font-size:13px;font-weight:600;color:var(--rw-sidebar-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.accountText small{font-size:12px;color:var(--rw-sidebar-muted)}
