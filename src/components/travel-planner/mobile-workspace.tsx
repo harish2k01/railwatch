@@ -49,3 +49,18 @@ export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data
 export function MobileScreen({title,children,action}:{title:string;children:ReactNode;action?:ReactNode}){return <div className={m.screen}><div className={m.heading}><h1>{title}</h1>{action}</div>{children}</div>;}
 /** Shows a seven-day selector around the chosen date, including exact event counts. */
 export function MobileWeek({date,choose,count}:{date:string;choose:(date:string)=>void;count:(date:string)=>number}){return <div className={m.week} aria-label="Calendar week">{Array.from({length:7},(_,i)=>addDays(date,i-3)).map(value=><button key={value} aria-label={`View ${value}, ${count(value)} events`} aria-pressed={value===date} onClick={()=>choose(value)}><small>{formatDay(value,{weekday:"short"})}</small><b>{Number(value.slice(-2))}</b><span aria-hidden="true">{count(value)>0?"•":" "}</span></button>)}</div>;}
+/** More on phones (canvas MoreMobile.dc.html): account header, Plan, Settings and Workspace groups, Sign out. */
+export function MobileMore({name,admin,missingTickets,openSettings,theme,signOut,close}:{name:string;admin:boolean;missingTickets:number;openSettings:()=>void;theme:{label:string;toggle:()=>void};signOut:()=>void;close:()=>void}){
+  const item=(href:string,label:string,value?:ReactNode,last?:boolean)=><Link className={m.moreItem} data-last={last||undefined} href={href} onClick={close}>{label}{value!==undefined&&<span className={m.moreValue}>{value}</span>}</Link>;
+  return <div className={m.more}>
+    <button type="button" className={m.moreHead} aria-label="User settings" onClick={openSettings}><span className={m.avatar} aria-hidden="true">{(name.trim()[0]??"?").toUpperCase()}</span><span><h1>{name}</h1><small>{admin?"Admin · ":""}Profile and security</small></span></button>
+    <nav aria-label="More destinations">
+      <h2 className={m.moreGroup}>Plan</h2>
+      <div className={m.moreCard}>{item("/time-off","Time off")}{item("/routines","Routines")}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined,true)}</div>
+      <h2 className={m.moreGroup}>Settings</h2>
+      <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders")}{item("/settings#settings-channels","Channels")}{item("/settings#settings-offline","Offline tickets")}{item("/settings#settings-data","Data and backup")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
+      {admin&&<><h2 className={m.moreGroup}>Workspace</h2><div className={m.moreCard}>{item("/settings/workspace","Members and booking rules")}{item("/settings/workspace/health","System health",undefined,true)}</div></>}
+    </nav>
+    <button type="button" className={m.signOut} onClick={signOut}>Sign out</button>
+  </div>;
+}

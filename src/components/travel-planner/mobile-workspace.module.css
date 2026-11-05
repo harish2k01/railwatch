@@ -38,3 +38,23 @@
 .strip b{font-size:15px;font-weight:700}
 .strip i{width:6px;height:6px;border-radius:999px}.strip i[data-on]{background:var(--rw-brand)}
 .strip span[data-today]{background:var(--rw-brand);color:var(--rw-brand-ink)}.strip span[data-today] small{color:inherit}.strip span[data-today] i[data-on]{background:var(--rw-brand-ink)}
+
+/* Tab bar (canvas TabBar.dc.html). */
+.navigation{display:flex!important;padding:6px 8px calc(14px + env(safe-area-inset-bottom))!important;background:var(--rw-sidebar)!important;border-top:1px solid var(--rw-line)!important}
+.navigation a,.navigation button{flex:1;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px!important;min-height:56px!important;border-radius:0!important;background:none!important;color:var(--rw-muted)!important;font:600 12px inherit!important}
+.navigation [aria-current=page],.navigation [aria-pressed=true]{color:var(--rw-brand-soft-ink)!important;font-weight:700!important}
+.navigation svg{width:22px;height:22px}
+
+/* More (canvas MoreMobile.dc.html). */
+.more{display:flex;flex-direction:column;padding:6px 0 24px}
+.moreHead{display:flex;align-items:center;gap:14px;padding:12px 0 4px;border:0;background:none;color:var(--rw-text);font:inherit;text-align:left}
+.avatar{display:grid;place-items:center;width:48px;height:48px;border-radius:999px;background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:800;font-size:18px;flex:none}
+.moreHead h1{margin:0;font-size:20px;font-weight:800}
+.moreHead small{font-size:13px;color:var(--rw-muted)}
+.moreGroup{margin:18px 4px 8px!important;font-size:11px!important;font-weight:700!important;letter-spacing:.08em;text-transform:uppercase;color:var(--rw-muted)}
+.moreCard{border-radius:14px;background:var(--rw-surface);border:1px solid var(--rw-line);overflow:hidden}
+.moreItem{display:flex;align-items:center;gap:14px;width:100%;min-height:52px;padding:0 16px;border:0;border-bottom:1px solid var(--rw-line);background:none;color:var(--rw-text);font:600 15px inherit;text-decoration:none;text-align:left}
+.moreItem[data-last]{border-bottom:0}
+.moreValue{margin-left:auto;font-size:13px;font-weight:500;color:var(--rw-muted)}
+.moreWarn{font-weight:700;color:var(--rw-attention-ink)}
+.signOut{margin-top:18px;width:100%;min-height:48px;border-radius:12px;border:1px solid var(--rw-line);background:transparent;color:var(--rw-danger);font:600 15px inherit}

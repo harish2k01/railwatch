@@ -6,7 +6,7 @@ import {expect} from './browser-expect.mjs';
 
 /** Exercises the populated test account at phone, tablet and desktop widths in both themes. */
 /** Opens user settings: More → User settings on phones (Today has no top bar), the profile menu otherwise. */
-async function openUserSettings(page){const profile=page.getByRole("button",{name:"Open profile menu",exact:true});if(await profile.isVisible()){await profile.click();await page.getByRole("menuitem",{name:"User settings",exact:true}).click();return;}await page.getByRole("navigation",{name:"Mobile navigation"}).getByRole("button",{name:"More",exact:true}).click();await page.getByRole("navigation",{name:"More destinations"}).getByRole("button",{name:"User settings",exact:true}).click();}
+async function openUserSettings(page){const profile=page.getByRole("button",{name:"Open profile menu",exact:true});if(await profile.isVisible()){await profile.click();await page.getByRole("menuitem",{name:"User settings",exact:true}).click();return;}await page.getByRole("navigation",{name:"Mobile navigation"}).getByRole("button",{name:"More",exact:true}).click();await page.getByRole("button",{name:"User settings",exact:true}).click();}
 export async function verifyResponsive({page,api,url,otherApi}) {
   const curve=createECDH('prime256v1');curve.generateKeys();
   const subscription={endpoint:'https://fcm.googleapis.com/fcm/send/railwatch-isolated-test',keys:{p256dh:curve.getPublicKey().toString('base64url'),auth:randomBytes(16).toString('base64url')}};
@@ -55,7 +55,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await page.getByRole('button',{name:'Planned',exact:true}).click();
         await expect(page.getByRole('button',{name:'Planned',exact:true})).toHaveAttribute('aria-pressed','true');
         await mobileNav.getByRole('button',{name:'More',exact:true}).click();
-        await expect(page.getByRole('heading',{name:'More',exact:true})).toBeVisible();
+        await expect(page.getByRole('navigation',{name:'More destinations'})).toBeVisible();
         const more=page.getByRole('navigation',{name:'More destinations'});
         await more.getByRole('link',{name:'Routines',exact:false}).click();await expect(page.getByRole('heading',{name:'Routines',exact:true})).toBeVisible();
         await openUserSettings(page);
@@ -74,7 +74,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(1);
         if(width===390&&theme==='light') {
           await mobileNav.getByRole('button',{name:'More',exact:true}).click();
-          await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User settings',exact:false}).click();
+          await page.getByRole('button',{name:'User settings',exact:true}).click();
           await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();
           await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
           await page.getByRole('navigation',{name:'More destinations'}).getByRole('link',{name:'Tickets',exact:true}).click();
