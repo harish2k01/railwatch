@@ -31,10 +31,8 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
       </div></div>
       <div className={s.list}>{groups.map(group => <details className={s.range} key={`${group.type}-${group.name}-${group.start}`}>
         <summary><span className={s.date} aria-hidden="true"><b>{formatDay(group.start, { day: "2-digit" })}</b><span>{formatDay(group.start, { month: "short" })}</span></span>
-          <span className={s.description}><strong>{group.name}</strong><span>{date(group.start)}{group.end !== group.start ? ` – ${date(group.end)}` : ""}</span></span>
+          <span className={s.description}><strong>{group.name}</strong><span>{date(group.start)}{group.end !== group.start ? ` – ${date(group.end)}` : ""}</span><span className={s.pills}>{group.start <= today && group.end >= today && <em className={s.pill}>In progress</em>}{!past && (() => { const n = tripsIn(group.start, group.end).length; return <em className={n ? s.pillWarn : s.pill}>{n ? `${n} ${n === 1 ? "trip" : "trips"} affected` : "No trips affected"}</em>; })()}</span></span>
           <span className={s.kind}>{group.type === "company" ? "Company" : "Personal"}{group.days.length > 1 ? ` · ${group.days.length} days` : ""}</span>
-          {group.start <= today && group.end >= today && <span className={s.pill}>In progress</span>}
-          {!past && (() => { const n = tripsIn(group.start, group.end).length; return <span className={n ? s.pillWarn : s.pill}>{n ? `${n} ${n === 1 ? "trip" : "trips"} affected` : "No trips affected"}</span>; })()}
         </summary>
         <div className={s.days}>{group.days.map(day => <div className={s.day} key={day.id}><span>{date(day.date)}</span><ActionMenu label={`Actions For ${day.name} on ${day.date}`} actions={[{ label: "Remove time off", danger: true, onClick: () => remove(day.id) }]} /></div>)}</div>
       </details>)}{!groups.length && <div className={s.empty}><CalendarDays size={24} aria-hidden="true"/><strong>{past ? "No past time off" : "No upcoming time off"}</strong><p>{past ? "Past holidays and leave will appear here." : "Add time off or import company holidays to plan your next break."}</p></div>}</div>
