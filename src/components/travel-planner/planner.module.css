@@ -201,3 +201,8 @@
 .weekColumnHead{display:grid;justify-items:start;gap:2px;border:0;background:none;color:var(--rw-text);font:inherit;padding:0 0 6px;cursor:pointer}
 .weekColumnHead small{font-size:12px;font-weight:700;color:var(--rw-muted);text-transform:uppercase}
 .weekColumnHead b{font-size:20px;font-weight:800}
+
+/* ICS holiday import preview (plan 3.8). */
+.icsPreview{display:grid;gap:8px;padding:14px;border-radius:12px;border:1px solid var(--rw-line);background:var(--rw-surface-2)}
+.icsPreview ul{margin:0;padding-left:18px;display:grid;gap:2px;font-size:14px}
+.icsActions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
