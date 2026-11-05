@@ -1,23 +1,25 @@
-// Regenerates the PWA icons and favicon.ico from the Signal clock mark. Run: node scripts/generate-icons.mjs
+// Regenerates the PWA icons and favicon.ico from the signal lamp mark. Run: node scripts/generate-icons.mjs
 import { writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
-const mark = (stroke, lamp, width = 2) => `<g fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"><circle cx="11" cy="13" r="8.5"/><path d="M11 13V7.5M11 13l-4.2 2.4"/><circle cx="19.5" cy="4.5" r="2.6" fill="${lamp}" stroke="none"/></g>`;
-// glyph: fraction of the tile the 24-unit mark spans; rounded: tile corner radius in px (0 = full bleed for maskable/iOS).
+const BRAND = "#4c4ddc", INK = "#f4f4ff";
+// Signal lamp on a 48-unit grid: solid head, lit top lens and dimmed lower lens cut in the tile colour, stem and base.
+const mark = () => `<rect x="16" y="6" width="16" height="28" rx="8" fill="${INK}"/><circle cx="24" cy="14" r="4.2" fill="${BRAND}"/><circle cx="24" cy="26" r="4.2" fill="${BRAND}" opacity=".35"/><rect x="22.5" y="34" width="3" height="8" rx="1.5" fill="${INK}"/><rect x="15" y="41" width="18" height="3" rx="1.5" fill="${INK}"/>`;
+// glyph: fraction of the tile the 48-unit mark spans; rounded: tile corner radius in px (0 = full bleed for maskable/iOS).
 const tile = (size, glyph, rounded) => {
-  const scale = (size * glyph) / 24, offset = (size - 24 * scale) / 2;
-  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${rounded}" fill="#ff8a3d"/><g transform="translate(${offset} ${offset}) scale(${scale})">${mark("#1a0e05", "#1a0e05", size <= 48 ? 2.6 : 2)}</g></svg>`);
+  const scale = (size * glyph) / 48, offset = (size - 48 * scale) / 2;
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${rounded}" fill="${BRAND}"/><g transform="translate(${offset} ${offset}) scale(${scale})">${mark()}</g></svg>`);
 };
 const png = (svg) => sharp(svg).png().toBuffer();
 
-await writeFile("public/icons/app-192.png", await png(tile(192, 0.66, 42)));
-await writeFile("public/icons/app-512.png", await png(tile(512, 0.66, 112)));
+await writeFile("public/icons/app-192.png", await png(tile(192, 0.82, 42)));
+await writeFile("public/icons/app-512.png", await png(tile(512, 0.82, 112)));
 // Maskable icons must keep the glyph inside the central 80% safe zone.
-await writeFile("public/icons/app-maskable-512.png", await png(tile(512, 0.52, 0)));
-await writeFile("public/icons/apple-touch-icon.png", await png(tile(180, 0.62, 0)));
+await writeFile("public/icons/app-maskable-512.png", await png(tile(512, 0.62, 0)));
+await writeFile("public/icons/apple-touch-icon.png", await png(tile(180, 0.78, 0)));
 
 // favicon.ico holding PNG entries (supported by every current browser).
-const sizes = [16, 32, 48], images = await Promise.all(sizes.map((s) => png(tile(s, 0.74, s / 4))));
+const sizes = [16, 32, 48], images = await Promise.all(sizes.map((s) => png(tile(s, 0.96, s / 4))));
 const header = Buffer.alloc(6 + 16 * sizes.length);
 header.writeUInt16LE(0, 0); header.writeUInt16LE(1, 2); header.writeUInt16LE(sizes.length, 4);
 let offset = header.length;
