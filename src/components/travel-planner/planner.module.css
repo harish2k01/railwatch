@@ -186,3 +186,18 @@
 @keyframes skeleton{from{background-position:100% 0}to{background-position:-100% 0}}
 @media(prefers-reduced-motion:reduce){.skeleton span{animation:none}}
 .navDivider{border:0;border-top:1px solid var(--rw-line);margin:10px 8px}
+
+/* Calendar week view and legend toggles (plan 2.6). */
+.legendToggle{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rw-line);background:var(--rw-surface);color:var(--rw-text);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.legendToggle[aria-pressed=false]{opacity:.55;text-decoration:line-through}
+.legendToggle i{width:10px;height:10px;border-radius:3px;display:inline-block;padding:0;min-height:0}
+.weekView{display:grid;gap:12px}
+.weekNav{display:flex;align-items:center;gap:10px}
+.weekColumns{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--rw-line);border-radius:16px;overflow:hidden;background:var(--rw-surface)}
+.weekColumn{display:flex;flex-direction:column;gap:6px;padding:10px;min-height:420px;border-right:1px solid var(--rw-line);min-width:0}
+.weekColumn:last-child{border-right:0}
+.weekColumn>button:not(.weekColumnHead){text-align:left;white-space:normal}
+.weekColumnToday{background:var(--rw-brand-soft)}
+.weekColumnHead{display:grid;justify-items:start;gap:2px;border:0;background:none;color:var(--rw-text);font:inherit;padding:0 0 6px;cursor:pointer}
+.weekColumnHead small{font-size:12px;font-weight:700;color:var(--rw-muted);text-transform:uppercase}
+.weekColumnHead b{font-size:20px;font-weight:800}
