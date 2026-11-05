@@ -161,9 +161,9 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();await expect(dialog).toHaveCount(0);
 
   await page.getByRole('button',{name:'New journey',exact:true}).click();
-  await dialog.getByLabel('Travel date',{exact:true}).fill(new Date(Date.now()+60*86400000).toISOString().slice(0,10));await dialog.getByRole('button',{name:'Tatkal',exact:true}).click();
+  await dialog.getByLabel('Travel date',{exact:true}).fill(new Date(Date.now()+60*86400000).toISOString().slice(0,10));await dialog.getByRole('combobox',{name:'Quota',exact:true}).click();await dialog.getByRole('option',{name:'Tatkal · AC (10:00)',exact:true}).click();
   await expect(dialog.getByText('10:00 AM IST',{exact:false}).first()).toBeVisible();
-  await dialog.getByRole('combobox',{name:'Tatkal class',exact:true}).click();await dialog.getByRole('option',{name:'Non-AC — opens at 11 AM',exact:true}).click();await expect(dialog.getByText('11:00 AM IST',{exact:false}).first()).toBeVisible();
+  await dialog.getByRole('combobox',{name:'Quota',exact:true}).click();await dialog.getByRole('option',{name:'Tatkal · non-AC (11:00)',exact:true}).click();await expect(dialog.getByText('11:00 AM IST',{exact:false}).first()).toBeVisible();
   await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();
   await page.goto(url+'/journeys');
   await page.emulateMedia({reducedMotion:'no-preference'});
