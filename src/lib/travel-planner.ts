@@ -27,7 +27,7 @@ export const journeySchema = z.object({
   bookingDateOverride: daySchema.optional(),
   bookingType: z.enum(["normal", "tatkal"]).optional(), tatkalClass: z.enum(["ac", "non_ac"]).optional(), trainOriginDate: daySchema.optional(),
   cancellationReminder: z.object({ enabled: z.boolean(), time: clock, schedule: reminderScheduleSchema.optional() }).optional(),
-  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), ticketStatus: z.enum(["CNF", "RAC", "WL"]).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(),
+  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), timeOffKept: z.boolean().optional(), ticketStatus: z.enum(["CNF", "RAC", "WL"]).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(),
   completedAt:daySchema.optional(), cancelledAt: daySchema.optional(), archivedAt: daySchema.optional(), attachments: z.array(attachmentSchema).max(20).optional(),
   status: statusSchema, pnr: z.string().regex(/^$|^\d{10}$/), notes: z.string().max(1000),
 }).refine(j=>j.bookingType!=="tatkal"||Boolean(j.tatkalClass&&j.trainOriginDate&&j.trainOriginDate<=j.date),"Choose the Tatkal class and a train starting date on or before travel.");
@@ -301,4 +301,11 @@ export function calendarFile(planner: Planner) {
   // Fold UTF-8 lines at 75 octets as required by iCalendar.
   const /** Folds calendar export lines to the iCalendar byte limit. */ fold = (line: string) => { let out = ""; let size = 0; for (const c of line) { const length = new TextEncoder().encode(c).length; if (size + length > 75) { out += "\r\n "; size = 1; } out += c; size += length; } return out; };
   return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//RailWatch//Travel planner//EN", "CALSCALE:GREGORIAN", ...events, "END:VCALENDAR", ""].join("\r\n").split("\r\n").map(fold).join("\r\n");
+}
+
+/** Skips a journey that falls on time off; a routine journey also records a routine exception so it is not regenerated (plan 3.1). */
+export function skipForTimeOff(planner: Planner, journey: Journey): Planner {
+  const skipped = transitionJourney(journey, "skipped");
+  const rules = journey.ruleId ? planner.rules.map(r => r.id === journey.ruleId && !r.excludedDates.includes(journey.date) ? { ...r, excludedDates: [...r.excludedDates, journey.date].sort() } : r) : planner.rules;
+  return { ...planner, rules, journeys: [...planner.journeys.filter(j => j.id !== journey.id), skipped] };
 }

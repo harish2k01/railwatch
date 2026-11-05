@@ -4,12 +4,13 @@ import {prisma} from "./db";
 import {decryptSecret,stableHash} from "./crypto";
 import {ApiError} from "./http";
 import {ensureJourneyIndex} from "./journey-pages";
+import {storedPlanner} from "./workspace-storage";
 import {addDays,daysBetween,isDay,todayIST,type Journey} from "./travel-planner";
 
 export const planningQuerySchema=z.object({view:z.enum(["dashboard","calendar"]),from:z.string().refine(isDay).optional(),to:z.string().refine(isDay).optional(),cursor:z.string().max(512).default("")});
 export type PlanningQuery=z.infer<typeof planningQuerySchema>;
 export type CalendarCounts=Record<string,{journeys:number;bookings:number;cancellations:number}>;
-export type DashboardView={revision:number;totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
+export type DashboardView={revision:number;conflicts:Journey[];totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
 export type CalendarView={revision:number;journeys:Journey[];counts:CalendarCounts;total:number;nextCursor:string|null};
 /** Decrypts only the explicitly selected index records. */
 function decode(rows:{payload:string}[]){return rows.map(row=>JSON.parse(decryptSecret(row.payload)!) as Journey);}
@@ -29,7 +30,7 @@ export async function readPlanningView(userId:string,input:PlanningQuery,now=new
   await ensureJourneyIndex(userId,now);
   return prisma.$transaction(async tx=>{
     await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR SHARE`;
-    const {version:revision}=await tx.railWorkspace.findUniqueOrThrow({where:{userId},select:{version:true}});
+    const workspace=await tx.railWorkspace.findUniqueOrThrow({where:{userId},select:{version:true,payload:true,storageVersion:true}}),revision=workspace.version;
     const today=todayIST(now),active={userId,archived:false};
     if(input.view==="dashboard"){
       const [totals]=await tx.$queryRaw<DashboardView["totals"][]>`SELECT
@@ -50,7 +51,11 @@ export async function readPlanningView(userId:string,input:PlanningQuery,now=new
       const weekUpcoming=await tx.railJourney.groupBy({by:["date"],where:{...active,date:{gte:today,lte:addDays(today,6)},OR:[{status:"booked"},{status:"needs_booking",bookingAt:{lte:now}}]},_count:{_all:true}});
       for(const value of Object.values(week))value.journeys=0;
       for(const row of weekUpcoming)(week[row.date]??(week[row.date]={journeys:0,bookings:0,cancellations:0})).journeys=row._count._all;
-      return {revision,totals,attention:decode([...ready,...cancelling]),upcoming:decode(upcoming),bookingSoon:decode(bookingSoon),week};
+      // Plan 3.1: planned or booked trips on upcoming time off, unless the user chose to keep them.
+      const holidays=(await storedPlanner(tx,userId,workspace,[])).holidays.map(h=>h.date).filter(d=>d>=today);
+      const onTimeOff=holidays.length?await tx.railJourney.findMany({where:{...active,date:{in:[...new Set(holidays)].slice(0,400)},status:{in:["needs_booking","booked"]}},orderBy:[{date:"asc"},{id:"asc"}],take:20,select:{payload:true}}):[];
+      const conflicts=decode(onTimeOff).filter(j=>!j.timeOffKept);
+      return {revision,conflicts,totals,attention:decode([...ready,...cancelling]),upcoming:decode(upcoming),bookingSoon:decode(bookingSoon),week};
     }
     const from=input.from!,to=input.to!,query=stableHash(userId+JSON.stringify({...input,cursor:""}));
     let after:string|undefined;

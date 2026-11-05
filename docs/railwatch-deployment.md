@@ -1,6 +1,6 @@
 # RailWatch Deployment
 
-The dashboard is at `/`, authentication at `/login`, and each section has its own route. PostgreSQL holds private account workspaces, encrypted tickets, jobs, and provider credentials.
+Today is at `/`, authentication at `/login`, and each section has its own route (`/journeys`, `/calendar`, `/time-off`, `/settings`, and `/settings/workspace/*` for administrators). PostgreSQL holds private account workspaces, encrypted tickets, jobs, and provider credentials.
 
 ## Local Run
 

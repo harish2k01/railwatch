@@ -25,3 +25,7 @@
 .todayLabel{font-weight:700;color:var(--rw-brand)}
 .line{display:flex;justify-content:space-between;gap:12px;font-size:14px}
 @media(max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
+.decision{display:grid;gap:10px;padding:18px;border-radius:16px;border:1px solid var(--rw-attention);background:var(--rw-surface)}
+.decision h2{font-size:16px;font-weight:700;color:var(--rw-attention-ink)}
+.decisionTrip{display:grid;gap:2px;text-align:left;border:0;background:none;color:var(--rw-text);font:inherit;cursor:pointer;padding:4px 0}
+.decisionTrip small{color:var(--rw-muted);font-size:13px}

@@ -9,17 +9,17 @@ import s from "./time-off-overview.module.css";
 
 type Break = { start: string; end: string; days: number; names: string[]; planBy: string; bookingAlreadyOpen: boolean };
 /** Presents upcoming leave first, retaining past records and individual-day actions. */
-export function TimeOffOverview({ holidays, today, breaks, remove, plan, journeys = [], skip, open }: {
+export function TimeOffOverview({ holidays, today, breaks, remove, plan, journeys = [], skip, keep, open }: {
   holidays: Planner["holidays"]; today: string; breaks: Break[];
   remove: (id: string) => void; plan: (date: string) => void;
-  journeys?: Journey[]; skip?: (journey: Journey) => void; open?: (journey: Journey) => void;
+  journeys?: Journey[]; skip?: (journey: Journey) => void; keep?: (journey: Journey) => void; open?: (journey: Journey) => void;
 }) {
   const [past, setPast] = useState(false), [kept, setKept] = useState<string[]>([]);
   // Plan 2.7: trips that fall on time off, and the count per time-off range.
   const active = journeys.filter(j => !j.archivedAt && ["needs_booking", "booked"].includes(j.status));
   const tripsIn = (start: string, end: string) => active.filter(j => j.date >= start && j.date <= end);
   const offDays = new Set(holidays.filter(h => h.date >= today).map(h => h.date));
-  const affected = active.filter(j => j.date >= today && offDays.has(j.date) && !kept.includes(j.id)).sort((a, b) => a.date.localeCompare(b.date));
+  const affected = active.filter(j => j.date >= today && offDays.has(j.date) && !kept.includes(j.id) && !j.timeOffKept).sort((a, b) => a.date.localeCompare(b.date));
   const upcomingBreaks = breaks.filter(b => b.start >= today);
   const groups = timeOffGroups(holidays, today, past);
   const date = (value: string) => formatDay(value, { day: "numeric", month: "short", year: "numeric" });
@@ -39,7 +39,7 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
       {!past && affected.length > 0 && <section className={s.affected} aria-labelledby="time-off-affected"><h2 id="time-off-affected">Trips during your time off</h2>
         {affected.map(j => <div key={j.id} className={s.affectedRow}><button type="button" className={s.affectedTrip} onClick={() => open?.(j)}>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · {stationLabel(j.from)} → {stationLabel(j.to)}<small>{j.status === "booked" ? "Booked" : "Planned"}</small></button>
           {skip && j.status === "needs_booking" && <button type="button" className={s.skip} onClick={() => skip(j)}>Skip it</button>}
-          <button type="button" className={s.keep} onClick={() => setKept([...kept, j.id])}>Keep</button></div>)}
+          <button type="button" className={s.keep} onClick={() => { setKept([...kept, j.id]); keep?.(j); }}>Keep</button></div>)}
       </section>}
     </section>
     <aside aria-label="Long weekends"><div className={s.heading}><h2>Long weekends ahead</h2></div><div className={s.list}>
