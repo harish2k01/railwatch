@@ -87,7 +87,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     if(!linkedJourney||linkedJourney===openedLink.current)return;
     if(linkedJourney.length>128)return;
     let live=true;
-    void apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(linkedJourney)).then(({journey})=>{if(!live)return;openedLink.current=linkedJourney;setMoreOpen(false);setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==journey.id),journey]});});setEditor({type:"journey",journey,editing:window.matchMedia("(min-width:769px)").matches});}).catch(()=>{if(live)setError("This journey is unavailable for your account.");});
+    void apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(linkedJourney)).then(({journey})=>{if(!live)return;openedLink.current=linkedJourney;setMoreOpen(false);setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==journey.id),journey]});});setEditor({type:"journey",journey});}).catch(()=>{if(live)setError("This journey is unavailable for your account.");});
     return()=>{live=false;};
   },[linkedJourney]);
   const [viewTicket,setViewTicket]=useState<import("@/lib/travel-planner").TicketAttachment>();
