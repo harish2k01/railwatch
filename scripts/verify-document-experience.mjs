@@ -34,7 +34,7 @@ try{
     for(const width of [390,1482]){
       await page.setViewportSize({width,height:844});await page.goto(url+'/tickets');
       if(width>600){
-        await expect(page.getByRole('heading',{name:'Ticket vault',exact:true})).toBeVisible();
+        await expect(page.getByRole('heading',{name:'Tickets',exact:true})).toBeVisible();
         const search=page.getByLabel('Search tickets',{exact:true}),reload=page.getByRole('button',{name:'Refresh tickets',exact:true});
         await expect(reload).toBeVisible();
         await expect(page.getByRole('article').first()).toBeVisible({timeout:30000});
@@ -47,7 +47,7 @@ try{
         const controls=[page.getByRole('button',{name:'New journey',exact:true}),page.getByRole('button',{name:'Select travel date range',exact:true}),page.getByRole('combobox',{name:'Sort journeys',exact:true})];
         const sizes=await Promise.all(controls.map(control=>control.evaluate(el=>({height:el.getBoundingClientRect().height,font:getComputedStyle(el).fontSize}))));
         assert.ok(sizes.every(size=>size.height>=44&&size.height<46&&size.font==='14px'),'Equivalent desktop controls share height and type size: '+JSON.stringify(sizes));
-        assert.equal(await page.getByRole('heading',{name:'My journeys',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight),'750');
+        assert.equal(await page.getByRole('heading',{name:'Journeys',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight),'750');
         assert.deepEqual(await controls[0].evaluate(el=>({background:getComputedStyle(el).backgroundColor,weight:getComputedStyle(el).fontWeight})),primaryStyle,'Primary actions share theme colour and weight across pages');
         await page.screenshot({path:'build/railwatch-qa/journeys-consistency-'+theme+'.png',animations:'disabled'});await page.goto(url+'/tickets');
       }
