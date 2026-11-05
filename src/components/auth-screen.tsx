@@ -77,7 +77,7 @@ export function AuthScreen({ mode, allowSignups, token, tokenType }: { mode: Aut
           <Primary busy={busy}>Sign in</Primary>
           <div className="flex items-center justify-between text-sm">
             <button type="button" onClick={() => setView("forgot")} className="font-medium text-blue-700 hover:text-blue-900">Forgot password?</button>
-            {allowSignups && <button type="button" onClick={() => setView("signup")} className="font-medium text-blue-700 hover:text-blue-900">Create account</button>}
+            {allowSignups ? <button type="button" onClick={() => setView("signup")} className="font-medium text-blue-700 hover:text-blue-900">Create account</button> : <span className={s.invite}>New here? Ask your RailWatch admin for an invite.</span>}
           </div>
         </form>
       )}
@@ -118,6 +118,8 @@ export function AuthScreen({ mode, allowSignups, token, tokenType }: { mode: Aut
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <main className={`${s.root} ${s.authPage}`}>
+      {/* Plan 2.9: brand panel beside the form on wide screens. */}
+      <aside className={s.brandPanel} aria-label="About RailWatch"><div className={s.panelBrand}><span className={s.brandMark}><RailWatchMark size={26} /></span><b>RailWatch</b></div><h2>Your journeys, ahead of time.</h2><ul><li>A reminder before every booking window opens</li><li>Tickets kept with each journey, readable offline</li><li>Routines that work around your holidays and leave</li></ul></aside>
       <section className={s.authCard}>
         <div className={s.authBrand}><div className={s.brandMark}><RailWatchMark size={30} /></div><div><h1>RailWatch</h1><p>Your journeys, ahead of time</p></div></div>
         <div className="grid gap-3">{children}</div>

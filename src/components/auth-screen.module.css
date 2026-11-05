@@ -1,3 +1,18 @@
 .root{font-family:var(--font-geist-sans),Arial,sans-serif;color:var(--rw-text)}.authPage{min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--rw-ground)}.authCard{width:100%;max-width:440px;padding:32px;background:white;border:1px solid var(--rw-line);border-radius:20px;box-shadow:0 12px 48px #1823310a}.authBrand{display:flex;gap:12px;align-items:center;margin-bottom:26px}.authBrand h1{font-size:24px;font-weight:750;letter-spacing:-.5px}.authBrand p{font-size:13px;color:var(--rw-muted)}.brandMark{--rw-mark-lamp:var(--rw-brand);width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--rw-brand);color:var(--rw-brand-ink)}.field{display:grid;gap:7px;font-size:13px;font-weight:600}.authInput{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rw-line);border-radius:10px;color:var(--rw-muted)}.authInput input{width:100%;min-width:0;background:transparent;color:var(--rw-text);border:0;outline:none;box-shadow:none;appearance:none;border-radius:0}.authInput:focus-within{border-color:var(--rw-brand);box-shadow:0 0 0 3px var(--rw-focus)}.button{padding:11px 16px;border-radius:10px;font-size:14px;font-weight:650}.primary{background:var(--rw-brand);color:white}.button:disabled{opacity:.6}@media(max-width:480px){.authCard{padding:24px}.authPage{padding:16px}}
 
 .authInput input:focus,.authInput input:focus-visible{border:0;outline:none;box-shadow:none}.authInput input:-webkit-autofill{ -webkit-text-fill-color:var(--rw-text);box-shadow:0 0 0 1000px white inset}.authInput svg{flex-shrink:0}
+
+/* Split sign-in layout (plan 2.9, canvas: Sign in). */
+.authPage{grid-template-columns:minmax(0,1fr);gap:40px}
+.brandPanel{display:none}
+.invite{color:var(--rw-muted);font-size:13px}
+@media(min-width:960px){
+.authPage{grid-template-columns:minmax(0,520px) minmax(0,440px);justify-content:center;align-items:center}
+.brandPanel{display:grid;gap:22px;align-self:stretch;align-content:center;padding:48px;border-radius:24px;background:var(--rw-sidebar);color:var(--rw-sidebar-strong)}
+.panelBrand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:800}
+.panelBrand .brandMark{width:40px;height:40px}
+.brandPanel h2{font-size:36px;line-height:1.15;font-weight:800;letter-spacing:-.02em}
+.brandPanel ul{display:grid;gap:12px;margin:0;padding:0;list-style:none;color:var(--rw-sidebar-text)}
+.brandPanel li{display:flex;gap:10px;align-items:center}
+.brandPanel li::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--rw-brand);flex:none}
+}
