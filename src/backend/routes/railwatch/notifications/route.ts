@@ -1,4 +1,5 @@
 import {z} from "zod";
+import { markJourneyBooked } from "@/lib/journey-actions";
 import {requireUser} from "@/lib/auth";
 import {setJourneySnooze} from "@/lib/notification-controls";
 import {assertSameOrigin,jsonData,parseJson,routeError} from "@/lib/http";
@@ -18,7 +19,9 @@ export async function POST(request:Request){try{
     z.object({action:z.literal("clear"),id:z.string().min(1).max(128).optional()}).strict(),
     z.object({action:z.literal("snooze"),journeyId:z.string().min(1).max(128),minutes:z.union([z.literal(30),z.literal(60),z.literal(1440)])}).strict(),
     z.object({action:z.literal("resume"),journeyId:z.string().min(1).max(128)}).strict(),
+    z.object({action:z.literal("booked"),journeyId:z.string().min(1).max(128)}).strict(),
   ]));
   if(input.action==="clear")return jsonData(await clearCurrentNotifications(user.id,input.id));
+  if(input.action==="booked")return jsonData(await markJourneyBooked(user.id,input.journeyId));
   return jsonData(await setJourneySnooze(user.id,input.journeyId,input.action==="resume"?0:input.minutes));
 }catch(error){return routeError(error,request);}}

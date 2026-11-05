@@ -28,14 +28,14 @@ export async function pushIdentity() {
   return prisma.railPushConfig.findUniqueOrThrow({ where: { id: "default" } });
 }
 /** Sends to one owned device; expired browser subscriptions are removed rather than retried. */
-export async function sendBrowserPush(userId: string, deviceId: string, message: string, tag: string) {
+export async function sendBrowserPush(userId: string, deviceId: string, message: string, tag: string, actions: "booking" | "none" = "none") {
   const device = await prisma.railPush.findFirst({ where: { id: deviceId, userId } });
   if (!device) return;
   const subscription = JSON.parse(decryptSecret(device.subscription)!) as webpush.PushSubscription;
   if (!validPushEndpoint(subscription.endpoint)) throw new ApiError(400, "Unsupported browser push service.");
   const identity = await pushIdentity();
   try {
-    await webpush.sendNotification(subscription, JSON.stringify({ title: "RailWatch", body: message, tag, url: tag.startsWith("railwatch-journey-") ? journeyLink(tag.slice("railwatch-journey-".length)) : "/journeys" }), {
+    await webpush.sendNotification(subscription, JSON.stringify({ title: "RailWatch", body: message, tag, actions, url: tag.startsWith("railwatch-journey-") ? journeyLink(tag.slice("railwatch-journey-".length)) : "/journeys" }), {
       TTL: 3600, timeout: 15000,
       // Apple publishes IPv6 addresses even on hosts without usable IPv6 egress.
       ...(new URL(subscription.endpoint).hostname.endsWith(".push.apple.com") ? { agent: new Agent({ family: 4 }) } : {}),

@@ -260,7 +260,7 @@ describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{time
     await saveWorkspace(f.user.id,{...f.planner,journeys:[journey]},f.revision);
     await prisma.railPush.create({data:{userId:f.user.id,endpointHash:randomUUID(),subscription:encryptSecret("{}")}});
     await Promise.all([processRailWatch(now),processRailWatch(now)]);
-    expect(pushDelivery).toHaveBeenCalledTimes(1);expect(pushDelivery).toHaveBeenCalledWith(f.user.id,expect.any(String),expect.stringContaining("Cancel your ticket"),"railwatch-journey-cancel-follow-up");
+    expect(pushDelivery).toHaveBeenCalledTimes(1);expect(pushDelivery).toHaveBeenCalledWith(f.user.id,expect.any(String),expect.stringContaining("Cancel your ticket"),"railwatch-journey-cancel-follow-up","none");
     await prisma.railJob.updateMany({where:{userId:f.user.id,kind:"PUSH"},data:{state:"PENDING"}});
     const latest=await loadWorkspace(f.user.id);await saveWorkspace(f.user.id,{...latest.planner,journeys:[{...journey,status:"cancelled"}]},latest.revision);
     await processRailWatch(now);expect(pushDelivery).toHaveBeenCalledTimes(1);
@@ -273,7 +273,7 @@ describe.skipIf(process.env.RUN_DB_TESTS!=="1")("account-backed RailWatch",{time
     await prisma.railPush.createMany({data:[1,2].map(n=>({id:`${f.user.id}-${n}`,userId:f.user.id,endpointHash:randomUUID(),subscription:encryptSecret("{}")}))});
     await Promise.all([processRailWatch(now),processRailWatch(now)]);
     expect(pushDelivery).toHaveBeenCalledTimes(2);
-    expect(pushDelivery).toHaveBeenCalledWith(f.user.id,expect.any(String),expect.stringContaining("Book your train"),"railwatch-journey-push-journey");
+    expect(pushDelivery).toHaveBeenCalledWith(f.user.id,expect.any(String),expect.stringContaining("Book your train"),"railwatch-journey-push-journey","booking");
     await prisma.railJob.updateMany({where:{userId:f.user.id,kind:"PUSH"},data:{state:"PENDING"}});
     const latest=await loadWorkspace(f.user.id);await saveWorkspace(f.user.id,{...latest.planner,journeys:[{...journey,status:"booked"}]},latest.revision);
     await processRailWatch(now);expect(pushDelivery).toHaveBeenCalledTimes(2);
