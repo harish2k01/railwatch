@@ -227,3 +227,7 @@
 .calendarDecisionRow{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .calendarDecisionRow>span{flex:1 1 260px;display:grid;gap:2px}
 .calendarDecisionRow small{color:var(--rw-muted);font-size:13px}
+/* Settings: section list beside the docked section content on desktop (design gap S1). */
+.profileDocked{inset:66px 0 0 auto;height:calc(100dvh - 66px);width:min(620px,calc(100vw - 640px));min-width:420px;box-shadow:none}
+.settingsWithPanel{padding-right:min(640px,calc(100vw - 620px))}
+@media(max-width:1180px){.settingsWithPanel{padding-right:0}.profileDocked{box-shadow:-15px 0 60px #0002}}
