@@ -5,6 +5,7 @@ import { assertSameOrigin,jsonData,parseJson,routeError } from "@/lib/http";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { reminderHealth,retryReminder } from "@/lib/reminder-operations";
 import { decryptSecret } from "@/lib/crypto";
+import { systemHealth } from "@/lib/system-health";
 
 /** Lists recent recoverable reminders and scheduler health without decrypted ticket data. */
 export async function GET(request:Request) {
@@ -12,7 +13,7 @@ export async function GET(request:Request) {
     await requireAdmin();
     const url=new URL(request.url),cursor=z.string().max(128).nullable().parse(url.searchParams.get("cursor"));
     const jobs=await prisma.railJob.findMany({where:{kind:{in:["EMAIL","PUSH","TELEGRAM"]},state:{in:["MISSED","FAILED"]}},orderBy:{id:"desc"},take:26,...(cursor?{cursor:{id:cursor},skip:1}:{}),select:{id:true,kind:true,state:true,dueAt:true,attempts:true,lastError:true,payload:true,user:{select:{name:true}}}});
-    return jsonData({health:await reminderHealth(),jobs:jobs.slice(0,25).map(({payload,...job})=>{
+    return jsonData({system:await systemHealth(),health:await reminderHealth(),jobs:jobs.slice(0,25).map(({payload,...job})=>{
       // Only the generated reminder text identifies its route/date, never the raw payload.
       const details=payload?JSON.parse(decryptSecret(payload)!):{};
       return {...job,message:typeof details.message==="string"?details.message.slice(0,512):"Journey reference unavailable."};

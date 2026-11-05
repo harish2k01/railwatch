@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Check, Paperclip, FileText } from "lucide-react";
 import { formatDay, type Journey, type TicketAttachment } from "@/lib/travel-planner";
 import { journeyStages } from "@/lib/journey-stages";
+import { bookingDay as bookingDate, daysBetween } from "@/lib/travel-planner";
+/** Days from today until booking opens (0 = today, negative = already open). */
+const daysUntilOpen = (j: Journey, today: string) => daysBetween(today, bookingDate(j));
 import { stationLabel } from "@/lib/journey-display";
 import { loadStations } from "@/lib/stations";
 import { ActionMenu } from "./action-menu";
@@ -18,7 +21,8 @@ function useStationName(code: string) {
 }
 
 /** Read-first journey panel (plan 2.2): stages, ticket, details, reminders and notes; edits sit behind ⋯. */
-export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove }: {
+export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
+  bookingDay?: () => void;
   journey: Journey; today: string; routine?: string; reminders: string; uploadsEnabled: boolean;
   edit: () => void; attach: () => void; view: (file: TicketAttachment) => void; cancel: () => void; remove?: () => void;
 }) {
@@ -33,8 +37,9 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
   const booked = j.status === "booked";
   const main = j.status === "cancellation_needed" ? { label: "Confirm cancellation", run: cancel }
     : booked && !pdfs.length && uploadsEnabled ? { label: "Attach ticket", run: attach }
+    : j.status === "needs_booking" && bookingDay && daysUntilOpen(j, today) <= 1 ? { label: "Booking day", run: bookingDay }
     : j.status === "needs_booking" ? { label: "Record booked ticket", run: attach } : undefined;
-  const actions = [{ label: "Edit journey", onClick: edit }, ...(j.status === "cancellation_needed" ? [{ label: "Confirm cancellation", onClick: cancel }] : []), ...(remove ? [{ label: "Delete journey", onClick: remove, danger: true }] : [])];
+  const actions = [{ label: "Edit journey", onClick: edit }, ...(bookingDay ? [{ label: "Booking day", onClick: bookingDay }] : []), ...(j.status === "cancellation_needed" ? [{ label: "Confirm cancellation", onClick: cancel }] : []), ...(remove ? [{ label: "Delete journey", onClick: remove, danger: true }] : [])];
   return <div className={d.detail}>
     <header className={d.head}>
       <div>

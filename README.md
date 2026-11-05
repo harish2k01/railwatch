@@ -37,7 +37,7 @@ Navigation is Today (`/`), Journeys (`/journeys`), Calendar (`/calendar`), Time 
 
 Set `APP_URL` to the public base URL at runtime so invitation links, password resets, and Google OAuth use the deployed hostname. The first account becomes administrator. Existing RailWatch installations can apply the checked-in Prisma migrations; a fresh installation starts with an empty database.
 
-Time off opens with upcoming time off and marks ranges in progress and how many trips fall on them; Trips during your time off offers Skip it or Keep. Past entries remain available through the Past filter; consecutive matching days stay together, including ranges already in progress. Expand a range to manage individual days. Long-weekend suggestions use the same saved holidays, leave and booking rules on desktop and mobile.
+Planned or booked trips on time off appear under Needs a decision on Today and on Time off: Skip this trip skips it (and, for a routine trip, adds the date to the routine's exceptions), Keep stops it being raised again. Time off opens with upcoming time off and marks ranges in progress and how many trips fall on them; Trips during your time off offers Skip it or Keep. Past entries remain available through the Past filter; consecutive matching days stay together, including ranges already in progress. Expand a range to manage individual days. Long-weekend suggestions use the same saved holidays, leave and booking rules on desktop and mobile.
 
 ## Tickets and history
 
@@ -46,6 +46,8 @@ Ticket extraction reads PDF text and QR codes, and uses local browser OCR for sc
 ## Verify
 
 `npm run verify` runs type checking, lint, coverage, and the production build. Database tests need `RUN_DB_TESTS=1` and an isolated database ending in `_test`. Browser tests need `RUN_E2E=1`, that isolated database, and Playwright Chromium: `npm run test:e2e`. The browser suite resets the test database.
+
+Booking day (from a planned journey's panel, the day before booking opens or later) shows an IST countdown, a checklist kept on the device, Open IRCTC, and the outcome: Confirmed, RAC or Waitlisted marks the journey booked with that ticket status; Try Tatkal switches the quota; Skip this trip skips it. Settings → Workspace → System health shows the running and latest version, scheduler status and 24-hour delivery failure rates per channel.
 
 ## Releases
 
