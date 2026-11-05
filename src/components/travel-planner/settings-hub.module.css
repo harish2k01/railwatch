@@ -1,0 +1,15 @@
+/* Settings page (plan 2.8, canvas: Settings, More · mobile). */
+.hub{display:grid;gap:24px;max-width:760px}
+.hub header{display:grid;gap:6px}
+.hub h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.hub header p{color:var(--rw-muted)}
+.hub section{display:grid;gap:10px}
+.hub h2{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rw-muted)}
+.list{display:grid;border:1px solid var(--rw-line);border-radius:16px;overflow:hidden;background:var(--rw-surface)}
+.row{position:relative;display:flex;align-items:center;gap:14px;min-height:60px;padding:10px 16px;border:0;border-bottom:1px solid var(--rw-line);background:none;color:var(--rw-text);font:inherit;text-align:left;text-decoration:none;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:hover,.row:focus-within,.row:focus-visible{background:var(--rw-surface-2)}
+.text{flex:1;display:grid;gap:2px;min-width:0}
+.text b{font-size:15px;font-weight:600}
+.text small{font-size:13px;color:var(--rw-muted)}
+.file{position:absolute;inset:0;opacity:0;cursor:pointer}
