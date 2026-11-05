@@ -19,7 +19,7 @@ export async function verifyCalendarExperience({page,api,url,today}){
       const background=locator=>locator.evaluate(el=>getComputedStyle(el).backgroundColor);
       assert.equal(new Set(await Promise.all([planned,booked,cancel].map(background))).size,3,'Planned, booked and cancellation travel have distinct visual cues');
       assert.notEqual(await background(page.getByRole('button',{name:'Book: OPN → END',exact:true})),await background(page.getByRole('button',{name:'Calendar holiday',exact:true})),'Booking dates and time off use distinct colours');
-      await expect(page.getByRole('group',{name:'Journey status legend',exact:true})).toBeVisible();
+      await expect(page.getByRole('group',{name:'Show on calendar',exact:true})).toBeVisible();
       await page.screenshot({path:`build/railwatch-qa/calendar-status-${theme}.png`,animations:'disabled'});
       const revision=(await(await api('/api/railwatch/workspace')).json()).data.revision;
       await page.getByRole('button',{name:`Plan journey on ${day(20)}`,exact:true}).click();
