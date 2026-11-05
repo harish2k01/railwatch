@@ -1,10 +1,11 @@
 "use client";
 import {apiRequest} from "@/lib/client-api";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, ArrowLeftRight, Clock3, Bell, Link2 } from "lucide-react";
 import { bookingDay, bookingTimeLabel, DEFAULT_TATKAL_SCHEDULE, type ReminderSchedule, formatDay, DEFAULT_CLOCK, journeySchema, REMINDER_KEYS, ruleSchema, type Journey, type Planner, type ReminderOverride, type Rule } from "@/lib/travel-planner";
 import { Select } from "./select";
+import { StationInput } from "./station-input";
 import s from "./planner.module.css";
 import j from "./journey-form.module.css";
 import r from "./routine-overview.module.css";
@@ -21,6 +22,8 @@ export const TIME_LABELS = { any: "Any time", morning: "Morning", afternoon: "Af
 export const REMINDER_LABELS = { previous_evening: "The evening before", morning: "On booking day", opening: "Near booking opening" };
 
 export {Field,Modal} from "./form-ui";
+/** Stations from the most recent journeys first, for ranking suggestions. */
+const recentStations=(planner:Planner)=>[...planner.journeys].sort((a,b)=>b.date.localeCompare(a.date)).flatMap(item=>[item.from,item.to]).slice(0,40);
 import {Field} from "./form-ui";
 /** Edits the selected reminder moments and their IST delivery times. */
 export function ReminderTimes({ times, clock }: { times: Planner["settings"]["reminderTimes"]; clock: Planner["settings"]["reminderClock"] }) {
@@ -93,7 +96,7 @@ export function RuleForm({ rule, planner, today, save, preview, fail,saving=fals
   }
   return <form ref={routineForm} className={s.form} onSubmit={submit} onInput={invalidateReview} onChange={invalidateReview} aria-busy={saving||previewing}><fieldset className={r.fields} disabled={saving} aria-label="Routine details">
     <Field label="Routine Name"><input name="name" maxLength={80} defaultValue={rule?.name} placeholder="Give this routine a name" required /></Field>
-    <div className={s.formGrid}><Field label="From"><input name="from" defaultValue={rule?.from} maxLength={80} placeholder="Station or city" required /></Field><Field label="To"><input name="to" defaultValue={rule?.to} maxLength={80} placeholder="Station or city" required /></Field></div>
+    <div className={s.formGrid}><Field label="From"><StationInput recent={recentStations(planner)} name="from" defaultValue={rule?.from} maxLength={80} placeholder="Station or city" required /></Field><Field label="To"><StationInput recent={recentStations(planner)} name="to" defaultValue={rule?.to} maxLength={80} placeholder="Station or city" required /></Field></div>
     <div className={s.formGrid}><Field label="Start Date"><input name="start" type="date" value={start} onChange={e => setStart(e.target.value)} required /></Field><Field label="End Date (Optional)" hint="Leave empty for an ongoing routine."><input name="end" type="date" defaultValue={rule?.end ?? ""} /></Field></div>
     <section className={s.formSection}><h3>Repeat This Journey</h3><Field label="Repeat Every"><Select value={preset} onChange={e => setPreset(e.target.value)}><option value="daily">Every day</option><option value="weekly">Every week on selected days</option><option value="monthly_date">Every month on a date</option><option value="monthly_weekday">Every month on a weekday</option><option value="yearly">Every year on the start date</option><option value="custom">Custom repeat…</option></Select></Field>
       {preset === "custom" && <div className={s.formGrid}><Field label="Repeat Interval"><input name="interval" type="number" min={1} max={365} defaultValue={initial?.interval ?? rule?.intervalWeeks ?? 1} required /></Field><Field label="Interval Unit"><Select value={unit} onChange={e => setUnit(e.target.value as typeof unit)}><option value="daily">Days</option><option value="weekly">Weeks</option><option value="monthly">Months</option><option value="yearly">Years</option></Select></Field></div>}
@@ -121,8 +124,8 @@ function JourneyReminderControls({journey}:{journey:Journey}){const [message,set
 
 /** Edits journey status, booking dates, ticket details, and attachment suggestions. */
 export function JourneyForm({ journey, date, planner, today, save, fail, ticket = false,remindersEnabled=true,uploadsEnabled=true }: { remindersEnabled?:boolean;uploadsEnabled?:boolean;journey?: Journey; date?: string; planner: Planner; today: string; save: (journey: Journey) => boolean | Promise<boolean>; fail: (message: string) => void; ticket?: boolean }) {
-  const ref = useRef<HTMLFormElement>(null);const stationsId=useId();
-  const stations=[...new Set(planner.journeys.flatMap(item=>[item.from,item.to]))].sort();
+  const ref = useRef<HTMLFormElement>(null);
+  const stations=recentStations(planner);
   const [status, setStatus] = useState<Journey["status"]>(ticket ? "booked" : journey?.status ?? "needs_booking");
   const [travelDate,setTravelDate]=useState(journey?.date ?? date ?? "");
   const [bookingType,setBookingType]=useState(journey?.bookingType??"normal"),[tatkalClass,setTatkalClass]=useState(journey?.tatkalClass??"ac"),[trainOriginDate,setTrainOriginDate]=useState(journey?.trainOriginDate??journey?.date??date??"");
@@ -172,8 +175,7 @@ export function JourneyForm({ journey, date, planner, today, save, fail, ticket 
   }
   return <form ref={ref} className={`${s.form} ${j.form}`} onSubmit={submit}>
     {!journey&&<div className={j.intent} role="group" aria-label="Journey intent"><button type="button" aria-pressed={status==="needs_booking"} onClick={e=>{setStatus("needs_booking");e.currentTarget.dispatchEvent(new Event("input",{bubbles:true}));}}>Planning a trip</button><button type="button" aria-pressed={status==="booked"} onClick={e=>{setStatus("booked");e.currentTarget.dispatchEvent(new Event("input",{bubbles:true}));}}>Already booked</button></div>}
-    <datalist id={stationsId}>{stations.map(station=><option key={station} value={station}/>)}</datalist>
-    <div className={j.route}><Field label="From"><input name="from" list={stationsId} autoComplete="off" defaultValue={journey?.from} maxLength={80} placeholder="Station or city" required /></Field><button type="button" className={j.swap} aria-label="Swap route" onClick={event=>{const from=ref.current?.elements.namedItem("from") as HTMLInputElement,to=ref.current?.elements.namedItem("to") as HTMLInputElement;if(from&&to){[from.value,to.value]=[to.value,from.value];event.currentTarget.dispatchEvent(new Event("input",{bubbles:true}));}}}><ArrowLeftRight size={18}/></button><Field label="To"><input name="to" list={stationsId} autoComplete="off" defaultValue={journey?.to} maxLength={80} placeholder="Station or city" required /></Field></div>
+    <div className={j.route}><Field label="From"><StationInput recent={stations} name="from" defaultValue={journey?.from} maxLength={80} placeholder="Station or city" required /></Field><button type="button" className={j.swap} aria-label="Swap route" onClick={event=>{const from=ref.current?.elements.namedItem("from") as HTMLInputElement,to=ref.current?.elements.namedItem("to") as HTMLInputElement;if(from&&to){[from.value,to.value]=[to.value,from.value];event.currentTarget.dispatchEvent(new Event("input",{bubbles:true}));}}}><ArrowLeftRight size={18}/></button><Field label="To"><StationInput recent={stations} name="to" defaultValue={journey?.to} maxLength={80} placeholder="Station or city" required /></Field></div>
     <div className={journey?s.formGrid:undefined}><Field label="Travel Date"><input type="date" name="date" value={travelDate} onChange={e=>{if(trainOriginDate===travelDate)setTrainOriginDate(e.target.value);setTravelDate(e.target.value);}} required /></Field>{journey&&<Field label="Journey Status"><Select name="status" value={status} onChange={e => setStatus(e.target.value as Journey["status"])}>{Object.entries(STATUS).map(([id, label]) => <option value={id} key={id}>{label}</option>)}</Select></Field>}</div>
     {status === "needs_booking" && <><div className={j.booking}><span>Booking type</span><div className={j.intent} role="group" aria-label="Booking type">{(["normal","tatkal"] as const).map(type=><button key={type} type="button" aria-pressed={bookingType===type} onClick={e=>{setBookingType(type);e.currentTarget.dispatchEvent(new Event("input",{bubbles:true}));}}>{type==="normal"?"Normal":"Tatkal"}</button>)}</div></div>{bookingType==="tatkal"&&<div className={s.formGrid}><Field label="Tatkal class"><Select value={tatkalClass} onChange={e=>setTatkalClass(e.target.value as "ac"|"non_ac")}><option value="ac">AC — opens at 10 AM</option><option value="non_ac">Non-AC — opens at 11 AM</option></Select></Field><Field label="Train starts from its origin on" hint="Use the train’s starting date, which can be earlier than your boarding date."><input type="date" value={trainOriginDate} max={travelDate} required onChange={e=>setTrainOriginDate(e.target.value)}/></Field></div>}<div className={j.opening}><Clock3 size={16}/><span>{travelDate?<>Booking opens <b>{formatDay(bookingDate,{weekday:"short",day:"numeric",month:"short",year:"numeric"})} · {bookingTimeLabel({bookingType,tatkalClass})}</b></>:"Choose a travel date to see when booking opens."}</span></div></>}
     {showTicket && <details className={j.optional} data-ticket-details onInvalidCapture={event=>{event.currentTarget.open=true;}}><summary>Ticket Details <span>Optional</span></summary><div className={j.ticketBody}>{uploadsEnabled&&<Field label="Upload Ticket PDF Or QR Image" hint="PDFs are saved. Images and QR codes only extract details. Review suggestions before applying."><input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" disabled={busy} onChange={e => { void upload(e.target.files?.[0]); e.target.value = ""; }} /></Field>}
