@@ -20,7 +20,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
     assert.equal((await api('/api/railwatch/workspace','put',state)).status(),200);
     for (const width of [320,390,768,1482]) {
       await page.setViewportSize({width,height:844});
-      for (const path of ['/','/journeys','/calendar','/routines','/holidays','/tickets','/admin','/admin/operations']) {
+      for (const path of ['/','/journeys','/calendar','/routines','/time-off','/tickets','/settings/workspace','/settings/workspace/health']) {
         await page.goto(url+path);
         await page.getByRole('heading',{level:1}).waitFor();
         await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);
@@ -43,7 +43,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
       if(width<=390) {
         await page.goto(url+'/journeys');
         const mobileNav=page.getByRole('navigation',{name:'Mobile navigation'});
-        for(const name of ['Home','Journeys','Tickets']) {
+        for(const name of ['Today','Journeys','Calendar']) {
           const link=mobileNav.getByRole('link',{name,exact:true});await expect(link).toBeVisible();
           const box=await link.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width,`Mobile ${name} fits`);
         }
@@ -75,7 +75,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
           await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User settings',exact:false}).click();
           await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();
           await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
-          await mobileNav.getByRole('link',{name:'Tickets',exact:true}).click();
+          await page.getByRole('navigation',{name:'More destinations'}).getByRole('link',{name:'Tickets',exact:true}).click();
           const ticketRow=page.getByRole('button',{name:/^View ticket/}).first();await ticketRow.click();
           const pdf=page.getByRole('dialog',{name:'Ticket',exact:true});
           await expect(pdf.locator('canvas[data-rendered-page="1"]')).toBeVisible();
@@ -109,7 +109,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'Cancelled',exact:true}).click();await expect(page.getByRole('button',{name:/Open journey/}).first()).toBeVisible();
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'History',exact:true}).click();await expect(page.getByText('History',{exact:true}).last()).toBeVisible();
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'Archive',exact:true}).click();await expect(page.getByText('Archive',{exact:true}).last()).toBeVisible();
-          await page.goto(url+'/admin');await expect(page.getByLabel('Booking opens this many days before travel')).toBeVisible();await expect(page.getByLabel('SMTP Connection')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Admin settings sections',exact:true})).toBeHidden();const sectionChooser=page.locator('details').filter({has:page.locator('nav[aria-label="Choose admin settings section"]')});await expect(sectionChooser).not.toHaveAttribute('open');await sectionChooser.locator('summary').click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(page.getByLabel('Months to plan ahead',{exact:true})).toBeVisible();await expect(sectionChooser).not.toHaveAttribute('open');await page.screenshot({path:`build/railwatch-qa/admin-mobile-${width}-${theme}.png`,animations:'disabled'});
+          await page.goto(url+'/settings/workspace');await expect(page.getByLabel('Booking opens this many days before travel')).toBeVisible();await expect(page.getByLabel('SMTP Connection')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Admin settings sections',exact:true})).toBeHidden();const sectionChooser=page.locator('details').filter({has:page.locator('nav[aria-label="Choose admin settings section"]')});await expect(sectionChooser).not.toHaveAttribute('open');await sectionChooser.locator('summary').click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(page.getByLabel('Months to plan ahead',{exact:true})).toBeVisible();await expect(sectionChooser).not.toHaveAttribute('open');await page.screenshot({path:`build/railwatch-qa/admin-mobile-${width}-${theme}.png`,animations:'disabled'});
         }
         await page.goto(url+'/calendar');await expect(page.getByRole('region',{name:'Day agenda',exact:true})).toBeVisible();await expect(page.getByLabel('Choose date',{exact:true})).toBeVisible();
         await page.goto(url+'/');await page.getByRole('heading',{level:1}).waitFor();await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);await page.screenshot({path:`build/railwatch-qa/mobile-${width}-${theme}.png`,animations:'disabled'});
@@ -131,7 +131,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await guardedSettings.getByRole('textbox',{name:'Username',exact:true}).fill('Discarded settings fixture');await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
   await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await expect(guardedSettings.getByRole('textbox',{name:'Username',exact:true})).toHaveValue(originalName);await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
   page.removeAllListeners('dialog');page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
-  await page.goto(url+'/admin');const bookingDays=page.getByRole('spinbutton',{name:'Booking opens this many days before travel',exact:true}),originalDays=await bookingDays.inputValue();await bookingDays.fill('61');
+  await page.goto(url+'/settings/workspace');const bookingDays=page.getByRole('spinbutton',{name:'Booking opens this many days before travel',exact:true}),originalDays=await bookingDays.inputValue();await bookingDays.fill('61');
   await page.getByRole('button',{name:'More',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,4);
   await page.locator('summary').filter({hasText:'Admin section'}).click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,5);
   await bookingDays.fill(originalDays);await page.getByRole('button',{name:'Save booking rules',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Booking rules saved.'})).toBeVisible();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();assert.equal(settingsWarnings,5);

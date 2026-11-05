@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
   compress: true,
+  // Old paths from before the plan 2.1 navigation keep working.
+  async redirects() {
+    return [
+      { source: "/holidays", destination: "/time-off", permanent: true },
+      { source: "/admin", destination: "/settings/workspace", permanent: true },
+      { source: "/admin/users", destination: "/settings/workspace/members", permanent: true },
+      { source: "/admin/integrations", destination: "/settings/workspace/integrations", permanent: true },
+      { source: "/admin/operations", destination: "/settings/workspace/health", permanent: true },
+    ];
+  },
   async headers() {
     const headers = [{ source: "/:path*", headers: securityHeaders }, { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Service-Worker-Allowed", value: "/" }] }];
     // OCR uses same-origin WebAssembly; JavaScript eval is permitted only for development debugging.

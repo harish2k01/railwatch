@@ -185,3 +185,4 @@
 .skeleton{display:grid;gap:12px;margin-bottom:16px}.skeleton span{display:block;height:72px;border-radius:14px;background:linear-gradient(90deg,var(--rw-surface-2,#0000000d) 0%,var(--rw-line,#0000001a) 50%,var(--rw-surface-2,#0000000d) 100%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite}.skeleton span:first-child{height:28px;width:40%}
 @keyframes skeleton{from{background-position:100% 0}to{background-position:-100% 0}}
 @media(prefers-reduced-motion:reduce){.skeleton span{animation:none}}
+.navDivider{border:0;border-top:1px solid var(--rw-line);margin:10px 8px}

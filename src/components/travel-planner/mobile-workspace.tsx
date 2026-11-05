@@ -1,7 +1,7 @@
 "use client";
 import {useSyncExternalStore, type ReactNode} from "react";
 import Link from "next/link";
-import {ArrowRight,CalendarDays,Files,House,LayoutList,Settings2} from "lucide-react";
+import { ArrowRight, CalendarDays, Files, House, LayoutList, MoreHorizontal } from "lucide-react";
 import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment} from "@/lib/travel-planner";
 import {stationLabel} from "@/lib/journey-display";
 import type {DashboardView} from "@/lib/planning-views";
@@ -15,7 +15,7 @@ export function useMobileWorkspace(){return useSyncExternalStore(subscribe,()=>w
 
 /** Keeps primary destinations within thumb reach; other routes live in More. */
 export function MobileNavigation({tab,more,openMore,navigate,disabled=false}:{tab:string;more:boolean;disabled?:boolean;openMore:()=>void;navigate:()=>void}){
-  return <nav className={m.navigation} aria-label="Mobile navigation" inert={disabled}>{[{id:"home",label:"Home",href:"/",icon:House},{id:"journeys",label:"Journeys",href:"/journeys",icon:LayoutList},{id:"vault",label:"Tickets",href:"/tickets",icon:Files}].map(item=><Link key={item.id} href={item.href} aria-current={!more&&tab===item.id?"page":undefined} onClick={navigate}><item.icon size={21}/><span>{item.label}</span></Link>)}<button onClick={openMore} aria-expanded={more} aria-pressed={more||!["home","journeys","vault"].includes(tab)}><Settings2 size={21}/><span>More</span></button></nav>;
+  return <nav className={m.navigation} aria-label="Mobile navigation" inert={disabled}>{[{id:"home",label:"Today",href:"/",icon:House},{id:"journeys",label:"Journeys",href:"/journeys",icon:LayoutList},{id:"calendar",label:"Calendar",href:"/calendar",icon:CalendarDays}].map(item=><Link key={item.id} href={item.href} aria-current={!more&&tab===item.id?"page":undefined} onClick={navigate}><item.icon size={21}/><span>{item.label}</span></Link>)}<button onClick={openMore} aria-expanded={more} aria-pressed={more||!["home","journeys","calendar"].includes(tab)}><MoreHorizontal size={21}/><span>More</span></button></nav>;
 }
 /** Presents one compact journey with a date tile and accessible whole-row action. */
 export function MobileJourneyRow({journey:j,open,label,accessibleLabel,booking=false}:{journey:Journey;open:()=>void;label?:string;accessibleLabel?:string;booking?:boolean}){
