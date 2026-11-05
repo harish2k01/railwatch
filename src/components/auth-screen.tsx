@@ -5,7 +5,7 @@ import { RailWatchMark } from "@/components/railwatch-mark";
 
 import { Lock, Mail, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import s from "./auth-screen.module.css";
 
 type AuthMode = "firstSignup" | "login" | "resetPassword" | "tokenPassword" | "missingDatabase";
@@ -129,7 +129,8 @@ function AuthShell({ children }: { children: React.ReactNode }) {
 
 /** Associates a form control with its generated label and optional help text. */
 function Field({ icon: Icon, label, aside, ...input }: { icon: React.ComponentType<{ className?: string }>; label: string; aside?: React.ReactNode; name: string; type?: string; autoComplete?: string }) {
-  return <label className={s.field}><span className={s.labelRow}>{label}{aside}</span><span className={s.authInput}><Icon className="h-4 w-4" /><input required {...input} /></span></label>;
+  const id = useId();
+  return <div className={s.field}><span className={s.labelRow}><label htmlFor={id}>{label}</label>{aside}</span><span className={s.authInput}><Icon className="h-4 w-4" /><input id={id} required {...input} /></span></div>;
 }
 
 /** Renders a primary authentication action with its busy state. */
