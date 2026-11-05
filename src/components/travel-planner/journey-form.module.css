@@ -23,3 +23,13 @@
 @media(max-width:600px){.form.form{padding:20px 18px;gap:20px}.route{grid-template-columns:minmax(0,1fr) 30px}.route>div:last-child{grid-column:1;grid-row:2}.swap{grid-column:2;grid-row:1/3;transform:rotate(90deg);align-self:center}.intent button{min-height:40px}.booking{font-size:12px}.optional>summary{min-height:40px}.opening{align-items:flex-start;line-height:1.6}.form input:not([type=checkbox]),.form select,.form textarea{font-size:16px}.form>footer{padding-bottom:env(safe-area-inset-bottom)}}
 
 .footer.footer{justify-content:flex-end}
+
+/* Return trip and What happens next (plan 2.5). */
+.returnTrip{display:grid;gap:10px}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;font-weight:600}
+.check input{width:18px;height:18px;accent-color:var(--rw-brand)}
+.next{display:grid;gap:8px;padding:14px 16px;border-radius:14px;background:var(--rw-surface-2);border:1px solid var(--rw-line)}
+.next h3{font-size:14px;font-weight:700}
+.next ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+.clash{padding:10px 12px;border-radius:10px;background:var(--rw-attention-bg);color:var(--rw-attention-ink);font-size:13px}
+.clash ul{margin-top:4px}

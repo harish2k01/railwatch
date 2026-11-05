@@ -162,8 +162,8 @@ export async function verifyResponsive({page,api,url,otherApi}) {
 
   await page.getByRole('button',{name:'New journey',exact:true}).click();
   await dialog.getByLabel('Travel date',{exact:true}).fill(new Date(Date.now()+60*86400000).toISOString().slice(0,10));await dialog.getByRole('button',{name:'Tatkal',exact:true}).click();
-  await expect(dialog.getByText('10:00 AM IST',{exact:false})).toBeVisible();
-  await dialog.getByRole('combobox',{name:'Tatkal class',exact:true}).click();await dialog.getByRole('option',{name:'Non-AC — opens at 11 AM',exact:true}).click();await expect(dialog.getByText('11:00 AM IST',{exact:false})).toBeVisible();
+  await expect(dialog.getByText('10:00 AM IST',{exact:false}).first()).toBeVisible();
+  await dialog.getByRole('combobox',{name:'Tatkal class',exact:true}).click();await dialog.getByRole('option',{name:'Non-AC — opens at 11 AM',exact:true}).click();await expect(dialog.getByText('11:00 AM IST',{exact:false}).first()).toBeVisible();
   await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();
   await page.goto(url+'/journeys');
   await page.emulateMedia({reducedMotion:'no-preference'});
