@@ -70,4 +70,4 @@
   .sticky button{min-height:50px;font-size:15px}
 }
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
-.head{padding-right:52px}
+.head{padding-right:64px;scroll-margin-top:88px}

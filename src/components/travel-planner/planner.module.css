@@ -280,3 +280,5 @@
 .sidebar .profileDrawer nav.profileTabs{display:flex;flex-direction:row;justify-content:flex-start;height:auto;margin:0;gap:8px;overflow:auto}
 .sidebar .profileDrawer nav.profileTabs button,.sidebar .profileDrawer nav.profileTabs a{flex-shrink:0}
 .profileOnly [aria-label="Open profile menu"]{display:none}
+/* The docked header floats over the content; only its close button takes clicks. */
+.dockedModal .modalHead{pointer-events:none}.dockedModal .modalHead button{pointer-events:auto}
