@@ -20,7 +20,7 @@ export async function verifyDesktopJourneys(page,api,url){
     const trigger=workspace.getByRole('button',{name:'Select travel date range',exact:true});assert.ok((await trigger.boundingBox()).width<225,'Date trigger stays compact');
     /** Applies a visible picker preset rather than modifying React state or the URL directly. */
     async function preset(name){await trigger.click();const picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByRole('button',{name,exact:true}).click();await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker).toHaveCount(0);}
-    await preset('Next 7 days');await expect(workspace.getByRole('article')).toHaveCount(2);await expect(workspace.getByRole('button',{name:'Active 2',exact:true})).toBeVisible();
+    await preset('Next 7 days');await expect(workspace.getByRole('article')).toHaveCount(2);await expect(workspace.getByRole('button',{name:'Upcoming 2',exact:true})).toBeVisible();
     await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(2);
     await preset('Next 30 days');await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(3);
     await trigger.click();let picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByLabel('From date',{exact:true}).fill(day(40));await picker.getByLabel('To date',{exact:true}).fill(day(50));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);

@@ -14,7 +14,7 @@ import s from "./planner.module.css";
 import d from "./journey-detail.module.css";
 
 /** Resolves a station code to its directory name, once the directory has loaded. */
-function useStationName(code: string) {
+export function useStationName(code: string) {
   const [name, setName] = useState("");
   useEffect(() => { let live = true; void loadStations().then((all) => { if (live) setName(all.find(([c]) => c === code.trim().toUpperCase())?.[1] ?? ""); }); return () => { live = false; }; }, [code]);
   return name;
