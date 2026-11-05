@@ -213,3 +213,9 @@
 .dockedModal{inset:auto;top:66px;right:0;bottom:0;left:auto;margin:0;width:440px;max-width:440px;max-height:none;height:calc(100dvh - 66px);border-radius:0;border-width:0 0 0 1px;box-shadow:-12px 0 40px #0003}
 .contentDocked{padding-right:464px}
 @media(max-width:1180px){.contentDocked{padding-right:0}}
+/* Sidebar account (canvas: Sidebar). */
+.sidebarAccount{display:flex;align-items:center;gap:10px;margin-top:auto;padding:12px 8px;border-top:1px solid var(--rw-sidebar-line)}
+.accountAvatar{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:999px;background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:700;font-size:13px}
+.accountText{display:grid;min-width:0}
+.accountText b{font-size:13px;font-weight:600;color:var(--rw-sidebar-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.accountText small{font-size:12px;color:var(--rw-sidebar-muted)}

@@ -26,3 +26,4 @@
 .routineGroup summary>span{display:grid;gap:2px}
 .routineGroup summary small{color:var(--rw-muted);font-size:13px}
 .routineGroup[open]{display:grid;gap:8px}
+.chipCount{font-weight:500;opacity:.8}
