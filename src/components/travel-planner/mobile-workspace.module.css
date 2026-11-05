@@ -74,3 +74,18 @@
 .segments button[aria-pressed=true]{background:var(--rw-brand-soft)!important;color:var(--rw-brand-soft-ink)!important;border-color:var(--rw-brand)!important}
 .screen .heading h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
 .tools label{min-height:44px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+
+/* Calendar on phones (canvas CalendarMobile.dc.html). */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.datePick input{min-height:40px;padding:0 8px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-surface);color:var(--rw-text);font:600 13px inherit}
+.week{gap:5px!important}
+.week button{min-height:58px!important;padding:6px 0!important;gap:3px!important;border:0!important;border-radius:12px!important;background:var(--rw-surface)!important;color:var(--rw-text)!important}
+.week small{font-size:10px!important;font-weight:700;color:var(--rw-muted)}
+.week b{font-size:16px!important;font-weight:800}
+.week span{width:5px;height:5px;border-radius:999px}.week span[data-on]{background:var(--rw-brand)}
+.week button[aria-pressed=true]{background:var(--rw-brand-soft)!important;outline:1.5px solid var(--rw-brand);color:var(--rw-text)!important}
+.week button[aria-pressed=true] small{color:var(--rw-brand-soft-ink)}
+.agenda h2{margin:16px 0 8px!important;font-size:13px!important;font-weight:700!important;color:var(--rw-sidebar-text)}
+.ev{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;margin-top:6px;font-size:14px}
+.ev span{flex:1}.ev small{font-size:12px}
+.ev[data-kind=off]{background:var(--rw-timeoff-bg);color:var(--rw-timeoff-ink)}
