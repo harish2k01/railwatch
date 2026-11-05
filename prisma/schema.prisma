@@ -157,6 +157,8 @@ model RailFile {
   type      String
   size      Int
   payload   String
+  // AES-GCM encrypted raw file bytes (plan 1.4). Null for rows still holding the legacy base64 `payload`.
+  payloadBytes Bytes?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
