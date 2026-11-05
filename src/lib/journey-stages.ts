@@ -9,10 +9,10 @@ export function journeyStages(j: Journey, today: string, routine?: string): Stag
   const hasTicket = Boolean(j.attachments?.length || j.pnr), travelled = j.date < today || j.status === "completed";
   const inDays = daysBetween(today, j.date);
   return [
-    { label: "Planned", note: routine || "One-off", state: "done" },
-    { label: opens <= today ? "Booking opened" : "Booking opens", note: `${formatDay(opens, { day: "numeric", month: "short" })}, ${bookingTimeLabel(j)}`, state: opens <= today ? "done" : "current" },
-    { label: j.status === "cancellation_needed" ? "To cancel" : j.status === "cancelled" ? "Cancelled" : "Booked", note: booked ? (hasTicket ? "Ticket attached" : "No ticket") : "Not yet", state: booked ? "done" : opens <= today ? "current" : "todo", warn: (booked && !hasTicket) || j.status === "cancellation_needed" },
-    { label: "Travel", note: travelled ? "Done" : inDays === 0 ? "Today" : `in ${inDays} day${inDays === 1 ? "" : "s"}`, state: travelled ? "done" : booked ? "current" : "todo" },
+    { label: "Planned", note: routine ? `Created by ${routine}` : "One-off trip", state: "done" },
+    { label: opens <= today ? "Booking opened" : "Booking opens", note: `${formatDay(opens, { weekday: "short", day: "numeric", month: "short" })} · ${bookingTimeLabel(j).replace(" IST", "")}`, state: opens <= today ? "done" : "current" },
+    { label: j.status === "cancellation_needed" ? "To cancel" : j.status === "cancelled" ? "Cancelled" : "Booked", note: booked ? (hasTicket ? "Ticket attached" : "Ticket not attached yet") : "Not yet", state: booked ? "done" : opens <= today ? "current" : "todo", warn: (booked && !hasTicket) || j.status === "cancellation_needed" },
+    { label: "Travel", note: `${formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · ${travelled ? "travelled" : inDays === 0 ? "today" : `in ${inDays} day${inDays === 1 ? "" : "s"}`}`, state: travelled ? "done" : booked ? "current" : "todo" },
   ];
 }
 

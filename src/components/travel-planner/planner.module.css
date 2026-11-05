@@ -254,3 +254,6 @@
 .legendToggle i[data-swatch=bookings]{background:var(--rw-open)}
 .legendToggle i[data-swatch=cancellation_needed]{background:var(--rw-danger)}
 .legendToggle i[data-swatch=holidays]{background:var(--rw-timeoff)}
+/* Docked journey panel: one header (the panel's own), as on the board; the dialog keeps its accessible title. */
+.dockedModal .modalHead{position:absolute;top:18px;right:18px;padding:0;border:0;background:none;z-index:1}
+.dockedModal .modalHead h2,.dockedModal .modalHead p{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

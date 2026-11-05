@@ -10,7 +10,7 @@ export async function verifyDesktopJourneys(page,api,url){
   try{
     assert.equal((await api('/api/railwatch/workspace','put',{...baseline,planner:{...baseline.planner,journeys:[...baseline.planner.journeys,...fixtures]}})).status(),200);
     await page.setViewportSize({width:1482,height:900});await page.goto(url+'/journeys');
-    const workspace=page.getByRole('region',{name:'Desktop journey workspace',exact:true});
+    const workspace=page.getByRole('region',{name:'Desktop journey workspace',exact:true});await workspace.getByRole('button',{name:'Board',exact:true}).click();
     await workspace.getByRole('textbox',{name:'Search journeys',exact:true}).fill('DesktopWindowFixture');
     await expect(workspace.getByRole('article')).toHaveCount(6);
     for(const label of ['Record booking','View ticket','Confirm cancellation'])await expect(workspace.getByRole('button',{name:label,exact:true})).toHaveCount(0);

@@ -31,3 +31,20 @@
 .link{background:none;border:0;padding:0;color:var(--rw-brand);font:inherit;font-weight:600;cursor:pointer}
 .sticky{position:sticky;bottom:0;padding:12px 0 4px;background:linear-gradient(transparent,var(--rw-surface) 30%)}
 .sticky button{width:100%;min-height:48px}
+
+/* Values from the canvas Journeys + detail board. */
+.detail{gap:24px}
+.route{font-size:26px}
+.stages{padding:0;border:0;background:none;gap:0}
+.stages li{align-items:flex-start;gap:14px;padding-bottom:14px}
+.stages li:last-child{padding-bottom:0}
+.dot{width:22px;height:22px}
+.stageText{display:grid;gap:2px}
+.stageLabel{font-size:14px;font-weight:700}
+.section{gap:12px}
+.section h3{font-size:15px}
+.drop{gap:10px;padding:26px 18px;border-color:var(--rw-line);font-size:14px;text-align:center}
+.drop small{font-size:13px}
+.choose{margin-top:4px;display:inline-flex;align-items:center;min-height:44px;padding:0 18px}
+.grid{gap:12px}
+.grid div{padding:12px 14px;background:var(--rw-ground)}

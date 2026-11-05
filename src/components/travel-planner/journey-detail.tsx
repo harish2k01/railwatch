@@ -9,7 +9,6 @@ const daysUntilOpen = (j: Journey, today: string) => daysBetween(today, bookingD
 import { stationLabel } from "@/lib/journey-display";
 import { loadStations } from "@/lib/stations";
 import { ActionMenu } from "./action-menu";
-import { STATUS } from "./forms";
 import s from "./planner.module.css";
 import d from "./journey-detail.module.css";
 
@@ -46,21 +45,20 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
         <p className={d.kicker}>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}{routine ? ` · ${routine}` : ""}</p>
         <p className={d.route}><b title={j.from}>{stationLabel(j.from)}</b> → <b title={j.to}>{stationLabel(j.to)}</b></p>
         {(from || to) && <p className={d.names}>{from || j.from} to {to || j.to}</p>}
-        <span className={`${s.badge} ${j.status === "cancellation_needed" ? s.badgeAmber : booked ? s.badgeGreen : s.badgePurple}`}>{STATUS[j.status]}</span>
       </div>
       <ActionMenu label="More journey actions" actions={actions} />
     </header>
-    <ol className={d.stages} aria-label="Journey stages">{stages.map((st) => <li key={st.label} data-state={st.state}><span className={d.dot} aria-hidden="true">{st.state === "done" && <Check size={12} strokeWidth={3} />}</span><span className={d.stageLabel}>{st.label}</span><span className={st.warn ? d.warn : d.note}>{st.note}</span></li>)}</ol>
+    <ol className={d.stages} aria-label="Journey stages">{stages.map((st) => <li key={st.label} data-state={st.state}><span className={d.dot} aria-hidden="true">{st.state === "done" && <Check size={12} strokeWidth={3} />}</span><span className={d.stageText}><span className={d.stageLabel}>{st.label}</span><span className={st.warn ? d.warn : d.note}>{st.note}</span></span></li>)}</ol>
     <section aria-labelledby="journey-ticket" className={d.section}>
       <h3 id="journey-ticket">Ticket</h3>
       {pdfs.length ? <ul className={d.files}>{pdfs.map((file, i) => <li key={file.id}><button type="button" className={s.secondary} onClick={() => view(file)}><FileText size={16} />View ticket{pdfs.length > 1 ? ` ${i + 1}` : ""}</button></li>)}</ul>
-        : uploadsEnabled && j.status !== "cancelled" ? <button type="button" className={d.drop} onClick={attach}><Paperclip size={18} /><span>Add the IRCTC PDF</span><small>Details are read from the ticket</small></button>
+        : uploadsEnabled && j.status !== "cancelled" ? <button type="button" className={d.drop} onClick={attach}><Paperclip size={22} aria-hidden="true" /><span>Drop the IRCTC PDF here</span><small>Train, coach, berth and PNR are read on this device and filled in below.</small><span className={`${s.primary} ${d.choose}`}>Choose file</span></button>
         : <p className={d.note}>No ticket attached.</p>}
       <dl className={d.grid}>{details.map(([label, value]) => <div key={label}><dt>{label}</dt><dd data-empty={!value || undefined}>{value || "Not set"}</dd></div>)}</dl>
     </section>
     <section aria-labelledby="journey-reminders" className={d.section}>
-      <h3 id="journey-reminders">Reminders and notes</h3>
-      <div className={d.line}><span>Reminders</span><span className={d.note}>{reminders}</span></div>
+      <h3 id="journey-reminders">Reminders</h3>
+      <div className={d.line}><span>{j.status === "cancellation_needed" ? "Cancellation follow-up" : "Booking reminders"}</span><span className={d.note}>{reminders}</span></div>
       <div className={d.line}><span>Notes</span>{j.notes ? <span className={d.noteText}>{j.notes}</span> : <button type="button" className={d.link} onClick={edit}>Add note</button>}</div>
       <p className={s.help}>Book or cancel through IRCTC. RailWatch records your plans.</p>
     </section>
