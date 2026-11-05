@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { randomBytes } from "node:crypto";
-import { decryptBytes, encryptBytes, encryptSecret } from "./crypto";
+import { decryptBytes, encryptBytes } from "./crypto";
 import { ticketBytes } from "./ticket-storage";
 
 beforeAll(() => { process.env.APP_ENCRYPTION_KEY ??= randomBytes(32).toString("base64"); });
@@ -14,8 +14,7 @@ describe("ticket byte storage", () => {
     expect(() => decryptBytes(sealed)).toThrow();
     expect(() => decryptBytes(Buffer.from([9, 1, 2]))).toThrow("malformed");
   });
-  it("prefers payloadBytes and falls back to the legacy base64 text", () => {
-    expect(ticketBytes({ payload: "", payloadBytes: encryptBytes(pdf) }).equals(pdf)).toBe(true);
-    expect(ticketBytes({ payload: encryptSecret(pdf.toString("base64")), payloadBytes: null }).equals(pdf)).toBe(true);
+  it("reads stored rows", () => {
+    expect(ticketBytes({ payloadBytes: encryptBytes(pdf) }).equals(pdf)).toBe(true);
   });
 });

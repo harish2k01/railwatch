@@ -21,7 +21,7 @@ export async function PUT(request:Request,context:Context){try{
   if(type!=="application/pdf")throw new ApiError(400,"Only PDF originals can be stored. Images and QR codes are used only to extract details.","PDF_ONLY");
   const meta=attachmentSchema.parse({id,name:decodeURIComponent(request.headers.get("x-file-name")??"ticket"),type,size:bytes.length,createdAt:new Date().toISOString()});
   if(!bytes.subarray(0,1024).includes(Buffer.from("%PDF-")))throw new ApiError(400,"The file contents do not match the PDF type.");
-  await prisma.$transaction(async tx=>{await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;const old=await tx.railFile.findUnique({where:{userId_id:{userId:user.id,id}},select:{name:true,type:true,size:true,payload:true,payloadBytes:true}});if(old){if(old.name!==meta.name||old.type!==meta.type||old.size!==meta.size||!ticketBytes(old).equals(bytes))throw new ApiError(409,"This attachment already exists. Upload it using a new identifier.");return;}
+  await prisma.$transaction(async tx=>{await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;const old=await tx.railFile.findUnique({where:{userId_id:{userId:user.id,id}},select:{name:true,type:true,size:true,payloadBytes:true}});if(old){if(old.name!==meta.name||old.type!==meta.type||old.size!==meta.size||!ticketBytes(old).equals(bytes))throw new ApiError(409,"This attachment already exists. Upload it using a new identifier.");return;}
     if((await ticketStorage.usage(tx,user.id))+bytes.length>250_000_000)throw new ApiError(413,"Your ticket storage limit is 250 MB. Remove unused files first.");
     await ticketStorage.put(tx,user.id,id,{name:meta.name,type:meta.type,bytes});
   });return jsonData(meta);

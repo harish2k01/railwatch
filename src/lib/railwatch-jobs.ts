@@ -1,5 +1,4 @@
 import { journeyLink } from "./journey-links";
-import { backfillTicketBytes } from "./ticket-storage";
 import {nextAccountBatch,planAccountReminders} from "./reminder-planning";
 import {storedPlanner} from "./workspace-storage";
 import {reminderJourneyId} from "./reminder-reference";
@@ -43,8 +42,6 @@ export async function processRailWatch(now=new Date()){
   const batch=await nextAccountBatch();let planningFailures=0;
   for(const {userId} of batch.accounts){try{await planAccountReminders(userId,policy,telegramProviderId,now,reminderJobs);}catch(error){planningFailures++;logger.error("scheduler.account_failed",{accountId:userId,errorType:error instanceof Error?error.name:"UnknownError"});}}
   await prisma.railOperations.upsert({where:{id:"scheduler"},create:{id:"scheduler",accountCursor:batch.cursor},update:{accountCursor:batch.cursor}});
-  // Plan 1.4b: convert legacy base64 ticket rows to raw encrypted bytes a few at a time.
-  try{const converted=await backfillTicketBytes(prisma);if(converted)logger.info("tickets.backfilled",{count:converted});}catch(error){logger.error("tickets.backfill_failed",{errorType:error instanceof Error?error.name:"UnknownError"});}
   const available={dueAt:{lte:now},attempts:{lt:5},OR:[{state:"PENDING"},{state:"FAILED"},{state:"SENDING",leaseUntil:{lt:now}}]};
   const jobs=await prisma.railJob.findMany({where:available,orderBy:{dueAt:"asc"},take:100});let sent=0;
   for(const job of jobs){const lease=randomUUID();const claim=await prisma.railJob.updateMany({where:{id:job.id,...available},data:{state:"SENDING",lease,leaseUntil:new Date(Math.max(Date.now(),now.getTime())+120000),attempts:{increment:1}}});if(!claim.count)continue;
