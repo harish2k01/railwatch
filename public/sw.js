@@ -27,11 +27,23 @@ self.addEventListener("push", event => {
   try { payload = event.data.json(); } catch { return; }
   event.waitUntil(self.registration.showNotification(payload.title || "RailWatch", {
     body: payload.body, tag: payload.tag || "railwatch", icon: "/icons/app-192.png",
-    data: { url: journeyDestination(payload.url) }, renotify: false,
+    data: { url: journeyDestination(payload.url), journeyId: journeyId(payload.url) }, renotify: false,
+    // Plan 3.7: booking reminders can be acted on without opening the app.
+    actions: payload.actions === "booking" ? [{ action: "booked", title: "Mark booked" }, { action: "snooze", title: "Snooze 1 hour" }] : [],
   }));
 });
+/** Reads the journey id from a same-origin journey link. */
+function journeyId(value) { try { const id = new URL(value || "/", self.location.origin).searchParams.get("journey"); return id && id.length <= 128 ? id : ""; } catch { return ""; } }
 self.addEventListener("notificationclick", event => {
   event.notification.close();
+  const id = event.notification.data?.journeyId;
+  if (id && (event.action === "booked" || event.action === "snooze")) {
+    // Same-origin, cookie-authenticated request; on failure, open the journey instead.
+    event.waitUntil(fetch("/api/railwatch/notifications", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(event.action === "booked" ? { action: "booked", journeyId: id } : { action: "snooze", journeyId: id, minutes: 60 }) })
+      .then(response => { if (!response.ok) throw new Error(); })
+      .catch(() => self.clients.openWindow(new URL(journeyDestination(event.notification.data?.url), self.location.origin).href)));
+    return;
+  }
   event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async windows => {
     const target = new URL(journeyDestination(event.notification.data?.url), self.location.origin).href;
     const client = windows.find(window => new URL(window.url).origin === self.location.origin);

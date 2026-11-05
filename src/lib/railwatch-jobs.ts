@@ -19,9 +19,18 @@ import { applyAccountSettings } from "./railwatch-store";
 import { scheduledReminders,bookingTimeLabel,todayIST,formatDay,bookingDay,type Planner } from "./travel-planner";
 import { syncGoogleCalendars } from "./railwatch-google";
 /** Builds durable reminder identities and due times from active journey preferences. */
+/** When to send the chart-check reminder: 4 hours before a confirmed departure, for booked RAC or waitlisted tickets only. */
+export function chartCheckAt(j:{status:string;ticketStatus?:string;departureConfirmed?:boolean;departure:string;date:string}){if(j.status!=="booked"||!j.ticketStatus||j.ticketStatus==="CNF"||!j.departureConfirmed)return undefined;return new Date(new Date(`${j.date}T${j.departure}:00+05:30`).getTime()-4*3600000);}
 export function reminderJobs(planner:Planner,now:Date,emailRecipient?:string,deviceIds:string[]=[]){
   const result:{key:string;kind:string;dueAt:Date;journeyId:string;message:string;deviceId?:string}[]=[];
-  for(const j of planner.journeys){if(j.archivedAt||!["needs_booking","cancellation_needed"].includes(j.status)||j.date<todayIST(now))continue;
+  const channels=[...deviceIds.map(id=>"PUSH:"+id),...(planner.settings.emailEnabled&&emailRecipient?["EMAIL"]:[]),...(planner.settings.telegramEnabled?["TELEGRAM"]:[])];
+  for(const j of planner.journeys){
+    // Plan 3.5: one chart-check reminder about 4 hours before departure for RAC or waitlisted tickets.
+    const chart=chartCheckAt(j);
+    if(chart&&chart.getTime()>now.getTime()-3600000&&!j.archivedAt)for(const channel of channels.filter(c=>c!=="EMAIL")){const kind=channel.startsWith("PUSH:")?"PUSH":channel,deviceId=kind==="PUSH"?channel.slice(5):undefined;
+      const identity=JSON.stringify([`${j.id}:chart`,j.date,j.departure,j.ticketStatus,kind,kind==="PUSH"?deviceId:kind==="EMAIL"?emailRecipient:kind==="TELEGRAM"?planner.settings.telegramProviderId:""]);
+      result.push({key:createHash("sha256").update(identity).digest("hex"),kind,dueAt:chart,journeyId:j.id,message:`Chart check: your ${j.ticketStatus} ticket from ${j.from} to ${j.to} departs at ${j.departure} IST today. Charts are usually prepared about 4 hours before departure, so check your PNR status now.`,deviceId});}
+    if(j.archivedAt||!["needs_booking","cancellation_needed"].includes(j.status)||j.date<todayIST(now))continue;
     // Retain a bounded recovery window; older schedules never auto-send externally.
     for(const time of scheduledReminders(planner,j,now)){const dueAt=new Date(time);if(dueAt.getTime()<now.getTime()-30*86400000)continue;
       const message=j.status==="cancellation_needed"?`Cancel your ticket from ${j.from} to ${j.to} for ${formatDay(j.date,{day:"numeric",month:"long",year:"numeric"})} through IRCTC, then confirm cancellation in RailWatch.`:`Book your train from ${j.from} to ${j.to} for ${formatDay(j.date,{day:"numeric",month:"long",year:"numeric"})}. Booking opens ${formatDay(bookingDay(j))} at ${bookingTimeLabel(j)}.`;
@@ -56,7 +65,7 @@ export async function processRailWatch(now=new Date()){
       if(resume>now.getTime()){await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"PENDING",attempts:{decrement:1},dueAt:new Date(resume),deferredUntil:new Date(resume),lease:null,leaseUntil:null,lastError:null}});logger.info("reminder.deferred",{jobId:job.id,kind:job.kind,reason:pause&&pause.until>now?"snooze":"quiet_hours"});continue;}
       if(job.kind==="EMAIL"&&!(await getDeliveryConfiguration()).smtpUrl){await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"PENDING",attempts:{decrement:1},dueAt:new Date(now.getTime()+300000),lastError:"Email setup is incomplete.",lease:null,leaseUntil:null}});continue;}
       const journey=planner!.journeys.find(j=>j.id===actual.journeyId)!;
-      if(job.kind==="PUSH")await sendBrowserPush(job.userId,actual.deviceId!,actual.message,"railwatch-journey-"+actual.journeyId);
+      if(job.kind==="PUSH")await sendBrowserPush(job.userId,actual.deviceId!,actual.message,"railwatch-journey-"+actual.journeyId,journey.status==="needs_booking"?"booking":"none");
       if(job.kind==="EMAIL"){const result=await sendBookingEmail(workspace!.user.email,journey);if(!result.sent)throw new Error("Email setup is incomplete.");}
       const providerId=job.kind==="TELEGRAM"?await sendTelegram(planner!.settings.telegramChatId,telegramBookingMessage(journey),planner!.settings.telegramProviderId,`${process.env.APP_URL??"http://localhost:3000"}${journeyLink(journey.id)}`):undefined;
       await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"SENT",sentAt:now,providerId,lastError:null,deferredUntil:null,lease:null,leaseUntil:null}});sent++;logger.info("reminder.delivered",{jobId:job.id,kind:job.kind});
