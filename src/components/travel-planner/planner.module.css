@@ -219,3 +219,7 @@
 .accountText{display:grid;min-width:0}
 .accountText b{font-size:13px;font-weight:600;color:var(--rw-sidebar-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .accountText small{font-size:12px;color:var(--rw-sidebar-muted)}
+/* Settings: section list beside the docked section content on desktop (design gap S1). */
+.profileDocked{inset:66px 0 0 auto;height:calc(100dvh - 66px);width:min(620px,calc(100vw - 640px));min-width:420px;box-shadow:none}
+.settingsWithPanel{padding-right:min(640px,calc(100vw - 620px))}
+@media(max-width:1180px){.settingsWithPanel{padding-right:0}.profileDocked{box-shadow:-15px 0 60px #0002}}
