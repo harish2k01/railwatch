@@ -69,3 +69,5 @@
   .sticky{margin:0 -16px;padding:12px 16px 20px;background:var(--rw-sidebar);border-top:1px solid var(--rw-line)}
   .sticky button{min-height:50px;font-size:15px}
 }
+/* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
+.head{padding-right:52px}
