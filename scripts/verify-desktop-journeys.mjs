@@ -10,21 +10,21 @@ export async function verifyDesktopJourneys(page,api,url){
   try{
     assert.equal((await api('/api/railwatch/workspace','put',{...baseline,planner:{...baseline.planner,journeys:[...baseline.planner.journeys,...fixtures]}})).status(),200);
     await page.setViewportSize({width:1482,height:900});await page.goto(url+'/journeys');
-    const workspace=page.getByRole('region',{name:'Desktop Journey Workspace',exact:true});
-    await workspace.getByRole('textbox',{name:'Search Journeys',exact:true}).fill('DesktopWindowFixture');
+    const workspace=page.getByRole('region',{name:'Desktop journey workspace',exact:true});
+    await workspace.getByRole('textbox',{name:'Search journeys',exact:true}).fill('DesktopWindowFixture');
     await expect(workspace.getByRole('article')).toHaveCount(6);
     for(const label of ['Record booking','View ticket','Confirm cancellation'])await expect(workspace.getByRole('button',{name:label,exact:true})).toHaveCount(0);
     const cancelled=workspace.getByRole('region',{name:'Cancelled column',exact:true});
     await expect(cancelled.getByRole('button',{name:'Expand Cancelled column',exact:true})).toBeVisible();
     await cancelled.getByRole('button',{name:'Expand Cancelled column',exact:true}).click();await cancelled.getByRole('button',{name:'Collapse Cancelled column',exact:true}).click();
-    const trigger=workspace.getByRole('button',{name:'Select Travel Date Range',exact:true});assert.ok((await trigger.boundingBox()).width<225,'Date trigger stays compact');
+    const trigger=workspace.getByRole('button',{name:'Select travel date range',exact:true});assert.ok((await trigger.boundingBox()).width<225,'Date trigger stays compact');
     /** Applies a visible picker preset rather than modifying React state or the URL directly. */
-    async function preset(name){await trigger.click();const picker=workspace.getByRole('dialog',{name:'Travel Date Range'});await picker.getByRole('button',{name,exact:true}).click();await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker).toHaveCount(0);}
+    async function preset(name){await trigger.click();const picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByRole('button',{name,exact:true}).click();await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker).toHaveCount(0);}
     await preset('Next 7 days');await expect(workspace.getByRole('article')).toHaveCount(2);await expect(workspace.getByRole('button',{name:'Active 2',exact:true})).toBeVisible();
     await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(2);
     await preset('Next 30 days');await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(3);
-    await trigger.click();let picker=workspace.getByRole('dialog',{name:'Travel Date Range'});await picker.getByLabel('From date',{exact:true}).fill(day(40));await picker.getByLabel('To date',{exact:true}).fill(day(50));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
-    await trigger.click();picker=workspace.getByRole('dialog',{name:'Travel Date Range'});await picker.getByLabel('From date',{exact:true}).fill(day(50));await picker.getByLabel('To date',{exact:true}).fill(day(40));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker.getByRole('alert')).toContainText('End date');await page.keyboard.press('Escape');await expect(picker).toHaveCount(0);await expect(trigger).toBeFocused();
+    await trigger.click();let picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByLabel('From date',{exact:true}).fill(day(40));await picker.getByLabel('To date',{exact:true}).fill(day(50));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
+    await trigger.click();picker=workspace.getByRole('dialog',{name:'Travel date range'});await picker.getByLabel('From date',{exact:true}).fill(day(50));await picker.getByLabel('To date',{exact:true}).fill(day(40));await picker.getByRole('button',{name:'Apply range',exact:true}).click();await expect(picker.getByRole('alert')).toContainText('End date');await page.keyboard.press('Escape');await expect(picker).toHaveCount(0);await expect(trigger).toBeFocused();
     await preset('All dates');await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(6);
     await workspace.getByRole('button',{name:'Cancellation pending',exact:true}).click();await expect(workspace.getByRole('table').locator('tbody tr')).toHaveCount(1);
     await workspace.getByRole('button',{name:'All journeys',exact:true}).click();await workspace.getByRole('button',{name:'Board',exact:true}).click();await expect(workspace.getByRole('article')).toHaveCount(6);
@@ -32,7 +32,7 @@ export async function verifyDesktopJourneys(page,api,url){
     await expect(cancelled.getByRole('article')).toHaveCount(1);
     const moved=(await(await api('/api/railwatch/workspace')).json()).data;assert.equal(moved.planner.journeys.find(j=>j.id==='desktop-window-0').status,'cancelled');
     await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(cancelled.getByRole('article')).toHaveCount(0);await expect.poll(async()=>((await(await api('/api/railwatch/workspace')).json()).data.planner.journeys.find(j=>j.id==='desktop-window-0')?.status)).toBe('booked');
-    await workspace.getByRole('button',{name:'List',exact:true}).click();await workspace.getByRole('button',{name:/Open journey/}).first().click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close Dialog',exact:true}).click();
+    await workspace.getByRole('button',{name:'List',exact:true}).click();await workspace.getByRole('button',{name:/Open journey/}).first().click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close dialog',exact:true}).click();
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);await page.goto(url+'/journeys');
       await workspace.getByRole('button',{name:'List',exact:true}).click();await expect(workspace.getByRole('table')).toBeVisible();await expect(workspace.getByText('Loading journeys…',{exact:true})).toHaveCount(0);

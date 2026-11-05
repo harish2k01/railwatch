@@ -13,7 +13,7 @@ export async function verifyCalendarExperience({page,api,url,today}){
     assert.equal((await api('/api/railwatch/workspace','put',fixture)).status(),200);
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);
-      await page.setViewportSize({width:1440,height:1000});await page.goto(url+'/calendar');await page.getByRole('button',{name:'Next Month',exact:true}).click();
+      await page.setViewportSize({width:1440,height:1000});await page.goto(url+'/calendar');await page.getByRole('button',{name:'Next month',exact:true}).click();
       const planned=page.getByRole('button',{name:'PLN → END · Planned',exact:true}),booked=page.getByRole('button',{name:'BKG → END · Booked',exact:true}),cancel=page.getByRole('button',{name:'CXL → END · To Cancel',exact:true});
       await expect(planned).toBeVisible();await expect(booked).toBeVisible();await expect(cancel).toBeVisible();
       const background=locator=>locator.evaluate(el=>getComputedStyle(el).backgroundColor);
@@ -23,8 +23,8 @@ export async function verifyCalendarExperience({page,api,url,today}){
       await page.screenshot({path:`build/railwatch-qa/calendar-status-${theme}.png`,animations:'disabled'});
       const revision=(await(await api('/api/railwatch/workspace')).json()).data.revision;
       await page.getByRole('button',{name:`Plan journey on ${day(20)}`,exact:true}).click();
-      const form=page.getByRole('dialog');await expect(form.getByRole('heading',{name:'New Journey',exact:true})).toBeVisible();await expect(form.getByLabel('Travel Date',{exact:true})).toHaveValue(day(20));await expect(form.getByRole('button',{name:'Plan Travel',exact:true})).toHaveCount(0);await form.getByRole('button',{name:'Close Dialog',exact:true}).click();
-      await booked.click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toHaveValue('BKG');await page.getByRole('dialog').getByRole('button',{name:'Close Dialog',exact:true}).click();
+      const form=page.getByRole('dialog');await expect(form.getByRole('heading',{name:'New journey',exact:true})).toBeVisible();await expect(form.getByLabel('Travel date',{exact:true})).toHaveValue(day(20));await expect(form.getByRole('button',{name:'Plan travel',exact:true})).toHaveCount(0);await form.getByRole('button',{name:'Close dialog',exact:true}).click();
+      await booked.click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toHaveValue('BKG');await page.getByRole('dialog').getByRole('button',{name:'Close dialog',exact:true}).click();
       assert.equal((await(await api('/api/railwatch/workspace')).json()).data.revision,revision,'Calendar browsing must not save data');
       await page.setViewportSize({width:390,height:844});await page.goto(url+'/calendar');await page.getByLabel('Choose date',{exact:true}).fill(day(10));await expect(page.getByRole('region',{name:'Day agenda',exact:true}).getByText('Planned',{exact:true})).toBeVisible();
       await page.screenshot({path:`build/railwatch-qa/calendar-agenda-mobile-${theme}.png`,animations:'disabled'});

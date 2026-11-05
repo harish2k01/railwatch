@@ -36,7 +36,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
             await expect(form.getByRole('heading',{name:'Review routine changes',exact:true})).toBeVisible();
             const size=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(size.scroll<=size.width+1,'Mobile routine review fits');
             await page.screenshot({path:'build/railwatch-qa/routine-review-mobile.png',animations:'disabled'});
-            await form.getByRole('button',{name:'Close Dialog',exact:true}).click();await expect(form).toHaveCount(0);
+            await form.getByRole('button',{name:'Close dialog',exact:true}).click();await expect(form).toHaveCount(0);
           }
         }
       }
@@ -56,60 +56,60 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         await expect(page.getByRole('heading',{name:'More',exact:true})).toBeVisible();
         const more=page.getByRole('navigation',{name:'More destinations'});
         await more.getByRole('link',{name:'Routines',exact:false}).click();await expect(page.getByRole('heading',{name:'Routines',exact:true})).toBeVisible();
-        await page.getByRole('button',{name:'Open Profile Menu',exact:true}).click();await page.getByRole('menuitem',{name:'User Settings',exact:true}).click();
-        const drawer=page.getByRole('dialog',{name:'User Settings',exact:true});
+        await page.getByRole('button',{name:'Open profile menu',exact:true}).click();await page.getByRole('menuitem',{name:'User settings',exact:true}).click();
+        const drawer=page.getByRole('dialog',{name:'User settings',exact:true});
         const bounds=await drawer.boundingBox();assert.ok(bounds.width>=width-1,'Settings fills the phone');
         if(width===390){await page.setViewportSize({width:1482,height:876});await expect(page.getByRole('dialog')).toHaveCount(1);await expect(drawer.getByLabel('Username',{exact:true})).toBeVisible();await drawer.getByLabel('Username',{exact:true}).focus();await expect(drawer.getByLabel('Username',{exact:true})).toBeFocused();await page.setViewportSize({width,height:844});await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();}
         for(const tab of await drawer.getByRole('navigation',{name:'Settings sections'}).getByRole('button').all()){const box=await tab.boundingBox();assert.ok(box.x>=bounds.x&&box.x+box.width<=bounds.x+bounds.width+1,'Settings sections fit phone');}
-        await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
+        await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
         await page.goto(url+'/journeys');await page.getByRole('button',{name:/Open journey/}).first().click();
-        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Back',exact:true})).toHaveCount(0);await expect(summary.getByRole('button',{name:'Close Dialog',exact:true})).toHaveCount(1);await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);
+        const summary=page.getByRole('dialog');await expect(summary.getByRole('button',{name:'Back',exact:true})).toHaveCount(0);await expect(summary.getByRole('button',{name:'Close dialog',exact:true})).toHaveCount(1);await expect(summary.getByRole('button',{name:'Edit journey',exact:true})).toBeVisible();await expect(summary.getByRole('textbox')).toHaveCount(0);
         assert.ok((await summary.boundingBox()).width>=width-1,'Journey summary fills phone');
-        await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
-        await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await drawer.getByRole('button',{name:'Preferences',exact:true}).click();await drawer.locator('summary').filter({hasText:'Normal booking reminders'}).click();
-        assert.ok(await drawer.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Custom reminder controls fit mobile');await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
+        await summary.getByRole('button',{name:'Close dialog',exact:true}).click();
+        await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await drawer.getByRole('button',{name:'Preferences',exact:true}).click();await drawer.locator('summary').filter({hasText:'Normal booking reminders'}).click();
+        assert.ok(await drawer.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Custom reminder controls fit mobile');await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
 
         await expect(page.getByRole('button',{name:/^Notifications/})).toHaveCount(1);
         if(width===390&&theme==='light') {
           await mobileNav.getByRole('button',{name:'More',exact:true}).click();
-          await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User Settings',exact:false}).click();
+          await page.getByRole('navigation',{name:'More destinations'}).getByRole('button',{name:'User settings',exact:false}).click();
           await expect(drawer.getByRole('navigation',{name:'Settings sections'})).toBeVisible();
-          await drawer.getByRole('button',{name:'Close User Settings',exact:true}).click();
+          await drawer.getByRole('button',{name:'Close user settings',exact:true}).click();
           await mobileNav.getByRole('link',{name:'Tickets',exact:true}).click();
           const ticketRow=page.getByRole('button',{name:/^View ticket/}).first();await ticketRow.click();
           const pdf=page.getByRole('dialog',{name:'Ticket',exact:true});
           await expect(pdf.locator('canvas[data-rendered-page="1"]')).toBeVisible();
           await pdf.getByRole('button',{name:'Zoom in',exact:true}).click();
           assert.ok(await pdf.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Zoom stays within PDF scroll surface');
-          await pdf.getByRole('button',{name:'Document actions',exact:true}).click();await pdf.getByRole('menuitem',{name:'Fit Width',exact:true}).click();
-          await pdf.getByRole('button',{name:'Close Dialog',exact:true}).click();
-          await page.getByRole('button',{name:/^Ticket Actions For/}).first().click();await page.getByRole('menuitem',{name:'Journey details',exact:true}).click();await expect(summary.getByRole('button',{name:'Edit Journey',exact:true})).toBeVisible();await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
+          await pdf.getByRole('button',{name:'Document actions',exact:true}).click();await pdf.getByRole('menuitem',{name:'Fit width',exact:true}).click();
+          await pdf.getByRole('button',{name:'Close dialog',exact:true}).click();
+          await page.getByRole('button',{name:/^Ticket Actions For/}).first().click();await page.getByRole('menuitem',{name:'Journey details',exact:true}).click();await expect(summary.getByRole('button',{name:'Edit journey',exact:true})).toBeVisible();await summary.getByRole('button',{name:'Close dialog',exact:true}).click();
           await mobileNav.getByRole('link',{name:'Journeys',exact:true}).click();
           await page.getByRole('button',{name:/Open journey/}).first().click();
-          await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
+          await summary.getByRole('button',{name:'Edit journey',exact:true}).click();
           await summary.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await summary.getByLabel('Notes',{exact:true}).fill('Saved from the dedicated mobile editor');
           await summary.getByRole('button',{name:'Save journey',exact:true}).click();
           await expect(summary).toHaveCount(0);
           const stored=(await(await api('/api/railwatch/workspace')).json()).data;
           assert.ok(stored.planner.journeys.some(j=>j.notes==='Saved from the dedicated mobile editor'),'Mobile edit persisted');
           await page.getByRole('button',{name:/Open journey/}).first().click();
-          await summary.getByRole('button',{name:'Edit Journey',exact:true}).click();
+          await summary.getByRole('button',{name:'Edit journey',exact:true}).click();
           await summary.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await summary.getByLabel('Notes',{exact:true}).fill('Unsaved mobile edit');
           page.removeAllListeners('dialog');let guarded=false;page.on('dialog',async d=>{guarded=true;await d.dismiss();});
-          await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();assert.equal(guarded,true);await expect(summary).toBeVisible();
-          page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await summary.getByRole('button',{name:'Close Dialog',exact:true}).click();
+          await summary.getByRole('button',{name:'Close dialog',exact:true}).click();assert.equal(guarded,true);await expect(summary).toBeVisible();
+          page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await summary.getByRole('button',{name:'Close dialog',exact:true}).click();
           await page.getByRole('button',{name:'Journey filters',exact:true}).click();
           await expect(page.getByRole('combobox',{name:'Routine',exact:true})).toBeVisible();
-          await page.getByLabel('Search Journeys',{exact:true}).fill('no-such-route-mobile-qa');
+          await page.getByLabel('Search journeys',{exact:true}).fill('no-such-route-mobile-qa');
           await expect(page.getByText('No journeys in this list.',{exact:true})).toBeVisible();
           await page.getByRole('button',{name:'Clear filters',exact:true}).click();
           await page.getByRole('button',{name:'To cancel',exact:true}).click();
           await page.getByRole('button',{name:/Open journey/}).first().click();
-          await summary.getByRole('button',{name:'Confirm Cancellation',exact:true}).click();await expect(summary).toHaveCount(0);
+          await summary.getByRole('button',{name:'Confirm cancellation',exact:true}).click();await expect(summary).toHaveCount(0);
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'Cancelled',exact:true}).click();await expect(page.getByRole('button',{name:/Open journey/}).first()).toBeVisible();
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'History',exact:true}).click();await expect(page.getByText('History',{exact:true}).last()).toBeVisible();
           await page.getByRole('button',{name:'More journey lists',exact:true}).click();await page.getByRole('menuitem',{name:'Archive',exact:true}).click();await expect(page.getByText('Archive',{exact:true}).last()).toBeVisible();
-          await page.goto(url+'/admin');await expect(page.getByLabel('Booking opens this many days before travel')).toBeVisible();await expect(page.getByLabel('SMTP Connection')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Admin Settings Sections',exact:true})).toBeHidden();const sectionChooser=page.locator('details').filter({has:page.locator('nav[aria-label="Choose Admin Settings Section"]')});await expect(sectionChooser).not.toHaveAttribute('open');await sectionChooser.locator('summary').click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(page.getByLabel('Months to plan ahead',{exact:true})).toBeVisible();await expect(sectionChooser).not.toHaveAttribute('open');await page.screenshot({path:`build/railwatch-qa/admin-mobile-${width}-${theme}.png`,animations:'disabled'});
+          await page.goto(url+'/admin');await expect(page.getByLabel('Booking opens this many days before travel')).toBeVisible();await expect(page.getByLabel('SMTP Connection')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Admin settings sections',exact:true})).toBeHidden();const sectionChooser=page.locator('details').filter({has:page.locator('nav[aria-label="Choose admin settings section"]')});await expect(sectionChooser).not.toHaveAttribute('open');await sectionChooser.locator('summary').click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(page.getByLabel('Months to plan ahead',{exact:true})).toBeVisible();await expect(sectionChooser).not.toHaveAttribute('open');await page.screenshot({path:`build/railwatch-qa/admin-mobile-${width}-${theme}.png`,animations:'disabled'});
         }
         await page.goto(url+'/calendar');await expect(page.getByRole('region',{name:'Day agenda',exact:true})).toBeVisible();await expect(page.getByLabel('Choose date',{exact:true})).toBeVisible();
         await page.goto(url+'/');await page.getByRole('heading',{level:1}).waitFor();await expect(page.locator('[data-theme]')).toHaveAttribute('data-theme',theme);await page.screenshot({path:`build/railwatch-qa/mobile-${width}-${theme}.png`,animations:'disabled'});
@@ -117,54 +117,54 @@ export async function verifyResponsive({page,api,url,otherApi}) {
     }
   }
   await page.setViewportSize({width:390,height:844});await page.goto(url+'/');
-  await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();
+  await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();
   const guardedSettings=page.getByRole('dialog');await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();
   const username=guardedSettings.getByRole('textbox',{name:'Username',exact:true}),originalName=await username.inputValue();await username.fill(originalName+' edited');
   page.removeAllListeners('dialog');let settingsWarnings=0;page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
-  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await expect(username).toHaveValue(originalName+' edited');assert.equal(settingsWarnings,1);
+  await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();await expect(username).toHaveValue(originalName+' edited');assert.equal(settingsWarnings,1);
   await guardedSettings.getByRole('button',{name:'← Settings',exact:true}).click();await expect(username).toBeVisible();assert.equal(settingsWarnings,2);
   await page.route('**/api/railwatch/profile',route=>route.request().method()==='PATCH'?route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:{message:'Settings failure fixture'}})}):route.continue());
-  await guardedSettings.getByRole('button',{name:'Save Profile',exact:true}).click();await expect(guardedSettings.getByRole('alert')).toContainText('Settings failure fixture');
-  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();assert.equal(settingsWarnings,3);await expect(username).toHaveValue(originalName+' edited');await page.unroute('**/api/railwatch/profile');
-  await username.fill(originalName);await guardedSettings.getByRole('button',{name:'Save Profile',exact:true}).click();await expect(guardedSettings.getByRole('status').filter({hasText:'Your profile has been updated'})).toBeVisible();
-  await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await expect(guardedSettings).toHaveCount(0);assert.equal(settingsWarnings,3);
-  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await guardedSettings.getByRole('textbox',{name:'Username',exact:true}).fill('Discarded settings fixture');await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();
-  await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await expect(guardedSettings.getByRole('textbox',{name:'Username',exact:true})).toHaveValue(originalName);await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();
+  await guardedSettings.getByRole('button',{name:'Save profile',exact:true}).click();await expect(guardedSettings.getByRole('alert')).toContainText('Settings failure fixture');
+  await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();assert.equal(settingsWarnings,3);await expect(username).toHaveValue(originalName+' edited');await page.unroute('**/api/railwatch/profile');
+  await username.fill(originalName);await guardedSettings.getByRole('button',{name:'Save profile',exact:true}).click();await expect(guardedSettings.getByRole('status').filter({hasText:'Your profile has been updated'})).toBeVisible();
+  await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();await expect(guardedSettings).toHaveCount(0);assert.equal(settingsWarnings,3);
+  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await guardedSettings.getByRole('textbox',{name:'Username',exact:true}).fill('Discarded settings fixture');await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
+  await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await expect(guardedSettings.getByRole('textbox',{name:'Username',exact:true})).toHaveValue(originalName);await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
   page.removeAllListeners('dialog');page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
   await page.goto(url+'/admin');const bookingDays=page.getByRole('spinbutton',{name:'Booking opens this many days before travel',exact:true}),originalDays=await bookingDays.inputValue();await bookingDays.fill('61');
   await page.getByRole('button',{name:'More',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,4);
   await page.locator('summary').filter({hasText:'Admin section'}).click();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,5);
-  await bookingDays.fill(originalDays);await page.getByRole('button',{name:'Save Booking Rules',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Booking rules saved.'})).toBeVisible();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();assert.equal(settingsWarnings,5);
+  await bookingDays.fill(originalDays);await page.getByRole('button',{name:'Save booking rules',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Booking rules saved.'})).toBeVisible();await page.getByRole('link',{name:'Calendar & routines',exact:true}).click();assert.equal(settingsWarnings,5);
   page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());
-  await page.goto(url+'/');await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();const reminderRows=guardedSettings.locator('[name="normal_days"]'),originalRowCount=await reminderRows.count();await guardedSettings.locator('summary').filter({hasText:'Normal booking reminders'}).click();await guardedSettings.getByRole('button',{name:'Add reminder',exact:true}).first().click();await expect(reminderRows).toHaveCount(originalRowCount+1);
-  page.removeAllListeners('dialog');let scheduleWarning=false;page.on('dialog',async d=>{scheduleWarning=true;await d.dismiss();});await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();assert.equal(scheduleWarning,true);await expect(reminderRows).toHaveCount(originalRowCount+1);
-  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();await expect(reminderRows).toHaveCount(originalRowCount);await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();
+  await page.goto(url+'/');await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();const reminderRows=guardedSettings.locator('[name="normal_days"]'),originalRowCount=await reminderRows.count();await guardedSettings.locator('summary').filter({hasText:'Normal booking reminders'}).click();await guardedSettings.getByRole('button',{name:'Add reminder',exact:true}).first().click();await expect(reminderRows).toHaveCount(originalRowCount+1);
+  page.removeAllListeners('dialog');let scheduleWarning=false;page.on('dialog',async d=>{scheduleWarning=true;await d.dismiss();});await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();assert.equal(scheduleWarning,true);await expect(reminderRows).toHaveCount(originalRowCount+1);
+  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();await expect(reminderRows).toHaveCount(originalRowCount);await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
   // Closed phone task groups keep their fields in FormData and retain edited schedules.
   for(const theme of ['light','dark']){
     const before=(await(await api('/api/railwatch/workspace')).json()).data;before.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',before)).status(),200);
-    await page.setViewportSize({width:390,height:844});await page.goto(url+'/');await page.getByRole('button',{name:'Open Profile Menu'}).click();await page.getByRole('menuitem',{name:'User Settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();
+    await page.setViewportSize({width:390,height:844});await page.goto(url+'/');await page.getByRole('button',{name:'Open profile menu'}).click();await page.getByRole('menuitem',{name:'User settings'}).click();await guardedSettings.getByRole('button',{name:'Preferences',exact:true}).click();
     const tasks=guardedSettings.locator('details[name="preference-task"]');await expect(tasks).toHaveCount(7);assert.equal(await tasks.evaluateAll(items=>items.filter(item=>item.open).length),0);
     const normal=guardedSettings.locator('summary').filter({hasText:'Normal booking reminders'}),quiet=guardedSettings.locator('summary').filter({hasText:'Quiet hours'});
     const days=await guardedSettings.locator('[name="normal_days"]').evaluateAll(inputs=>inputs.map(input=>Number(input.value))),times=await guardedSettings.locator('[name="normal_time"]').evaluateAll(inputs=>inputs.map(input=>input.value));
     const expected=days.map((daysBefore,index)=>({daysBefore,time:times[index]}));await normal.click();await expect(guardedSettings.locator('[name="normal_days"]').first()).toBeVisible();await quiet.click();await expect(guardedSettings.locator('[name="normal_days"]').first()).toBeHidden();assert.deepEqual(await guardedSettings.locator('[name="normal_time"]').evaluateAll(inputs=>inputs.map(input=>input.value)),times);
-    await quiet.click();await page.screenshot({path:'build/railwatch-qa/preferences-mobile-'+theme+'.png',animations:'disabled'});const saveResponse=page.waitForResponse(response=>response.url().endsWith('/api/railwatch/workspace')&&response.request().method()==='PUT');await guardedSettings.getByRole('button',{name:'Save Preferences',exact:true}).click();assert.equal((await saveResponse).status(),200);await expect(guardedSettings.getByRole('button',{name:'Save Preferences',exact:true})).toBeEnabled();await expect.poll(async()=>(await(await api('/api/railwatch/workspace')).json()).data.planner.settings.bookingSchedule).toEqual(expected);await guardedSettings.getByRole('button',{name:'Close User Settings',exact:true}).click();await expect(guardedSettings).toHaveCount(0);
+    await quiet.click();await page.screenshot({path:'build/railwatch-qa/preferences-mobile-'+theme+'.png',animations:'disabled'});const saveResponse=page.waitForResponse(response=>response.url().endsWith('/api/railwatch/workspace')&&response.request().method()==='PUT');await guardedSettings.getByRole('button',{name:'Save preferences',exact:true}).click();assert.equal((await saveResponse).status(),200);await expect(guardedSettings.getByRole('button',{name:'Save preferences',exact:true})).toBeEnabled();await expect.poll(async()=>(await(await api('/api/railwatch/workspace')).json()).data.planner.settings.bookingSchedule).toEqual(expected);await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();await expect(guardedSettings).toHaveCount(0);
   }
   await page.setViewportSize({width:1482,height:876});
   const state=(await(await api('/api/railwatch/workspace')).json()).data;state.planner.settings.theme='light';assert.equal((await api('/api/railwatch/workspace','put',state)).status(),200);
   await page.goto(url+'/journeys');await page.getByRole('region',{name:'Booked column',exact:true}).getByRole('button',{name:/Open journey/}).first().click();
-  const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'Edit Journey',exact:true})).toHaveCount(0);await expect(dialog.getByLabel('From',{exact:true})).toBeVisible();
+  const dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:'Edit journey',exact:true})).toHaveCount(0);await expect(dialog.getByLabel('From',{exact:true})).toBeVisible();
   assert.ok((await dialog.boundingBox()).width>1000,'Desktop journey opens directly in editor');
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).overflow),'hidden','Dialog owns scrolling');
   await dialog.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await dialog.getByLabel('Notes',{exact:true}).fill('Discard guard test');
   page.removeAllListeners('dialog');let warned=false;page.on('dialog',async d=>{warned=true;await d.dismiss();});
-  await dialog.getByRole('button',{name:'Close Dialog',exact:true}).click();assert.equal(warned,true);await expect(dialog).toBeVisible();
-  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Close Dialog',exact:true}).click();await expect(dialog).toHaveCount(0);
+  await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();assert.equal(warned,true);await expect(dialog).toBeVisible();
+  page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();await expect(dialog).toHaveCount(0);
 
-  await page.getByRole('button',{name:'New Journey',exact:true}).click();
-  await dialog.getByLabel('Travel Date',{exact:true}).fill(new Date(Date.now()+60*86400000).toISOString().slice(0,10));await dialog.getByRole('button',{name:'Tatkal',exact:true}).click();
+  await page.getByRole('button',{name:'New journey',exact:true}).click();
+  await dialog.getByLabel('Travel date',{exact:true}).fill(new Date(Date.now()+60*86400000).toISOString().slice(0,10));await dialog.getByRole('button',{name:'Tatkal',exact:true}).click();
   await expect(dialog.getByText('10:00 AM IST',{exact:false})).toBeVisible();
   await dialog.getByRole('combobox',{name:'Tatkal class',exact:true}).click();await dialog.getByRole('option',{name:'Non-AC — opens at 11 AM',exact:true}).click();await expect(dialog.getByText('11:00 AM IST',{exact:false})).toBeVisible();
-  await dialog.getByRole('button',{name:'Close Dialog',exact:true}).click();
+  await dialog.getByRole('button',{name:'Close dialog',exact:true}).click();
   await page.goto(url+'/journeys');
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.evaluate(()=>{window.viewMotionCalls=[];const original=Element.prototype.animate;Element.prototype.animate=function(frames,options){window.viewMotionCalls.push({frames,options});return original.call(this,frames,options);};});
