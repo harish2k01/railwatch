@@ -15,7 +15,7 @@ import { useJourneyPages } from "./journey-pages";
 import { useViewMotion } from "./view-motion";
 import { PwaInstall } from "@/components/pwa-install";
 import { CalendarAgenda } from "./calendar-agenda";
-import { JourneySummary } from "./journey-summary";
+import { JourneyDetail } from "./journey-detail";
 import { stationLabel } from "@/lib/journey-display";
 import { RailWatchMark } from "@/components/railwatch-mark";
 
@@ -60,6 +60,8 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   const /** Navigates to the selected workspace page. */ setTab=(tab:Tab)=>{if(settingsNavigationAllowed())router.push(PATHS[tab]);};
   const navItems=NAV.filter(n=>n.id!=="settings"||account.role==="ADMIN");
   const activeNav=tab==="users"||tab==="integrations"||tab==="operations"?"settings":tab;
+  /** Says where a journey's reminder settings come from. */
+  const reminderLabel=(j:Journey)=>{const own=j.reminderOverride?.mode,rule=planner.rules.find(x=>x.id===j.ruleId)?.reminderOverride?.mode;return own==="off"?"Off":own==="custom"?"Custom for this journey":rule&&rule!=="inherit"?"From the routine":"Your defaults";};
   const saveLock=useRef(false); const [displayName,setDisplayName]=useState(account.name);
   const [remote,setRemote]=useState(JSON.stringify(account.planner)); const [revision,setRevision]=useState(account.revision); const [saving,setSaving]=useState(false);
   const raw=remote;
@@ -85,7 +87,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     if(!linkedJourney||linkedJourney===openedLink.current)return;
     if(linkedJourney.length>128)return;
     let live=true;
-    void apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(linkedJourney)).then(({journey})=>{if(!live)return;openedLink.current=linkedJourney;setMoreOpen(false);setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==journey.id),journey]});});setEditor({type:"journey",journey,editing:window.matchMedia("(min-width:769px)").matches});}).catch(()=>{if(live)setError("This journey is unavailable for your account.");});
+    void apiRequest<{journey:Journey}>("/api/railwatch/journeys?id="+encodeURIComponent(linkedJourney)).then(({journey})=>{if(!live)return;openedLink.current=linkedJourney;setMoreOpen(false);setRemote(old=>{const p=read(old).planner;return JSON.stringify({...p,journeys:[...p.journeys.filter(j=>j.id!==journey.id),journey]});});setEditor({type:"journey",journey});}).catch(()=>{if(live)setError("This journey is unavailable for your account.");});
     return()=>{live=false;};
   },[linkedJourney]);
   const [viewTicket,setViewTicket]=useState<import("@/lib/travel-planner").TicketAttachment>();
@@ -137,7 +139,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     }catch(e){setRemote(previous);setError(e instanceof Error ? e.message : "Could not save your changes.");return false;}finally{saveLock.current=false;setSaving(false);}
   }
     /** Opens the selected item editor and clears stale feedback. */
-  function open(next: Editor) { if(next?.type==="journey"&&next.journey){openedLink.current=next.journey.id;const url=new URL(location.href);url.searchParams.set("journey",next.journey.id);history.replaceState(null,"",url.pathname+url.search);} setError(""); setEditor(next?.type === "journey" && next.journey && window.matchMedia("(min-width: 769px)").matches ? {...next,editing:true} : next); }
+  function open(next: Editor) { if(next?.type==="journey"&&next.journey){openedLink.current=next.journey.id;const url=new URL(location.href);url.searchParams.set("journey",next.journey.id);history.replaceState(null,"",url.pathname+url.search);} setError(""); setEditor(next); }
   /** Selects a mobile list without displaying every secondary destination as a tab. */
   function chooseMobileList(id:string){setJourneyView(["completed","archive"].includes(id)?id:"board");setMobileStatus(id);setStatusFilter("all");setRange(["completed","archive","all"].includes(id)?"all":"upcoming");}
     /** Closes the active editor and clears its transient feedback. */
@@ -262,7 +264,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     {mobile&&<MobileNavigation disabled={saving} tab={tab} more={moreOpen} openMore={()=>{if(settingsNavigationAllowed())setMoreOpen(!moreVisible);}} navigate={()=>setMoreOpen(false)}/>}
     {editor && <Modal title={editor.type === "journey" ? editor.ticket ? "Record booked ticket" : editor.journey ? `${editor.journey.from} → ${editor.journey.to}` : "New journey" : editor.type === "rule" ? editor.rule?.id ? "Edit routine" : "New routine" : editor.type === "day" ? formatDay(editor.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : editor.type === "holiday" ? "Add time off" : "Import company holidays"} subtitle={editor.type === "journey" && editor.journey ? `${formatDay(editor.journey.date)} · ${ruleName(editor.journey) || "One-off journey"}` : undefined} close={close} wide={editor.type === "journey" && Boolean(editor.journey) && Boolean(editor.editing)} guard={editor.type !== "day" && (editor.type !== "journey" || !editor.journey || Boolean(editor.editing))}>
       <div inert={saving}>
-      {editor.type === "journey" && editor.journey && !editor.editing ? <JourneySummary journey={editor.journey} routine={ruleName(editor.journey)} edit={()=>setEditor({...editor,editing:true})} view={setViewTicket} cancel={()=>{const j=editor.journey;if(j&&confirm("Have you cancelled this ticket through IRCTC?"))void update(transitionJourney(j,"cancelled")).then(saved=>{if(saved)close();});}}/> : editor.type === "journey" && <JourneyForm remindersEnabled={policy.remindersEnabled} uploadsEnabled={policy.ticketUploadsEnabled} journey={editor.journey} date={editor.date} ticket={editor.ticket} planner={planner} today={today} fail={setError} save={async j => { const saved = await commit({ ...planner, journeys: [...planner.journeys.filter(old => old.id !== j.id), j] }, "Journey saved."); if (saved) close(); return saved; }} />}
+      {editor.type === "journey" && editor.journey && !editor.editing ? <JourneyDetail journey={editor.journey} today={today} routine={ruleName(editor.journey)} reminders={reminderLabel(editor.journey)} uploadsEnabled={policy.ticketUploadsEnabled} edit={()=>setEditor({...editor,editing:true})} attach={()=>setEditor({...editor,editing:true,ticket:true})} view={setViewTicket} cancel={()=>{const j=editor.journey;if(j&&confirm("Have you cancelled this ticket through IRCTC?"))void update(transitionJourney(j,"cancelled")).then(saved=>{if(saved)close();});}}/> : editor.type === "journey" && <JourneyForm remindersEnabled={policy.remindersEnabled} uploadsEnabled={policy.ticketUploadsEnabled} journey={editor.journey} date={editor.date} ticket={editor.ticket} planner={planner} today={today} fail={setError} save={async j => { const saved = await commit({ ...planner, journeys: [...planner.journeys.filter(old => old.id !== j.id), j] }, "Journey saved."); if (saved) close(); return saved; }} />}
       {editor.type === "rule" && <RuleForm saving={saving} remindersEnabled={policy.remindersEnabled} rule={editor.rule} planner={planner} today={today} fail={setError} preview={previewRoutine} save={saveRoutine} />}
       {editor.type === "day" && <div className={s.form}>{selectedDay.pending&&<p role="status">Loading events…</p>}{selectedDay.error&&<><p role="alert">{selectedDay.error}</p><button className={s.reloadButton} aria-label="Refresh events" onClick={selectedDay.refresh}><RefreshCw size={18}/></button></>}{dayEvents.holidays.map(h=><p key={h.id}>{h.name}</p>)}{dayEvents.bookings.map(j=><button key={"b"+j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>Booking: {j.from} → {j.to}</button>)}{dayEvents.journeys.map(j=><button key={j.id} className={s.secondary} onClick={()=>open({type:"journey",journey:j})}>{j.from} → {j.to} · {STATUS[j.status]}</button>)}{selectedDay.data?.nextCursor&&<button className={s.secondary} disabled={selectedDay.busy} onClick={()=>void selectedDay.more()}>Load more day events</button>}<button className={s.primary} onClick={()=>open({type:"journey",date:editor.date})}>Plan travel</button></div>}
       {editor.type === "holiday" && <form className={s.form} onSubmit={addHoliday}><Field label="Name"><input name="name" maxLength={100} placeholder="Holiday or personal plan" required /></Field><Field label="Type"><Select name="type"><option value="company">Company holiday</option><option value="leave">Personal leave / holiday</option></Select></Field><div className={s.formGrid}><Field label="Date"><input name="date" type="date" defaultValue={today} required /></Field><Field label="Through (Optional)"><input name="end" type="date" /></Field></div><button className={s.primary}>Add time off</button></form>}
