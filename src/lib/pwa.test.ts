@@ -21,13 +21,13 @@ it("never intercepts private API or PDF requests and uses only the public fallba
   runInNewContext(readFileSync("public/sw.js", "utf8"), {
     URL, Promise,
     self: { location: { origin: "https://railwatch.test" }, addEventListener: (type: string, handler: (event: unknown) => void) => { handlers[type] = handler; }, skipWaiting: () => Promise.resolve(), clients: { claim: () => Promise.resolve() } },
-    caches: { open: async () => ({ add: async (path: string) => { cached.push(path); } }), match: async () => "offline", keys: async () => [] },
+    caches: { open: async () => ({ add: async (path: string) => { cached.push(path); }, addAll: async (paths: string[]) => { cached.push(...paths); } }), match: async () => "offline", keys: async () => [] },
     fetch: async (request: { url: string }) => { fetches.push(request.url); throw new Error("offline"); },
   });
   let installation: Promise<unknown> | undefined;
   handlers.install({ waitUntil: (promise: Promise<unknown>) => { installation = promise; } });
   await installation;
-  expect(cached).toEqual(["/offline.html"]);
+  expect(cached).toEqual(["/offline.html", "/offline-reader.js"]);
   for (const url of ["/api/railwatch/workspace", "/api/railwatch/files/pdf"]) {
     handlers.fetch({ request: { mode: "cors", method: "GET", url: `https://railwatch.test${url}` }, respondWith: () => { throw new Error("Private fetch intercepted"); } });
   }

@@ -1,7 +1,8 @@
-/* Only the public offline document is cached. Account pages, API data and PDFs remain network-only. */
-const OFFLINE_CACHE = "railwatch-offline-v1";
+/* Only the public offline document and its reader script are cached. Account pages, API data and PDFs
+   remain network-only; offline tickets live encrypted in IndexedDB (plan 3.6), not in Cache Storage. */
+const OFFLINE_CACHE = "railwatch-offline-v2";
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(OFFLINE_CACHE).then(cache => cache.add("/offline.html")).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(OFFLINE_CACHE).then(cache => cache.addAll(["/offline.html", "/offline-reader.js"])).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("railwatch-offline-") && key !== OFFLINE_CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));

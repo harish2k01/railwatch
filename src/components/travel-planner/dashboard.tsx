@@ -8,6 +8,13 @@ import { stationLabel } from "@/lib/journey-display";
 import { STATUS } from "./forms";
 import s from "./planner.module.css";
 import t from "./today.module.css";
+import { useStationName } from "./journey-detail";
+
+/** Route codes with their station names underneath (canvas: Today · Next trip). */
+function NextRoute({ from, to }: { from: string; to: string }) {
+  const a = useStationName(from), b = useStationName(to);
+  return <div className={t.route}><span className={t.stop}><b title={from}>{stationLabel(from)}</b>{a && <small>{a}</small>}</span><span aria-hidden="true" className={t.track} /><span className={t.stop}><b title={to}>{stationLabel(to)}</b>{b && <small>{b}</small>}</span></div>;
+}
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const weekdayList = (days: number[]) => days.length === 7 ? "Every day" : `Every ${days.map((d) => DAYS[d]).join(", ")}`;
@@ -30,7 +37,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
       <div className={t.column}>
         {next ? <section className={t.card} aria-labelledby="today-next">
           <header className={t.cardHead}><h2 id="today-next">Next trip · {daysBetween(today, next.date) === 0 ? "today" : `in ${daysBetween(today, next.date)} day${daysBetween(today, next.date) === 1 ? "" : "s"}`}</h2><span className={`${s.badge} ${next.status === "booked" ? s.badgeGreen : next.status === "cancellation_needed" ? s.badgeAmber : s.badgePurple}`}>{STATUS[next.status]}</span></header>
-          <p className={t.route}><b title={next.from}>{stationLabel(next.from)}</b><span aria-hidden="true" className={t.track} /><b title={next.to}>{stationLabel(next.to)}</b></p>
+          <NextRoute from={next.from} to={next.to} />
           <p className={t.muted}>{formatDay(next.date, { weekday: "short", day: "numeric", month: "short" })}{next.departureConfirmed && next.departure ? ` · ${next.departure} IST` : ""}{planner.rules.find((r) => r.id === next.ruleId)?.name ? ` · ${planner.rules.find((r) => r.id === next.ruleId)!.name}` : ""}</p>
           {next.status === "booked" && !next.attachments?.length && <div className={t.nudge}><span>No ticket attached. Add it now so the train, coach and PNR are here on the day.</span><button type="button" className={s.secondary} onClick={() => openJourney(next)}><Paperclip size={15} />Attach ticket</button></div>}
           <div className={t.actions}><button type="button" className={s.primary} onClick={() => openJourney(next)}>Open journey</button></div>
