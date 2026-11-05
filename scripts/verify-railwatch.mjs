@@ -32,7 +32,7 @@ try{
   // Profile changes are scoped to the current account and rotate sessions on password change.
   assert.equal((await api('/api/railwatch/profile','patch',{name:'Foreign',userId:'another-user'})).status(),400);
   const staleSession=await browser.newContext();assert.equal((await staleSession.request.post(url+'/api/auth/login',{headers:{Origin:url},data:{email,password}})).status(),200);
-  await expect(page.getByRole('button',{name:'Open profile menu'})).toHaveText('R');
+  await expect(page.getByRole('button',{name:'Open profile menu'})).toContainText('RailWatch test');
   await nav('Open profile menu');await page.getByRole('menuitem',{name:'User settings'}).click();
   const drawer=page.getByRole('dialog',{name:'User settings'});await expect(drawer.getByRole('tablist')).toHaveAttribute('aria-orientation','horizontal');assert.equal(Math.round((await drawer.getByRole('tab',{name:'Profile',exact:true}).boundingBox()).y),Math.round((await drawer.getByRole('tab',{name:'Security',exact:true}).boundingBox()).y));await drawer.getByLabel('Username',{exact:true}).fill('Harish T');await drawer.getByRole('button',{name:'Save profile'}).click();await expect(page.getByRole('button',{name:'Open profile menu'})).toHaveText('H');
   assert.equal((await(await probe(b,'/api/railwatch/profile')).json()).data.name,'RailWatch test');
