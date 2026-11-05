@@ -27,3 +27,33 @@
 .routineGroup summary small{color:var(--rw-muted);font-size:13px}
 .routineGroup[open]{display:grid;gap:8px}
 .chipCount{font-weight:500;opacity:.8}
+
+/* Journeys as on the canvas board (header, search, chips, timeline rows). */
+.heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.heading h1{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.tabs button{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--rw-text);font:600 14px var(--font-manrope),Manrope,system-ui,sans-serif}
+.tabs button[aria-pressed=true]{background:var(--rw-surface-2)}
+.tabs button b{font-weight:600;color:var(--rw-muted)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.search{flex:1 1 320px;min-height:46px;padding:0 14px;gap:10px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.search input{font-size:14px;font-weight:500}
+.quickFilters button{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--rw-line);background:transparent;color:var(--rw-muted);font:600 13px var(--font-manrope),Manrope,system-ui,sans-serif}
+.quickFilters button[aria-pressed=true]{background:var(--rw-brand-soft);border-color:var(--rw-brand);color:var(--rw-brand-soft-ink)}
+.timeline{gap:6px}
+.timeline section{gap:6px}
+.timeline h2{margin:8px 0 4px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rw-muted)}
+.timelineRow{gap:14px;padding:12px 14px;border-radius:12px;border:1px solid transparent;background:transparent}
+.timelineRow:hover{background:var(--rw-surface)}
+.timelineRow:focus-visible{border-color:var(--rw-brand)}
+.timelineDate{width:48px}
+.timelineDate b{font-size:18px;font-weight:800}
+.timelineDate small{font-size:11px;font-weight:600}
+.timelineMain{gap:6px}
+.timelineMain .route{font-size:15px;font-weight:700}
+.stageBar{display:flex;gap:4px;max-width:none}
+.stageBar span{width:28px;height:4px;border-radius:2px;background:var(--rw-line)}
+.stageBar span[data-on]{background:var(--rw-booked)}
+.timelinePill{height:24px;display:inline-flex;align-items:center;padding:0 10px;font-weight:600}
+.routineGroup{border-radius:12px;padding:12px 14px;background:var(--rw-surface)}
+.timelineRow[aria-current=true]{background:var(--rw-brand-soft);border-color:var(--rw-brand)}

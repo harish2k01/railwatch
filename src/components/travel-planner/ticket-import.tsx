@@ -39,7 +39,7 @@ export function TicketImport({ planner, commit, fail, done }: { planner: Planner
       const found = new Map<string, Journey>();
       for (const d of dates) { const page = await apiRequest<JourneyPages>(`/api/railwatch/journeys?view=list&range=all&from=${d}&to=${d}`); for (const j of page.pages.all?.items ?? []) found.set(j.id, j); }
       const pool = [...new Map([...planner.journeys, ...found.values()].map(j => [j.id, j])).values()];
-      setRows(read.map(r => { const match = matchTicket(r.details, pool); return { ...r, match, choice: match.kind === "matched" ? match.journey.id : match.kind === "create" ? "create" : "" }; }));
+      setRows(read.map(r => { const match = matchTicket(r.details, pool); return { ...r, match, choice: match.kind === "matched" ? match.journey.id : "" }; }));
       setStatus("");
     } catch (e) { fail(e instanceof Error ? e.message : "Couldn’t read these tickets."); setStatus(""); }
     finally { setBusy(false); }
@@ -69,20 +69,22 @@ export function TicketImport({ planner, commit, fail, done }: { planner: Planner
     finally { setBusy(false); }
   }
   const label = (j: Journey) => `${formatDay(j.date, { day: "numeric", month: "short" })} · ${stationLabel(j.from)} → ${stationLabel(j.to)}`;
-  return <div className={s.form}>
-    <p className={s.help}>Choose up to 30 IRCTC e-ticket PDFs. Details are read on this device; each ticket is matched to a journey by date, PNR and route.</p>
-    <label className={t.drop}><input type="file" accept="application/pdf" multiple disabled={busy} onChange={e => { void choose(e.target.files); e.target.value = ""; }} /><b>Choose ticket PDFs</b><small>Or drop them here</small></label>
+  const counts={matched:rows.filter(r=>r.match.kind==="matched").length,check:rows.filter(r=>r.match.kind==="check").length,create:rows.filter(r=>r.match.kind==="create").length};
+  const chosen=rows.filter(r=>r.choice).length;
+  const read=(r:Row)=>[r.details.date?formatDay(r.details.date,{weekday:"short",day:"numeric",month:"short"}):"",r.details.from&&r.details.to?`${r.details.from} → ${r.details.to}`:"",r.details.ticketStatus??""].filter(Boolean).join(" · ")||"Couldn’t read the travel details";
+  // Canvas TicketImport.dc.html: summary pills, drop zone, a File / Read / Journey / Result table, Cancel and Attach N.
+  return <div className={t.import}>
+    <div className={t.head}><p className={t.muted}>Files are read on this device, matched to your journeys, then stored encrypted.</p>{rows.length>0&&<div className={t.summary}>{counts.matched>0&&<span className={t.pillOk}>{counts.matched} matched</span>}{counts.check>0&&<span className={t.pillCheck}>{counts.check} needs review</span>}{counts.create>0&&<span className={t.pillNew}>{counts.create} new {counts.create===1?"journey":"journeys"}</span>}</div>}</div>
+    <label className={t.drop}><input type="file" accept="application/pdf" multiple disabled={busy} onChange={e => { void choose(e.target.files); e.target.value = ""; }} /><span><b>{rows.length?"Drop more PDFs":"Drop IRCTC e-ticket PDFs"}</b> <span className={t.muted}>· up to 10 MB each</span></span><span className={`${s.secondary} ${t.chooseBtn}`}>Choose files</span></label>
     {status && <p role="status">{status}</p>}
-    {rows.length > 0 && <ul className={t.rows} aria-label="Imported tickets">{rows.map((r, i) => <li key={r.meta.id} data-kind={r.match.kind}>
-      <span className={t.badge}>{r.match.kind === "matched" ? "Matched" : r.match.kind === "create" ? "New journey" : "Check"}</span>
-      <span className={t.text}><b>{r.details.date ? formatDay(r.details.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : r.file.name}{r.details.from && r.details.to ? ` · ${r.details.from} → ${r.details.to}` : ""}</b><small>{r.match.kind === "check" ? r.match.reason : r.details.pnr ? `PNR ${r.details.pnr}` : r.message}</small></span>
-      <select aria-label={`Attach ${r.file.name} to`} value={r.choice} onChange={e => setRows(rows.map((x, k) => k === i ? { ...x, choice: e.target.value } : x))}>
-        <option value="">Don’t import</option>
-        {r.match.kind === "matched" && <option value={r.match.journey.id}>{label(r.match.journey)}</option>}
-        {r.match.kind === "check" && r.match.candidates.map(c => <option key={c.id} value={c.id}>{label(c)}</option>)}
-        {r.details.date && <option value="create">Create a booked journey</option>}
-      </select>
-    </li>)}</ul>}
-    {rows.length > 0 && <button type="button" className={s.primary} disabled={busy || !rows.some(r => r.choice)} onClick={() => void save()}>{busy ? "Working…" : `Import ${rows.filter(r => r.choice).length} tickets`}</button>}
+    {rows.length > 0 && <div className={t.tableWrap}><table className={t.table} aria-label="Imported tickets"><thead><tr><th scope="col">File</th><th scope="col">Read from ticket</th><th scope="col">Journey</th><th scope="col">Result</th></tr></thead><tbody>{rows.map((r, i) => {
+      const set=(choice:string)=>setRows(rows.map((x,k)=>k===i?{...x,choice}:x));
+      return <tr key={r.meta.id} data-kind={r.match.kind}>
+        <td className={t.file}>{r.file.name}</td>
+        <td>{read(r)}</td>
+        <td>{r.match.kind==="matched"?label(r.match.journey):r.match.kind==="check"?<select aria-label={`Choose journey for ${r.file.name}`} className={t.select} value={r.choice} onChange={e=>set(e.target.value)}><option value="">Don’t attach</option>{r.match.candidates.map(c=><option key={c.id} value={c.id}>{label(c)}</option>)}{r.details.date&&<option value="create">Create a booked journey</option>}</select>:<span className={t.muted}>{r.choice==="create"?"New booked journey":"No planned journey"}</span>}</td>
+        <td>{r.match.kind==="matched"?<span className={t.pillOk}>Matched</span>:r.match.kind==="check"?<span className={t.pillCheck}>Check</span>:r.choice==="create"?<button type="button" className={`${s.secondary} ${t.small}`} onClick={()=>set("")}>Don’t create</button>:<button type="button" className={`${s.secondary} ${t.small}`} disabled={!r.details.date} onClick={()=>set("create")}>Create journey</button>}</td>
+      </tr>;})}</tbody></table></div>}
+    <div className={t.footer}><button type="button" className={s.secondary} onClick={done}>Cancel</button><button type="button" className={s.primary} disabled={busy || !chosen} onClick={() => void save()}>{busy ? "Working…" : `Attach ${chosen} ${chosen===1?"ticket":"tickets"}`}</button></div>
   </div>;
 }

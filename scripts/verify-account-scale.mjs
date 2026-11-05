@@ -36,7 +36,7 @@ export async function verifyAccountScale({page,api,url}) {
     assert.ok(dashboard.upcoming.length<=4&&dashboard.bookingSoon.length<=4&&dashboard.attention.length<=30);
     const calendar=(await (await api(`/api/railwatch/views?view=calendar&from=${targetDay}&to=${targetDay}`)).json()).data;
     assert.equal(calendar.journeys.length,200);assert.ok(calendar.counts[targetDay].journeys>=210);assert.ok(calendar.nextCursor);
-    await page.goto(url+'/calendar');
+    await page.goto(url+'/calendar');await page.getByRole('button',{name:'Month',exact:true}).click();
     const months=(Number(targetDay.slice(0,4))-Number(today.slice(0,4)))*12+Number(targetDay.slice(5,7))-Number(today.slice(5,7));
     await expect(page.getByRole('button',{name:'Next month',exact:true})).toBeVisible();
     for(let i=0;i<months;i++){await page.getByRole('button',{name:'Next month',exact:true}).click();const expectedMonth=new Date(`${today.slice(0,7)}-01T00:00:00Z`);expectedMonth.setUTCMonth(expectedMonth.getUTCMonth()+i+1);await expect(page.getByRole('heading',{name:new Intl.DateTimeFormat('en-IN',{month:'long',year:'numeric',timeZone:'UTC'}).format(expectedMonth),exact:true})).toBeVisible();}

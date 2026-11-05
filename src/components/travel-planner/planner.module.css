@@ -231,6 +231,22 @@
 .profileDocked{inset:66px 0 0 auto;height:calc(100dvh - 66px);width:min(620px,calc(100vw - 640px));min-width:420px;box-shadow:none}
 .settingsWithPanel{padding-right:min(640px,calc(100vw - 620px))}
 @media(max-width:1180px){.settingsWithPanel{padding-right:0}.profileDocked{box-shadow:-15px 0 60px #0002}}
+/* Shell as on the canvas Sidebar and Today boards. */
+.pageActions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.navCount{margin-left:auto;display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 8px;border-radius:999px;background:var(--rw-brand);color:var(--rw-brand-ink);font-size:12px;font-weight:600}
+.profileSidebar{margin-top:auto;position:relative}
+.profileSidebar .sidebarAccount{width:100%;border:0;border-top:1px solid var(--rw-sidebar-line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:0}
+.profileSidebar .sidebarAccount:hover{background:var(--rw-sidebar-raised)}
+.profileMenuUp{top:auto;bottom:calc(100% + 8px);left:0;right:auto}
+/* Sidebar values from the canvas Sidebar board (desktop widths). */
+@media(min-width:1001px){
+.sidebar{width:240px;padding:20px 14px;gap:4px}
+.brandRow{padding:4px 8px 22px}
+.brand{font-size:19px;font-weight:800;letter-spacing:-.02em;padding:0;gap:10px}
+.brand>span{width:36px;height:36px;border-radius:10px}
+.navItem,.navActive{min-height:44px;padding:0 14px;gap:12px;border-radius:10px;font-size:14px;font-weight:500}
+.navActive{color:var(--rw-sidebar-strong);font-weight:600}
+}
 /* Calendar filter swatches use solid status colours (canvas: Calendar). */
 .legendToggle i[data-swatch]{width:10px;height:10px;border-radius:3px;box-sizing:border-box}
 .legendToggle i[data-swatch=booked]{background:var(--rw-booked)}
@@ -238,3 +254,31 @@
 .legendToggle i[data-swatch=bookings]{background:var(--rw-open)}
 .legendToggle i[data-swatch=cancellation_needed]{background:var(--rw-danger)}
 .legendToggle i[data-swatch=holidays]{background:var(--rw-timeoff)}
+/* Docked journey panel: one header (the panel's own), as on the board; the dialog keeps its accessible title. */
+.dockedModal .modalHead{position:absolute;top:18px;right:18px;padding:0;border:0;background:none;z-index:1}
+.dockedModal .modalHead h2,.dockedModal .modalHead p{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Calendar as on the canvas board. */
+.calendarToolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.calendarPeriod{display:flex;align-items:center;gap:10px}
+.calendarPeriod h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.calendarViews{margin-left:auto;padding:4px;gap:4px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.calendarLayout{display:grid;grid-template-columns:minmax(0,3fr) minmax(260px,1fr);gap:24px;align-items:start}
+.calendarMain{min-width:0;display:grid;gap:12px}
+.calendarSide{display:grid;gap:16px}
+.calendarSide .calendarDecision{margin:0;border-color:#4a3a12}
+.calendarSync{display:grid;gap:10px;padding:20px;border-radius:16px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.calendarSync h2{font-size:16px;font-weight:700}
+.calendarSyncRow{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.linkButton{border:0;background:none;padding:0;color:var(--rw-brand);font:inherit;font-weight:600;cursor:pointer}
+.weekColumns{border-radius:16px;background:var(--rw-surface)}
+.weekColumn{min-height:560px;padding:12px}
+@media(max-width:1180px){.calendarLayout{grid-template-columns:minmax(0,1fr)}}
+@media(min-width:1001px){.wideModal:has(form[class*=split]){width:980px}}
+.savedState{font-size:13px;color:var(--rw-muted)}
+/* The settings drawer is mounted inside the sidebar; keep the sidebar's nav rules off its tabs. */
+.sidebar .profileDrawer nav.profileTabs{display:flex;flex-direction:row;justify-content:flex-start;height:auto;margin:0;gap:8px;overflow:auto}
+.sidebar .profileDrawer nav.profileTabs button,.sidebar .profileDrawer nav.profileTabs a{flex-shrink:0}
+.profileOnly [aria-label="Open profile menu"]{display:none}
+/* The docked header floats over the content; only its close button takes clicks. */
+.dockedModal .modalHead{pointer-events:none}.dockedModal .modalHead button{pointer-events:auto}

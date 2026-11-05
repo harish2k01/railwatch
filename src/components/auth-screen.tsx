@@ -5,7 +5,7 @@ import { RailWatchMark } from "@/components/railwatch-mark";
 
 import { Lock, Mail, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import s from "./auth-screen.module.css";
 
 type AuthMode = "firstSignup" | "login" | "resetPassword" | "tokenPassword" | "missingDatabase";
@@ -71,14 +71,12 @@ export function AuthScreen({ mode, allowSignups, token, tokenType }: { mode: Aut
       {message && !error && <Toast key={message} message={message} dismiss={()=>setMessage(undefined)}/>}
 
       {view === "login" && (
-        <form action={(form) => submit("/api/auth/login", Object.fromEntries(form))} className="grid gap-3">
+        <form action={(form) => submit("/api/auth/login", Object.fromEntries(form))} className={s.authForm} aria-labelledby="sign-in-title">
+          <h2 id="sign-in-title" className={s.formTitle}>Sign in</h2>
           <Field icon={Mail} name="email" type="email" label="Email" autoComplete="email" />
-          <Field icon={Lock} name="password" type="password" label="Password" autoComplete="current-password" />
+          <Field icon={Lock} name="password" type="password" label="Password" autoComplete="current-password" aside={<button type="button" className={s.inlineLink} onClick={() => setView("forgot")}>Forgot?</button>} />
           <Primary busy={busy}>Sign in</Primary>
-          <div className="flex items-center justify-between text-sm">
-            <button type="button" onClick={() => setView("forgot")} className="font-medium text-blue-700 hover:text-blue-900">Forgot password?</button>
-            {allowSignups ? <button type="button" onClick={() => setView("signup")} className="font-medium text-blue-700 hover:text-blue-900">Create account</button> : <span className={s.invite}>New here? Ask your RailWatch admin for an invite.</span>}
-          </div>
+          <p className={s.invite}>{allowSignups ? <>New here? <button type="button" onClick={() => setView("signup")} className={s.inlineLink}>Create account</button></> : "New here? Ask your RailWatch admin for an invite."}</p>
         </form>
       )}
 
@@ -117,9 +115,9 @@ export function AuthScreen({ mode, allowSignups, token, tokenType }: { mode: Aut
 /** Provides the shared account-authentication screen layout. */
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className={`${s.root} ${s.authPage}`}>
+    <main className={`${s.root} ${s.authPage}`} data-theme="dark">
       {/* Plan 2.9: brand panel beside the form on wide screens. */}
-      <aside className={s.brandPanel} aria-label="About RailWatch"><div className={s.panelBrand}><span className={s.brandMark}><RailWatchMark size={26} /></span><b>RailWatch</b></div><h2>Your journeys, ahead of time.</h2><ul><li>A reminder before every booking window opens</li><li>Tickets kept with each journey, readable offline</li><li>Routines that work around your holidays and leave</li></ul></aside>
+      <aside className={s.brandPanel} aria-label="About RailWatch"><div className={s.panelBrand}><span className={s.brandMark}><RailWatchMark size={24} /></span><b>RailWatch</b></div><div className={s.panelBody}><h2>Your journeys, ahead of time.</h2><ul><li data-tone="open">A reminder before every booking window opens</li><li data-tone="booked">Tickets kept with each journey, readable offline</li><li data-tone="off">Routines that work around your holidays and leave</li></ul></div><small>Independent planning tool. Not affiliated with or endorsed by IRCTC or Indian Railways.</small></aside>
       <section className={s.authCard}>
         <div className={s.authBrand}><div className={s.brandMark}><RailWatchMark size={30} /></div><div><h1>RailWatch</h1><p>Your journeys, ahead of time</p></div></div>
         <div className="grid gap-3">{children}</div>
@@ -130,8 +128,9 @@ function AuthShell({ children }: { children: React.ReactNode }) {
 }
 
 /** Associates a form control with its generated label and optional help text. */
-function Field({ icon: Icon, label, ...input }: { icon: React.ComponentType<{ className?: string }>; label: string; name: string; type?: string; autoComplete?: string }) {
-  return <label className={s.field}>{label}<span className={s.authInput}><Icon className="h-4 w-4" /><input required {...input} /></span></label>;
+function Field({ icon: Icon, label, aside, ...input }: { icon: React.ComponentType<{ className?: string }>; label: string; aside?: React.ReactNode; name: string; type?: string; autoComplete?: string }) {
+  const id = useId();
+  return <div className={s.field}><span className={s.labelRow}><label htmlFor={id}>{label}</label>{aside}</span><span className={s.authInput}><Icon className="h-4 w-4" /><input id={id} required {...input} /></span></div>;
 }
 
 /** Renders a primary authentication action with its busy state. */

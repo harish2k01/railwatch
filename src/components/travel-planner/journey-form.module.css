@@ -33,3 +33,24 @@
 .next ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 .clash{padding:10px 12px;border-radius:10px;background:var(--rw-attention-bg);color:var(--rw-attention-ink);font-size:13px}
 .clash ul{margin-top:4px}
+
+/* New journey as on the canvas board: two panes, segmented type, inline return, dotted preview. */
+.split{display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,2fr);column-gap:0;align-items:start}
+.split>*{grid-column:1;padding-right:28px}
+.split>.next{grid-column:2;grid-row:1 / span 40;align-self:stretch;margin:-24px -24px -24px 0;padding:28px;background:var(--rw-sidebar);border-left:1px solid var(--rw-line);border-radius:0}
+.intent{padding:4px;gap:4px;border-radius:12px;background:var(--rw-ground);border:1px solid var(--rw-line)}
+.returnTrip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:44px;font-size:14px;font-weight:600}
+.returnRoute{color:var(--rw-muted);font-weight:500}
+.returnDate{min-height:40px;max-width:180px}
+.next{gap:18px}
+.next h3{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rw-muted)}
+.next ol{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.next li{display:grid;grid-template-columns:10px 1fr;column-gap:12px}
+.next li::before{content:"";width:10px;height:10px;margin-top:5px;border-radius:999px;grid-row:1 / span 2}
+.next li[data-tone=open]::before{background:var(--rw-open)}
+.next li[data-tone=brand]::before{background:var(--rw-brand)}
+.next li[data-tone=booked]::before{background:var(--rw-booked)}
+.next li b{font-size:14px}
+.next li small{font-size:13px;color:var(--rw-muted)}
+.noClash{padding:14px;border-radius:12px;background:var(--rw-booked-bg);color:var(--rw-booked-ink);font-size:13px}
+@media(max-width:860px){.split{grid-template-columns:minmax(0,1fr)}.split>*{padding-right:0}.split>.next{grid-column:1;grid-row:auto;margin:0;border-left:0;border-radius:12px}}

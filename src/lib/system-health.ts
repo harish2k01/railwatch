@@ -19,9 +19,12 @@ async function latestRelease(now: number): Promise<Latest> {
 export async function systemHealth(now = new Date()) {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "development";
   const since = new Date(now.getTime() - 86400000);
-  const [latest, outcomes] = await Promise.all([
+  const [latest, outcomes, db, files, members] = await Promise.all([
     latestRelease(now.getTime()),
     prisma.railJob.groupBy({ by: ["kind", "state"], where: { kind: { in: ["EMAIL", "PUSH", "TELEGRAM"] }, state: { in: ["SENT", "FAILED", "MISSED"] }, updatedAt: { gte: since } }, _count: true }),
+    prisma.$queryRaw<{ bytes: bigint }[]>`SELECT pg_database_size(current_database()) AS bytes`,
+    prisma.railFile.aggregate({ _sum: { size: true }, _count: true }),
+    prisma.user.count({ where: { isActive: true } }),
   ]);
   const channels: Record<string, { sent: number; failed: number; failureRate: number | null }> = {};
   for (const row of outcomes) {
@@ -30,5 +33,7 @@ export async function systemHealth(now = new Date()) {
   }
   for (const c of Object.values(channels)) c.failureRate = c.sent + c.failed ? Math.round((c.failed / (c.sent + c.failed)) * 100) : null;
   const updateAvailable = Boolean(latest && /^v\d+\.\d+\.\d+$/.test(version) && latest.tag !== version);
-  return { version, latest, updateAvailable, channels };
+  // Storage (canvas Admin: Database, Ticket files, Members).
+  const storage = { databaseBytes: Number(db[0]?.bytes ?? 0), ticketBytes: files._sum.size ?? 0, ticketFiles: files._count, members };
+  return { version, latest, updateAvailable, channels, storage };
 }
