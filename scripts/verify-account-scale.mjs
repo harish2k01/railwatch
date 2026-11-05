@@ -19,7 +19,7 @@ export async function verifyAccountScale({page,api,url}) {
     await expect(column.getByRole('article')).toHaveCount(60);
     await page.getByRole('textbox',{name:'Search journeys',exact:true}).fill('ScaleOrigin209');
     await expect(column.getByRole('article')).toHaveCount(1);
-    await column.getByRole('button',{name:/Open journey/}).click();
+    await column.getByRole('button',{name:/Open journey/}).click();await page.getByRole('dialog').getByRole('button',{name:'More journey actions',exact:true}).click();await page.getByRole('dialog').getByRole('menuitem',{name:'Edit journey',exact:true}).click();
     const dialog=page.getByRole('dialog');
     await dialog.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await dialog.getByLabel('Notes',{exact:true}).fill('Edited beyond the first page');
     await dialog.getByRole('button',{name:/^Save journey$/i}).click();
