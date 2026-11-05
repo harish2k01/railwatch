@@ -16,8 +16,8 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan }: {
   const groups = timeOffGroups(holidays, today, past);
   const date = (value: string) => formatDay(value, { day: "numeric", month: "short", year: "numeric" });
   return <div className={s.layout}>
-    <section aria-label="Your Time Off">
-      <div className={s.heading}><h2>Your Time Off</h2><div className={s.filters} role="group" aria-label="Time off period">
+    <section aria-label="Your time off">
+      <div className={s.heading}><h2>Your time off</h2><div className={s.filters} role="group" aria-label="Time off period">
         <button type="button" aria-pressed={!past} onClick={() => setPast(false)}>Upcoming</button>
         <button type="button" aria-pressed={past} onClick={() => setPast(true)}>Past</button>
       </div></div>
