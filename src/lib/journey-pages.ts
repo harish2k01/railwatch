@@ -8,7 +8,7 @@ import { todayIST,isDay,addDays,weekday,type Journey } from "./travel-planner";
 import { loadWorkspace } from "./railwatch-store";
 
 const day=z.string().refine(value=>!value||isDay(value));
-export const journeyQuerySchema=z.object({view:z.enum(["board","list","completed","archive","tickets"]).default("board"),status:z.enum(["all","ready","needs_booking","booked","cancellation_needed","cancelled"]).default("all"),quick:z.enum(["all","booking_week","travel_week","cancellation"]).default("all"),weekStartsOn:z.coerce.number().int().min(0).max(1).default(0),q:z.string().max(120).default(""),rule:z.string().max(128).default(""),from:day.default(""),to:day.default(""),range:z.enum(["upcoming","past","all"]).default("upcoming"),sort:z.enum(["travel","booking"]).default("travel"),cursor:z.string().max(512).default(""),column:z.enum(["all","needs_booking","booked","cancellation_needed","cancelled"]).optional()}).refine(input=>!input.from||!input.to||input.from<=input.to,{message:"Travel end date must be on or after the start date.",path:["to"]});
+export const journeyQuerySchema=z.object({view:z.enum(["board","list","completed","archive","tickets"]).default("board"),status:z.enum(["all","ready","needs_booking","booked","cancellation_needed","cancelled"]).default("all"),quick:z.enum(["all","booking_week","travel_week","cancellation","no_ticket"]).default("all"),weekStartsOn:z.coerce.number().int().min(0).max(1).default(0),q:z.string().max(120).default(""),rule:z.string().max(128).default(""),from:day.default(""),to:day.default(""),range:z.enum(["upcoming","past","all"]).default("upcoming"),sort:z.enum(["travel","booking"]).default("travel"),cursor:z.string().max(512).default(""),column:z.enum(["all","needs_booking","booked","cancellation_needed","cancelled"]).optional()}).refine(input=>!input.from||!input.to||input.from<=input.to,{message:"Travel end date must be on or after the start date.",path:["to"]});
 export type JourneyQuery=z.infer<typeof journeyQuerySchema>;
 export type JourneyQuickFilter=JourneyQuery["quick"];
 export type JourneyPage={items:Journey[];nextCursor:string|null;total:number};
@@ -36,6 +36,8 @@ export function journeyWhere(userId:string,input:JourneyQuery,now=new Date(),all
   if(input.quick==="booking_week")conditions.push({status:"needs_booking",bookingAt:{gte:new Date(`${start}T00:00:00+05:30`),lt:new Date(`${addDays(start,7)}T00:00:00+05:30`)}});
   if(input.quick==="travel_week")conditions.push({status:"booked",date:{gte:start,lte:addDays(start,6)}});
   if(input.quick==="cancellation")conditions.push({status:"cancellation_needed"});
+  // Plan 2.4: booked upcoming journeys with no ticket attached or recorded.
+  if(input.quick==="no_ticket")conditions.push({status:"booked",hasTicket:false});
   return {userId,AND:conditions};
 }
 /** Verifies substring candidates in bounded batches so opaque token matches never inflate totals. */

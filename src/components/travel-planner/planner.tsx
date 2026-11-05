@@ -94,14 +94,14 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   const [notice, setNotice] = useState(""); const [error, setError] = useState("");
   const [search, setSearch] = useState(""); const [routineFilter, setRoutineFilter] = useState(""); const [range, setRange] = useState("upcoming");
   const [sort, setSort] = useState("travel"); const [showFilters, setShowFilters] = useState(false); const [dateFrom, setDateFrom] = useState(""); const [dateTo, setDateTo] = useState("");
-  const [desktopLayout,setDesktopLayout]=useState<"board"|"list">("board");
+  const [desktopLayout,setDesktopLayout]=useState<"board"|"list"|"timeline">("board");
   const [quick,setQuick]=useState<JourneyQuickFilter>("all");
   const [desktopRange,setDesktopRange]=useState<JourneyRange>(()=>({from:todayIST(new Date()),to:"",period:"all"}));
   const [month, setMonth] = useState(""); const [day, setDay] = useState("");
   const [calendarLayers, setCalendarLayers] = useState({ journeys: true, bookings: true, holidays: true });
   const viewMotion = useViewMotion<HTMLElement>(`${tab}:${journeyView}:${desktopLayout}:${calendarView}:${month}:${day}:${mobileStatus}`);
   const desktopJourneys=!mobile&&tab==="journeys";
-  const listQuery=new URLSearchParams({view:tab==="vault"?"tickets":desktopJourneys&&journeyView==="board"&&desktopLayout==="list"?"list":journeyView,status:tab==="vault"?"all":statusFilter,quick:desktopJourneys?quick:"all",weekStartsOn:String(loaded.planner.settings.weekStartsOn),q:tab==="vault"?vaultSearch:search,rule:tab==="vault"?"":routineFilter,from:tab==="vault"?"":desktopJourneys?desktopRange.from:dateFrom,to:tab==="vault"?"":desktopJourneys?desktopRange.to:dateTo,range:tab==="vault"?"all":desktopJourneys?desktopRange.period:range,sort}).toString();
+  const listQuery=new URLSearchParams({view:tab==="vault"?"tickets":desktopJourneys&&journeyView==="board"&&desktopLayout!=="board"?"list":journeyView,status:tab==="vault"?"all":statusFilter,quick:desktopJourneys?quick:"all",weekStartsOn:String(loaded.planner.settings.weekStartsOn),q:tab==="vault"?vaultSearch:search,rule:tab==="vault"?"":routineFilter,from:tab==="vault"?"":desktopJourneys?desktopRange.from:dateFrom,to:tab==="vault"?"":desktopJourneys?desktopRange.to:dateTo,range:tab==="vault"?"all":desktopJourneys?desktopRange.period:range,sort}).toString();
   const pages=useJourneyPages(listQuery,revision,listView);
   const pageItems=useMemo(()=>Object.values(pages.data?.pages??{}).flatMap(p=>p.items),[pages.data]);
   const currentMonth = month || today.slice(0, 7);
