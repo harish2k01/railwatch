@@ -1,15 +1,28 @@
-/* Booking day mode (plan 3.4, canvas: Booking day · desktop/mobile). */
-.day{display:grid;gap:22px}
-.day section{display:grid;gap:10px}
-.day h3{font-size:16px;font-weight:700}
-.hero{padding:22px;border-radius:18px;background:var(--rw-open-bg);color:var(--rw-open-ink);text-align:center;justify-items:center}
-.hero h2{font-size:18px;font-weight:700;color:var(--rw-text)}
-.kicker{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.timer{display:grid;gap:4px;justify-items:center}
-.timer small{font-size:13px;font-weight:600}
-.timer b{font-size:52px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;color:var(--rw-text)}
+/* Booking day (plan 3.4), matching canvas BookingDay.dc.html. */
+.day{display:grid;gap:24px}
+.hero{display:flex;flex-wrap:wrap;align-items:center;gap:28px;padding:32px;border-radius:18px;background:var(--rw-open-bg);border:1px solid color-mix(in srgb,var(--rw-open) 35%,transparent)}
+.heroText{flex:2 1 360px;display:grid;gap:10px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rw-open-ink)}
+.hero h2{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--rw-text)}
+.sub{font-size:15px;color:var(--rw-muted)}
+.timer{flex:1 1 240px;display:grid;justify-items:end;gap:4px}
+.timer small{font-size:13px;font-weight:600;color:var(--rw-open-ink)}
+.timer b{font-size:56px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;color:var(--rw-text)}
+.cards{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.card{flex:1 1 340px;display:grid;gap:8px;padding:24px;border-radius:18px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.card h3{margin:0 0 6px;font-size:18px;font-weight:700}
 .check{display:flex;align-items:center;gap:12px;min-height:44px;font-size:15px}
 .check input{width:20px;height:20px;accent-color:var(--rw-brand)}
-.irctc{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-decoration:none}
-.outcomes{display:flex;flex-wrap:wrap;gap:8px}
-.outcomes button{flex:1 1 120px;min-height:48px}
+.irctc{margin-top:10px;display:inline-flex;align-items:center;justify-content:center;min-height:52px;font-size:16px;text-decoration:none}
+.muted{font-size:12px;color:var(--rw-muted)}
+.outcomes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:6px}
+.outcome{display:grid;justify-items:center;align-content:center;gap:2px;min-height:72px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-surface-2);color:var(--rw-text);font:600 14px inherit;cursor:pointer}
+.outcome small{font-size:12px;font-weight:500;color:var(--rw-muted)}
+.outcome[aria-checked=true]{background:var(--rw-booked-bg);border-color:var(--rw-booked);color:var(--rw-booked-ink)}
+.outcome[aria-checked=true] small{color:inherit}
+.drop{position:relative;display:grid;justify-items:center;gap:8px;padding:20px;border-radius:14px;border:1.5px dashed var(--rw-line);text-align:center;font-size:14px;cursor:pointer}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop small{font-size:13px;color:var(--rw-muted)}
+.rule{border:0;border-top:1px solid var(--rw-line);margin:6px 0}
+.didnt{font-size:14px}
+.retry{display:flex;flex-wrap:wrap;gap:8px}
