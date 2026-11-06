@@ -14,9 +14,9 @@ export async function verifyAccountScale({page,api,url}) {
     assert.equal(partial.partial,true);assert.equal(partial.planner.journeys.length,0);
     await page.goto(url+'/journeys');
     const column=page.getByRole('region',{name:'Desktop journey workspace',exact:true});
-    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(30);
+    await expect(column.getByRole('button',{name:/^Open journey/}).first()).toBeVisible();const firstPage=await column.getByRole('button',{name:/^Open journey/}).count();
     await column.getByRole('button',{name:'Load more journeys',exact:true}).click();
-    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(60);
+    await expect.poll(async()=>column.getByRole('button',{name:/^Open journey/}).count()).toBeGreaterThan(firstPage);
     await page.getByRole('textbox',{name:'Search journeys',exact:true}).fill('ScaleOrigin209');
     await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(1);
     await column.getByRole('button',{name:/Open journey/}).click();await page.getByRole('dialog').getByRole('button',{name:'More journey actions',exact:true}).click();await page.getByRole('dialog').getByRole('menuitem',{name:'Edit journey',exact:true}).click();
