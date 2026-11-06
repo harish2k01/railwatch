@@ -9,8 +9,8 @@
 /* Workspace pages share the Settings section nav (canvas Admin.dc.html). */
 @media(min-width:768px){.workspace{grid-template-columns:220px minmax(0,1fr)}}
 @media(min-width:768px){.navigation{display:flex;flex-direction:column;gap:2px}}
-.navigation a{display:flex;align-items:center;min-height:40px;padding:0 12px;border-radius:8px;color:var(--rw-sidebar-text);font-size:14px;font-weight:500;text-decoration:none}
+.navigation a{display:flex;align-items:center;min-height:40px;padding:0 12px;border-radius:8px;color:var(--rw-muted);font-size:14px;font-weight:500;text-decoration:none}
 .navigation a:hover{background:var(--rw-surface-2);color:var(--rw-text)}
-.navigation a[aria-current=page]{background:var(--rw-sidebar-active);color:var(--rw-sidebar-strong);font-weight:600}
+.navigation a[aria-current=page]{background:var(--rw-brand-soft);color:var(--rw-text);font-weight:600}
 .navGroup{padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rw-muted)}
 .navGroup:not(:first-child){padding-top:16px}
