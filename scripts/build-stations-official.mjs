@@ -8,7 +8,7 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
 
 const DIR = "scripts/stations-official";
-const NOT_ZONE = new Set(["possibly-retired.tsv", "removed.tsv", "long-distance.tsv"]);
+const NOT_ZONE = new Set(["possibly-retired.tsv", "removed.tsv", "long-distance.tsv", "dropped.tsv"]);
 const KEEP_UPPER = new Set(["JN", "CANT", "RS", "HLT", "PH", "MG", "SG", "GT", "KSR"]);
 const title = (name) => name.trim().replace(/\.$/, "").replace(/\s+/g, " ").toLowerCase().split(" ")
   .map((w) => KEEP_UPPER.has(w.toUpperCase()) ? w.toUpperCase() : w.replace(/(^|[-(.])([a-z])/g, (_, p, c) => p + c.toUpperCase())).join(" ");
@@ -78,25 +78,47 @@ async function build(wikidataFile) {
   }
   // Confirmed retired/invalid codes (removed.tsv) never come back on a rebuild.
   for (const line of (await readFile(`${DIR}/removed.tsv`, "utf8").catch(() => "")).split("\n")) { const code = line.split("\t")[0]; if (code && !code.startsWith("#")) stations.delete(code); }
-  // Long-distance filter: keep only codes in long-distance.tsv. STATIONS_ALL=1 skips it.
-  const keep = process.env.STATIONS_ALL ? null : await readFile(`${DIR}/long-distance.tsv`, "utf8").then((t) => new Set(t.split("\n").map((l) => l.split("\t")[0]).filter((c) => c && !c.startsWith("#"))), () => null);
-  if (keep) for (const code of stations.keys()) if (!keep.has(code)) stations.delete(code);
+  // Long-distance filter (STATIONS_ALL=1 skips it): codes in dropped.tsv (local-only/metro) are removed; codes in
+  // neither long-distance.tsv nor dropped.tsv are new since the 2017 schedules, so they are kept and appended to
+  // long-distance.tsv as "unverified-new" for review in the refresh PR instead of being silently dropped or added.
+  const tsvCodes = async (f) => new Set((await readFile(`${DIR}/${f}`, "utf8").catch(() => "")).split("\n").map((l) => l.split("\t")[0]).filter((c) => c && !c.startsWith("#")));
+  const keep = await tsvCodes("long-distance.tsv"), dropped = await tsvCodes("dropped.tsv");
+  const added = [];
+  if (!process.env.STATIONS_ALL && keep.size) {
+    for (const [code, name] of stations) {
+      if (dropped.has(code)) stations.delete(code);
+      else if (!keep.has(code)) added.push([code, name, `unverified-new ${new Date().toISOString().slice(0, 10)}`]);
+    }
+    if (added.length) await writeFile(`${DIR}/long-distance.tsv`, (await readFile(`${DIR}/long-distance.tsv`, "utf8")) + added.map((r) => r.join("\t")).join("\n") + "\n");
+  }
   const rows = [...stations].sort(([a], [b]) => a.localeCompare(b));
   await writeFile("src/data/stations.json", JSON.stringify(rows) + "\n");
   const retired = rows.filter(([c]) => !official.has(c) && !wikidata.has(c));
   await writeFile(`${DIR}/possibly-retired.tsv`, retired.map((r) => r.join("\t")).join("\n") + "\n");
-  console.log(`${rows.length} stations, ${renamed} official renames, ${retired.length} possibly retired`);
+  const unverified = (await readFile(`${DIR}/long-distance.tsv`, "utf8").catch(() => "")).split("\n").filter((l) => /\tunverified/.test(l) && stations.has(l.split("\t")[0])).length;
+  console.log(`${rows.length} stations, ${renamed} official renames, ${retired.length} possibly retired, ${added.length} new unverified`);
+  // Markdown summary for the monthly refresh PR body (path from STATIONS_SUMMARY).
+  if (process.env.STATIONS_SUMMARY) {
+    const list = (r) => r.length ? r.slice(0, 50).map(([c, n]) => `\`${c}\` ${n}`).join(", ") + (r.length > 50 ? `, … (${r.length - 50} more)` : "") : "none";
+    await writeFile(process.env.STATIONS_SUMMARY, [
+      `| | Count |`, `| --- | --- |`, `| Stations | ${rows.length} |`, `| Unverified (no 2017 schedule, kept for review) | ${unverified} |`,
+      `| New since last refresh (added as unverified-new) | ${added.length} |`, `| Possibly retired (no official list or Wikidata) | ${retired.length} |`,
+      `| Held out: local-only/metro (dropped.tsv) | ${dropped.size} |`, ``,
+      `**New unverified codes:** ${list(added)}`, ``, `**Possibly retired:** ${list(retired)}`,
+    ].join("\n") + "\n");
+  }
 }
 
 /**
  * Writes long-distance.tsv (code, name, basis) from datameet/railways trains.json + schedules.json (CC0, ~2017).
- * Kept: any station where a Mail/Express-class train stops (arrival differs from departure, or it starts/ends there) (SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt).
- * Dropped: stations served only by Passenger (median run 117 km), EMU/MEMU/DEMU or suburban (Hyd/Klkt/Del) trains,
- * toy trains, and stations with no 2017 schedule whose name says Metro. Stations with no 2017 schedule at all
- * (newer than the data) are kept as "unverified" so new lines aren't lost. Hand edits: add/remove rows.
+ * Kept: any station where a Passenger or Mail/Express-class train stops (arrival differs from departure, or it
+ * starts/ends there): Pass, SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt.
+ * Dropped (written to dropped.tsv so rebuilds never re-add them): stations served only by EMU/MEMU/DEMU, suburban
+ * (Hyd MMTS, Klkt, Del) or toy trains, and stations with no 2017 schedule whose name says Metro. Stations with no
+ * 2017 schedule at all (newer than the data) are kept as "unverified". Hand edits: move rows between the two files.
  */
 async function longDistance(trainsFile, schedulesFile) {
-  const LONG = new Set(["SF", "Exp", "Mail", "Raj", "Shtb", "JShtb", "GR", "SKr", "Drnt"]);
+  const LONG = new Set(["Pass", "SF", "Exp", "Mail", "Raj", "Shtb", "JShtb", "GR", "SKr", "Drnt"]);
   const type = new Map(JSON.parse(await readFile(trainsFile, "utf8")).features.map((f) => [f.properties.number, f.properties.type]));
   const served = new Set(), long = new Set();
   for (const r of JSON.parse(await readFile(schedulesFile, "utf8"))) {
@@ -106,13 +128,14 @@ async function longDistance(trainsFile, schedulesFile) {
     if (stops && LONG.has(type.get(r.train_number))) long.add(r.station_code);
   }
   const stations = JSON.parse(await readFile("src/data/stations.json", "utf8"));
-  const out = [], counts = { schedule: 0, unverified: 0, local: 0, metro: 0 };
+  const out = [], dropped = [], counts = { schedule: 0, unverified: 0, local: 0, metro: 0 };
   for (const [code, name] of stations) {
     const basis = long.has(code) ? "schedule" : served.has(code) ? "local" : /metro/i.test(name) ? "metro" : "unverified";
     counts[basis]++;
-    if (basis === "schedule" || basis === "unverified") out.push([code, name, basis]);
+    (basis === "schedule" || basis === "unverified" ? out : dropped).push([code, name, basis]);
   }
-  await writeFile(`${DIR}/long-distance.tsv`, "# code\tname\tbasis (schedule = Mail/Express stop in datameet 2017; unverified = no 2017 schedule)\n" + out.map((r) => r.join("\t")).join("\n") + "\n");
+  await writeFile(`${DIR}/long-distance.tsv`, "# code\tname\tbasis (schedule = Passenger/Mail/Express stop in datameet 2017; unverified = no 2017 schedule)\n" + out.map((r) => r.join("\t")).join("\n") + "\n");
+  await writeFile(`${DIR}/dropped.tsv`, "# code\tname\treason (local = only EMU/MEMU/DEMU/suburban/toy trains stop; metro)\n" + dropped.map((r) => r.join("\t")).join("\n") + "\n");
   console.log(counts);
 }
 

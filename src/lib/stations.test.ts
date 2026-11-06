@@ -20,8 +20,8 @@ describe("searchStations", () => {
   });
   it("ships a usable directory", () => {
     const codes = new Map((stations as unknown as Station[]).map((s) => [s[0], s[1]]));
-    // Long-distance stops only (scripts/stations-official/long-distance.tsv), so well under the ~9.7k full list.
-    expect(codes.size).toBeGreaterThan(4000);
+    // Passenger/Mail/Express stops only (scripts/stations-official/long-distance.tsv); local-only and metro are held out.
+    expect(codes.size).toBeGreaterThan(8000);
     for (const code of ["MDU", "MS", "MAS", "SBC", "CBE", "TPJ", "NDLS", "TBM", "MBM", "CGL"]) expect(codes.has(code)).toBe(true);
     for (const code of ["MKK", "MPK"]) expect(codes.has(code)).toBe(false); // Kodambakkam, Chennai Park: suburban EMUs only
     expect(codes.get("MDU")).toBe("Madurai JN");

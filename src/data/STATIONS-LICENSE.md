@@ -39,10 +39,10 @@ lists, Wikidata or OpenStreetMap are removed and recorded in `scripts/stations-o
 [datameet/railways](https://github.com/datameet/railways) `trains.json` + `schedules.json` (CC0, ~2017) by
 `node scripts/build-stations-official.mjs long-distance <trains.json> <schedules.json>`:
 
-- **schedule**: a Mail/Express-class train (SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt) actually stops there.
+- **schedule**: a Passenger or Mail/Express-class train (Pass, SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt) actually stops there.
   Passing points have equal or missing arrival/departure and don't count.
 - **unverified**: no 2017 schedule at all (newer stations, or lines datameet lacks). Kept until checked.
-- Dropped: stations served only by Passenger, EMU/MEMU/DEMU, MMTS/Kolkata/Delhi suburban or toy trains, and "Metro" stations.
+- Dropped and recorded in `dropped.tsv` (so rebuilds never re-add them): stations served only by EMU/MEMU/DEMU, MMTS/Kolkata/Delhi suburban or toy trains, and "Metro" stations.
 
 To override, edit rows in `long-distance.tsv` by hand, or run the build with `STATIONS_ALL=1` to skip the filter. New codes from the
-monthly Wikidata refresh stay out until they are added to `long-distance.tsv`.
+monthly Wikidata refresh are kept and appended to `long-distance.tsv` as `unverified-new`, and the refresh PR lists them with the counts.
