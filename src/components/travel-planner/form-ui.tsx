@@ -1,4 +1,5 @@
 "use client";
+import { ask } from "./confirm";
 import {cloneElement,useEffect,useId,useRef,type ReactElement,type ReactNode} from "react";
 import {X} from "lucide-react";
 import s from "./planner.module.css";
@@ -13,7 +14,7 @@ export function Modal({ title, subtitle, children, close, wide = false, guard = 
   const titleId=useId();const ref = useRef<HTMLDialogElement>(null);
   const dirty = useRef(false);
   /** Preserves form edits when a dialog is dismissed accidentally. */
-  function dismiss() { if (!guard || !dirty.current || confirm("Discard your unsaved changes?")) close(); }
+  async function dismiss() { if (!guard || !dirty.current || await ask("Discard your unsaved changes?")) close(); }
   useEffect(() => {
     if (!guard) return;
     /** Warns before closing or reloading a page with unsaved form edits. */

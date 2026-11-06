@@ -1,5 +1,7 @@
 "use client";
+import { ask } from "./confirm";
 import Link from "next/link";
+import { useState } from "react";
 
 import { AlertTriangle, CalendarPlus, CheckCheck, Plus, Ticket } from "lucide-react";
 import { addDays, bookingDay, bookingTimeLabel, calendarFile, daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
@@ -32,11 +34,11 @@ type Props = {
   planner: Planner; today: string; data: DashboardView; openJourney: (j: Journey) => void; createJourney: () => void;
   go: (tab: "journeys" | "calendar" | "routines" | "holidays", status?: Journey["status"]) => void; chooseDate: (date: string) => void;
   setStatus?: (j: Journey, status: Journey["status"]) => void; skipTimeOff?: (j: Journey) => void; keepTimeOff?: (j: Journey) => void;
-  openBookingDay?: (j: Journey) => void; importTickets?: () => void; attachTicket?: (j: Journey) => void; remind?: (j: Journey) => void;
+  openBookingDay?: (j: Journey) => void; importTickets?: () => void; attachTicket?: (j: Journey) => void; remind?: (j: Journey) => void; updateStatus?: (j: Journey, text: string) => boolean;
 };
 
 /** Today (plan 2.3, canvas Main.dc.html): next trip, Do next, this week, the routine and time off. */
-export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus, skipTimeOff, keepTimeOff, openBookingDay, importTickets, attachTicket, remind }: Props) {
+export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus, skipTimeOff, keepTimeOff, openBookingDay, importTickets, attachTicket, remind, updateStatus }: Props) {
   const { upcoming, bookingSoon, totals, week } = data;
   const next = upcoming.find(j => j.status === "booked") ?? upcoming[0];
   const holidays = planner.holidays.filter(h => h.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
@@ -47,25 +49,26 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
   const istHour = Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date()));
   const missed = (j: Journey) => j.status === "needs_booking" && j.bookingType !== "tatkal" && (bookingDay(j) < today || (bookingDay(j) === today && istHour >= 18));
   const waitlisted = planner.journeys.filter(j => !j.archivedAt && j.status === "booked" && j.date >= today && (j.ticketStatus === "WL" || j.ticketStatus === "RAC")).sort((a, b) => a.date.localeCompare(b.date));
+  const [statusFor, setStatusFor] = useState<string>();
   const reminding = (j: Journey) => j.reminderOverride?.mode === "custom" && j.reminderOverride.times.includes("opening");
   // Do next: what needs doing now, then missing tickets and the next booking openings (canvas order).
   const items: { key: string; node: React.ReactNode }[] = [
     ...data.attention.map(j => ({ key: "a" + j.id, node: <div className={t.row} data-attention>
       <button type="button" className={`${s.dashboardRow} ${t.rowMain}`} onClick={() => openJourney(j)}><span className={j.status === "cancellation_needed" ? t.tileCancel : t.tileOpen}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><span className={t.rowText}><b>{j.status === "cancellation_needed" ? "Cancellation to confirm" : missed(j) ? `Not booked yet · Tatkal opens ${tatkal(j)}` : "Booking is open"}</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</small></span></button>
       <span className={t.rowActions}>{setStatus && (j.status === "cancellation_needed"
-        ? <button type="button" className={s.secondary} onClick={() => { if (confirm("Have you cancelled this ticket through IRCTC?")) setStatus(j, "cancelled"); }}>Confirm cancellation</button>
+        ? <button type="button" className={s.secondary} onClick={async () => { if (await ask("Have you cancelled this ticket through IRCTC?")) setStatus(j, "cancelled"); }}>Confirm cancellation</button>
         : <>{missed(j) && openBookingDay && <button type="button" className={s.secondary} onClick={() => openBookingDay(j)}>Try Tatkal</button>}<button type="button" className={s.secondary} onClick={() => setStatus(j, "booked")}>Mark booked</button></>)}</span>
     </div> })),
     ...waitlisted.map(j => ({ key: "w" + j.id, node: <div className={t.row} data-attention>
-      <button type="button" className={`${s.dashboardRow} ${t.rowMain}`} onClick={() => openJourney(j)}><span className={t.tileCancel}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><span className={t.rowText}><b>{j.ticketStatus === "WL" ? "Waitlisted" : "RAC"} · check the chart 4 hours before departure</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · Tatkal opens {tatkal(j)}</small></span></button>
-      <span className={t.rowActions}><span className={t.badgeWarn}>{j.ticketStatus}</span></span>
+      <button type="button" className={`${s.dashboardRow} ${t.rowMain}`} onClick={() => openJourney(j)}><span className={t.tileCancel}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><span className={t.rowText}><b>{j.currentStatus ?? (j.ticketStatus === "WL" ? "Waitlisted" : "RAC")} · check the chart 4 hours before departure</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · Tatkal opens {tatkal(j)}</small></span></button>
+      <span className={t.rowActions}>{updateStatus ? (statusFor === j.id ? <form className={t.statusForm} onSubmit={e => { e.preventDefault(); const text = new FormData(e.currentTarget).get("status")?.toString() ?? ""; if (updateStatus(j, text)) setStatusFor(undefined); }}><input name="status" aria-label="Current status" placeholder="WL 4, RAC 2, CNF or paste the SMS" autoFocus /><button type="submit" className={s.secondary}>Save</button></form> : <button type="button" className={s.secondary} onClick={() => setStatusFor(j.id)}>Update status</button>) : <span className={t.badgeWarn}>{j.ticketStatus}</span>}</span>
     </div> })),
     ...(missing > 0 && importTickets ? [{ key: "tickets", node: <div className={t.row}>
       <span className={`${t.rowMain} ${t.rowStatic}`}><span className={t.tileTicket} aria-hidden="true"><Ticket size={22} /></span><span className={t.rowText}><b>{missing} booked {missing === 1 ? "journey has" : "journeys have"} no ticket</b><small>Drop the IRCTC PDFs in one go. Details are read on your device.</small></span></span>
       <span className={t.rowActions}><button type="button" className={s.secondary} onClick={importTickets}>Attach tickets</button></span>
     </div> }] : []),
     ...bookingSoon.slice(0, 3).map(j => ({ key: "b" + j.id, node: <div className={t.row}>
-      <button type="button" className={t.rowMain} onClick={() => openJourney(j)}><span className={t.tileOpen}><b>{bookingDay(j).slice(-2)}</b><small>{formatDay(bookingDay(j), { month: "short" })}</small></span><span className={t.rowText}><b>Booking opens {dayName(bookingDay(j), today)}, {time(j)}</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · {j.bookingType === "tatkal" ? "Tatkal" : "Normal quota"}</small></span></button>
+      <button type="button" className={t.rowMain} onClick={() => openJourney(j)}><span className={t.tileOpen}><b>{bookingDay(j).slice(-2)}</b><small>{formatDay(bookingDay(j), { month: "short" })}</small></span><span className={t.rowText}><b>{j.bookingType === "tatkal" ? <>Tatkal opens {dayName(bookingDay(j), today)}, {time(j)}{bookingDay(j) === addDays(today, 1) ? " · get ready tonight" : bookingDay(j) === today ? " · be logged in 5 minutes early" : ""}</> : <>Booking opens {dayName(bookingDay(j), today)}, {time(j)}</>}</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · {j.bookingType === "tatkal" ? "Tatkal" : "Normal quota"}</small></span></button>
       <span className={t.rowActions}>{remind && <button type="button" className={s.secondary} aria-pressed={reminding(j)} onClick={() => remind(j)}>{reminding(j) ? "Reminder set" : `Remind ${planner.settings.reminderClock?.opening ?? "07:55"}`}</button>}{bookingDay(j) <= addDays(today, 1) && openBookingDay && <button type="button" className={s.secondary} onClick={() => openBookingDay(j)}>Booking day</button>}{bookingDay(j) <= addDays(today, 1) && setStatus && <button type="button" className={s.secondary} onClick={() => setStatus(j, "booked")}>Mark booked</button>}</span>
     </div> })),
   ];

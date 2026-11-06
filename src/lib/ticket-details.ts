@@ -1,6 +1,7 @@
+import { parseFare } from "./ticket-fare";
 import { isDay, type Journey } from "./travel-planner";
 
-export type TicketDetails = Partial<Pick<Journey, "from" | "to" | "date" | "trainNumber" | "trainName" | "travelClass" | "pnr" | "coach" | "seat" | "berth" | "departure" | "ticketStatus" | "bookingType">>;
+export type TicketDetails = Partial<Pick<Journey, "from" | "to" | "date" | "trainNumber" | "trainName" | "travelClass" | "pnr" | "coach" | "seat" | "berth" | "departure" | "ticketStatus" | "bookingType" | "fare">>;
 /** Extracts validated ticket-field suggestions from QR JSON, printed text, or OCR. */
 export function parseTicketDetails(raw: string): TicketDetails {
   const text = raw.replace(/\r/g, "").replace(/[,;]\s*(?=(?:PNR|Train\s*(?:No|Number|Name)|From|To|Class|Journey\s*Date|Departure|Coach|Seat|Berth)\s*[:=])/gi,"\n").replace(/\b(TrainNo|TrainName|JourneyDate|DepartureTime|CoachNo|SeatNo|BerthType)\b/g, label=>label.replace(/([a-z])([A-Z])/g,"$1 $2")).replace(/\b(From|To|Class|Coach|Seat No|Berth Type|Train No|Train Name|Journey Date|Departure Time)\s*=/gi,"$1:"); const details: TicketDetails = {};
@@ -12,7 +13,7 @@ export function parseTicketDetails(raw: string): TicketDetails {
         /** Collects supported ticket fields from nested QR objects and the first passenger record. */
     function flatten(value:Record<string,unknown>,depth=0){if(depth>8)return;for(const [key,item] of Object.entries(value)){if(typeof item === "string"||typeof item === "number")normalized[normalizeKey(key)]=item;else if(item&&typeof item==="object"&&!Array.isArray(item))flatten(item as Record<string,unknown>,depth+1);else if(Array.isArray(item)&&item[0]&&typeof item[0]==="object")flatten(item[0] as Record<string,unknown>,depth+1);}}
     flatten(json);
-    const aliases: Record<Exclude<keyof TicketDetails, "ticketStatus" | "bookingType">, string[]> = { from: ["from", "source", "boardingStation"], to: ["to", "destination"], date: ["date", "journeyDate", "travelDate"], trainNumber: ["trainNumber", "trainNo", "train_no"], trainName: ["trainName", "train_name"], travelClass: ["travelClass", "class"], pnr: ["pnr", "PNR", "pnrNumber", "pnrNo"], coach: ["coach", "coachNumber", "coachNo"], seat: ["seat", "seatNumber", "seatNo", "berthNumber", "berthNo"], berth: ["berth", "berthType"], departure: ["departure", "departureTime", "scheduledDeparture", "boardingTime"] };
+    const aliases: Record<Exclude<keyof TicketDetails, "ticketStatus" | "bookingType" | "fare">, string[]> = { from: ["from", "source", "boardingStation"], to: ["to", "destination"], date: ["date", "journeyDate", "travelDate"], trainNumber: ["trainNumber", "trainNo", "train_no"], trainName: ["trainName", "train_name"], travelClass: ["travelClass", "class"], pnr: ["pnr", "PNR", "pnrNumber", "pnrNo"], coach: ["coach", "coachNumber", "coachNo"], seat: ["seat", "seatNumber", "seatNo", "berthNumber", "berthNo"], berth: ["berth", "berthType"], departure: ["departure", "departureTime", "scheduledDeparture", "boardingTime"] };
     for (const [key, keys] of Object.entries(aliases)) { const value = keys.map(k => normalized[normalizeKey(k)]).find(v => typeof v === "string" || typeof v === "number"); if (value !== undefined) (details as Record<string, string>)[key] = String(value).trim(); }
   } else {
     const /** Returns the first matching ticket field from the parsed text. */ match = (pattern: RegExp) => text.match(pattern)?.[1]?.trim();
@@ -50,6 +51,15 @@ export function parseTicketDetails(raw: string): TicketDetails {
   if(current){details.coach=current[1];details.seat=current[2];details.berth=current[3];}
   const passengerRow=text.match(/(?:Booking Status|Current Status)[^\n]*\n[^\n]*?\b([A-Z]{1,2}\d{1,2})\s+(\d{1,3})\s+(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS)\b/i);
   if(passengerRow){details.coach??=passengerRow[1];details.seat??=passengerRow[2];details.berth??=passengerRow[3];}
+  // Every passenger row ("1. NAME 25 M CNF/S7/27/UPPER CNF/S7/27/UPPER"): use each row's current (last) allocation.
+  const seatPattern = /(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/gi;
+  const seats = [...text.matchAll(/^\s*\d+\.\s[^\n]*$/gm)].map(row => [...row[0].matchAll(seatPattern)].pop()).filter((m): m is RegExpExecArray => Boolean(m));
+  if (seats.length > 1) {
+    const coaches = [...new Set(seats.map(m => m[1].toUpperCase()))];
+    details.coach = coaches.join(", ").slice(0, 20);
+    details.seat = seats.map(m => m[2]).join(", ").slice(0, 30);
+    details.berth = seats.map(m => m[3].toUpperCase().replace(/\s+/g, " ")).join(", ").slice(0, 30);
+  }
   details.departure??=text.match(/(?:Scheduled Departure|Departure(?: Time)?|Boarding Time)\s*\*?\s*[:\-]?\s*(?:\d{2}[-/]\w{2,9}[-/]\d{4}\s+)?((?:[01]?\d|2[0-3]):[0-5]\d)(?:\s*(AM|PM))?/i)?.slice(1).filter(Boolean).join(" ");
   if(details.departure){const time=details.departure.match(/^(\d{1,2}):([0-5]\d)(?:\s*(AM|PM))?$/i);if(time){let hour=Number(time[1]);if(time[3]&&hour>=1&&hour<=12)hour=hour%12+(time[3].toUpperCase()==="PM"?12:0);details.departure=String(hour).padStart(2,"0")+":"+time[2];}}
   details.date??=text.match(/\bStart Date\s*\*?\s*[:\-]?\s*(\d{2}-[A-Za-z]{3}-\d{4})/i)?.[1];
@@ -66,6 +76,7 @@ export function parseTicketDetails(raw: string): TicketDetails {
   if (details.pnr && !/^\d{10}$/.test(details.pnr)) delete details.pnr;
   if (details.trainNumber && !/^\d{5}$/.test(details.trainNumber)) delete details.trainNumber;
   if (details.departure && !/^([01]\d|2[0-3]):[0-5]\d$/.test(details.departure)) delete details.departure;
+  const fare = parseFare(text); if (fare) details.fare = fare;
   for (const key of Object.keys(details) as (keyof TicketDetails)[]) if (!details[key]) delete details[key];
   return details;
 }

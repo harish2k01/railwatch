@@ -1,4 +1,6 @@
 "use client";
+import { ADMIN_SECTIONS } from "./settings-nav";
+import { settingsNavigationAllowed } from "./settings-guard";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offlineCount, offlineEnabled, offlineSupported, setOfflineEnabled } from "@/lib/offline-tickets";
@@ -35,7 +37,8 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
   // One section at a time; #settings-<id> deep links (e.g. from Today) open that section.
   const [section, setSection] = useState("profile");
   useEffect(() => { const sync = () => { const id = window.location.hash.replace("#settings-", ""); if (SECTIONS.includes(id)) setSection(id); }; sync(); window.addEventListener("hashchange", sync); return () => window.removeEventListener("hashchange", sync); }, []);
-  const nav = (id: string) => { const key = id.replace("settings-", ""); setSection(key); window.history.replaceState(null, "", "#" + id); };
+  // Switching sections unmounts the open form, so unsaved edits get the same in-app discard prompt.
+  const nav = (id: string) => { const go = () => { const key = id.replace("settings-", ""); setSection(key); window.history.replaceState(null, "", "#" + id); }; if (settingsNavigationAllowed(go)) go(); };
   const show = (key: string) => section === key;
   return <div className={s.page}>
     <div className={s.layout}>
@@ -49,10 +52,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
         <button type="button" className={s.navItem} aria-current={section === "data" ? "page" : undefined} onClick={() => nav("settings-data")}>Data and backup</button>
         <button type="button" className={s.navItem} aria-current={section === "security" ? "page" : undefined} onClick={() => nav("settings-security")}>Security</button>
         {admin && <><span className={s.navGroup}>Workspace · admin</span>
-          <Link className={s.navItem} href="/settings/workspace">Booking rules</Link>
-          <Link className={s.navItem} href="/settings/workspace/members">Members</Link>
-          <Link className={s.navItem} href="/settings/workspace/integrations">Integrations</Link>
-          <Link className={s.navItem} href="/settings/workspace/health">System health</Link></>}
+          {ADMIN_SECTIONS.map(x => <Link key={x.id} className={s.navItem} href={x.href}>{x.label}</Link>)}</>}
       </nav>
       <div className={s.content}>
         {["profile", "preferences", "connections", "security"].includes(section) && personal(section)}
@@ -73,6 +73,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
           <div className={s.card}>
             <div className={s.toggleRow}><span><strong>Download backup</strong><span className={s.muted}>Everything in your workspace as one file</span></span><button type="button" className={s.btn} onClick={backup}>Download</button></div>
             <div className={s.toggleRow}><span><strong>Restore backup</strong><span className={s.muted}>Replace your workspace from a backup file</span></span><label className={s.btn}>Choose file<input type="file" accept="application/json,.json" className={s.file} onChange={e => { const f = e.target.files?.[0]; if (f) restore(f); e.target.value = ""; }} /></label></div>
+            <CalendarFeed />
             <div className={s.toggleRow}><span><strong>Export calendar</strong><span className={s.muted}>An .ics file of your journeys and booking dates</span></span><button type="button" className={s.btn} onClick={exportCalendar}>Export</button></div>
             <div className={s.toggleRow}><span><strong>Install the app</strong><span className={s.muted}>Open RailWatch from your home screen or dock</span></span><PwaInstall /></div>
           </div>
@@ -108,5 +109,23 @@ function DeliveryStatus({ planner, go }: { planner: Planner; go: () => void }) {
   return <div className={s.card} aria-label="Reminder delivery">
     {!channels.length ? <div className={s.toggleRow} data-warn><span><strong>No reminder channel is on</strong><span className={s.muted}>You won’t be reminded when booking opens. Turn on this device, Telegram or email.</span></span><button type="button" className={s.btn} onClick={go}>Set up</button></div>
       : channels.map(c => { const x = d[c.id]; return <div key={c.id} className={s.toggleRow} data-warn={x?.failing ? true : undefined}><span><strong>{c.label}</strong><span className={s.muted}>{x?.failing ? `Failing since ${ago(x.failing.at)}. ${x.failing.error}` : [x?.lastSent ? `Last sent ${ago(x.lastSent)}` : "Nothing sent yet", x?.next ? `next ${when(x.next)}` : ""].filter(Boolean).join(" · ")}</span></span>{x?.failing && <button type="button" className={s.btn} onClick={go}>Fix</button>}</div>; })}
+  </div>;
+}
+
+/** Live calendar feed: a private URL Google Calendar and Outlook subscribe to and refresh on their own. */
+function CalendarFeed() {
+  const [url, setUrl] = useState(""), [busy, setBusy] = useState(false), [copied, setCopied] = useState(false), [error, setError] = useState("");
+  async function issue() {
+    setBusy(true); setError("");
+    try { const r = await fetch("/api/railwatch/calendar/feed", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }); const j = await r.json(); if (!r.ok) throw new Error(j.error?.message ?? "Couldn’t create the link."); setUrl((j.data ?? j).url); setCopied(false); }
+    catch (e) { setError(e instanceof Error ? e.message : "Couldn’t create the link."); } finally { setBusy(false); }
+  }
+  return <div className={s.toggleRow}>
+    <span><strong>Live calendar feed</strong><span className={s.muted}>Subscribe once in Google Calendar or Outlook and journeys, booking openings and time off stay in sync. Anyone with the link can see your trips.</span>
+      {url && <span className={s.feed}><input readOnly value={url} aria-label="Calendar feed link" onFocus={e => e.currentTarget.select()} /><button type="button" className={s.btn} onClick={() => { void navigator.clipboard.writeText(url).then(() => setCopied(true)); }}>{copied ? "Copied" : "Copy"}</button></span>}
+      {url && <span className={s.muted}>Google Calendar: Other calendars → + → From URL. Outlook: Add calendar → Subscribe from web. Updates arrive within a few hours.</span>}
+      {error && <span role="alert" className={s.muted}>{error}</span>}
+    </span>
+    <button type="button" className={s.btn} disabled={busy} onClick={() => void issue()}>{busy ? "Working…" : url ? "Reset link" : "Get link"}</button>
   </div>;
 }

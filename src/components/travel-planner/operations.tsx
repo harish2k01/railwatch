@@ -1,4 +1,5 @@
 "use client";
+import { ask } from "./confirm";
 import { useEffect,useState } from "react";
 import { apiRequest } from "@/lib/client-api";
 import { ActionMenu } from "./action-menu";
@@ -14,7 +15,7 @@ export function ReminderOperations({notice}:{notice:(message:string)=>void}) {
   async function load(page:string|null|undefined=cursor) {setBusy(true);setError("");try{setData(await apiRequest<Data>("/api/admin/operations"+(page?"?cursor="+encodeURIComponent(page):"")));setCursor(page??undefined);}catch(e){setError(e instanceof Error?e.message:"Could not load delivery health.");}finally{setBusy(false);}}
   useEffect(()=>{let live=true;apiRequest<Data>("/api/admin/operations").then(result=>{if(live)setData(result);}).catch(e=>{if(live)setError(e.message);});return()=>{live=false;};},[]);
   /** Confirms one external send and lets the scheduler recheck its current eligibility. */
-  async function retry(id:string) {if(!confirm("Retry this reminder now? It may arrive late. If a provider accepted an earlier attempt before the connection failed, the recipient could receive it twice."))return;setBusy(true);setError("");try{const result=await apiRequest<{message:string}>("/api/admin/operations",{method:"POST",body:JSON.stringify({id})});notice(result.message);await load();}catch(e){setError(e instanceof Error?e.message:"Could not queue retry.");}finally{setBusy(false);}}
+  async function retry(id:string) {if(!await ask("Retry this reminder now? It may arrive late. If a provider accepted an earlier attempt before the connection failed, the recipient could receive it twice."))return;setBusy(true);setError("");try{const result=await apiRequest<{message:string}>("/api/admin/operations",{method:"POST",body:JSON.stringify({id})});notice(result.message);await load();}catch(e){setError(e instanceof Error?e.message:"Could not queue retry.");}finally{setBusy(false);}}
   const date=(value:string|null)=>value?new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"}).format(new Date(value))+" IST":"Not recorded yet";
   return <section className={s.settingsCard}><div className={s.sectionHead}><h2>Reminder delivery</h2><button className={s.reloadButton} aria-label="Refresh delivery health" title="Reload delivery health" disabled={busy} onClick={()=>void load()}><RefreshCw size={18}/></button></div>{error&&<p role="alert" className={s.modalError}>{error}</p>}{!data?<p>Loading delivery health…</p>:<>{data.system&&<><section className={o.health} aria-labelledby="health-h"><div className={o.head}><h2 id="health-h">System health</h2><span className={o.muted}>Checked just now</span></div><div className={o.card}>
   {[

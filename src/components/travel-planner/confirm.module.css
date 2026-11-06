@@ -1,0 +1,11 @@
+/* App-styled confirm dialog (replaces the browser's confirm box). */
+.dialog{width:min(420px,calc(100vw - 32px));padding:0;border:1px solid var(--rw-line);border-radius:16px;background:var(--rw-surface);color:var(--rw-text);box-shadow:0 24px 60px #0006}
+.dialog::backdrop{background:#0008;backdrop-filter:blur(2px)}
+.body{display:grid;gap:20px;padding:22px}
+.message{margin:0;font-size:15px;line-height:1.5;font-weight:600}
+.actions{display:flex;justify-content:flex-end;gap:10px}
+.cancel,.confirm,.danger{min-height:40px;padding:0 16px;border-radius:10px;font:600 14px inherit;cursor:pointer}
+.cancel{border:1px solid var(--rw-line);background:var(--rw-surface-2);color:var(--rw-text)}
+.confirm{border:0;background:var(--rw-brand);color:var(--rw-brand-ink)}
+.danger{border:0;background:var(--rw-danger);color:#fff}
+@media(prefers-reduced-motion:no-preference){.dialog[open]{animation:in .16s ease-out}@keyframes in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}}

@@ -7,7 +7,9 @@ import { useStationName } from "./journey-detail";
 import s from "./planner.module.css";
 import b from "./booking-day.module.css";
 
-const ITEMS = ["Signed in to IRCTC", "Passenger saved in IRCTC master list", "Payment method ready", "Train and class chosen"];
+const NORMAL_ITEMS = ["Signed in to IRCTC", "Passenger saved in IRCTC master list", "Payment method ready", "Train and class chosen"];
+// Tatkal sells out in minutes: be logged in early, with passengers and payment ready to go.
+const TATKAL_ITEMS = ["Logged in to IRCTC 5 minutes before opening", "Passengers and ID saved in the master list", "UPI or IRCTC eWallet ready (fastest checkout)", "Train, class and boarding station noted", "A backup train picked in case this one fills"];
 const key = (id: string) => `railwatch:booking-checklist:${id}`;
 /** Reads the per-device checklist; storage may be unavailable, which leaves every item unticked. */
 const readChecklist = (id: string): boolean[] => { try { const v = JSON.parse(localStorage.getItem(key(id)) ?? "[]"); return Array.isArray(v) ? v.map(Boolean) : []; } catch { return []; } };
@@ -24,6 +26,7 @@ export function BookingDay({ journey: j, routine, booked, retryTatkal, skip, fai
   const stored = useSyncExternalStore(noop, () => JSON.stringify(readChecklist(j.id)), () => "[]");
   const [checks, setChecks] = useState<boolean[] | null>(null), [result, setResult] = useState<"CNF" | "RAC" | "WL">("CNF"), [file, setFile] = useState<File>(), [busy, setBusy] = useState(false);
   const ticked = checks ?? (JSON.parse(stored) as boolean[]);
+  const ITEMS = j.bookingType === "tatkal" ? TATKAL_ITEMS : NORMAL_ITEMS;
   const toggle = (i: number) => { const next = ITEMS.map((_, k) => k === i ? !ticked[k] : Boolean(ticked[k])); setChecks(next); try { localStorage.setItem(key(j.id), JSON.stringify(next)); } catch { /* device only */ } };
   const left = countdown(opens.getTime() - now), from = useStationName(j.from), to = useStationName(j.to);
   // The Tatkal opening for the same trip: the day before travel, 10:00 (AC) or 11:00 (non-AC).
