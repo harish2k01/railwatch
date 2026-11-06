@@ -38,7 +38,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
   const details: [string, string][] = [
     ["Train", [j.trainNumber, j.trainName || j.train].filter(Boolean).join(" · ")], ["PNR", j.pnr],
     ["Coach · berth", [j.coach, j.seat, j.berth].filter(Boolean).join(" · ")], ["Departs", j.departureConfirmed && j.departure ? `${j.departure} IST` : ""],
-    ["Class", j.travelClass], ["Ticket status", j.ticketStatus === "CNF" ? "Confirmed" : j.ticketStatus ?? ""],
+    ["Class", j.travelClass], ["Ticket status", j.ticketStatus === "CNF" ? "Confirmed" : j.currentStatus ?? j.ticketStatus ?? ""],
   ];
   const booked = j.status === "booked";
   const main = j.status === "cancellation_needed" ? { label: "Confirm cancellation", run: cancel }
@@ -63,6 +63,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
         : mobile ? null : uploadsEnabled && j.status !== "cancelled" ? <button type="button" className={d.drop} data-dragging={dragging || undefined} onClick={choose} onDragOver={e => { if (!attachFile) return; e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { if (!attachFile) return; e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) attachFile(f); }}><Paperclip size={22} aria-hidden="true" /><span>Drop the IRCTC PDF here</span><small>Train, coach, berth and PNR are read on this device and filled in below.</small><span className={`${s.primary} ${d.choose}`}>Choose file</span></button>
         : <p className={d.note}>No ticket attached.</p>}
       <dl className={d.grid}>{details.map(([label, value]) => <div key={label}><dt>{label}</dt><dd data-empty={!value || undefined}>{value || "Not set"}</dd></div>)}</dl>
+      {(j.statusLog?.length ?? 0) > 0 && <p className={d.note}>Status history: {j.statusLog!.map(x => x.status).join(" → ")}</p>}
     </section>
     <section aria-labelledby="journey-reminders" className={d.section}>
       <h3 id="journey-reminders">{mobile ? "Reminders & notes" : "Reminders"}</h3>
