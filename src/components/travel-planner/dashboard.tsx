@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { AlertTriangle, CalendarPlus, CheckCheck, Plus, Ticket } from "lucide-react";
 import { addDays, bookingDay, bookingTimeLabel, calendarFile, daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
@@ -69,6 +70,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
     </div> })),
   ];
   return <div className={t.today}>
+    {data.remindersOn === false && <section className={t.decision} aria-labelledby="today-reminders-off"><h2 id="today-reminders-off">Reminders are off</h2><div className={t.decisionLine}><span className={t.decisionTrip}><b>You won’t be told when booking opens</b><small>Turn on this device, Telegram or email so RailWatch can remind you.</small></span><Link className={s.secondary} href="/settings#settings-connections">Turn on reminders</Link></div></section>}
     {(data.conflicts?.length ?? 0) > 0 && <section className={t.decision} aria-labelledby="today-decision"><h2 id="today-decision">Needs a decision</h2>
       {data.conflicts.map(j => <div key={j.id} className={t.decisionLine}><button type="button" className={t.decisionTrip} onClick={() => openJourney(j)}><b>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>{STATUS[j.status]} on your time off{j.ruleId ? " · from a routine" : ""}</small></button>{skipTimeOff && <button type="button" className={s.primary} onClick={() => skipTimeOff(j)}>Skip this trip</button>}{keepTimeOff && <button type="button" className={s.secondary} onClick={() => keepTimeOff(j)}>Keep</button>}</div>)}
     </section>}

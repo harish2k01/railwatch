@@ -16,11 +16,22 @@ export async function GET(request:Request){try{
     getDeliveryConfiguration(),
   ]);
   const current=telegram?.providerId===config.telegram?.id;
+  // Per-channel delivery health so Settings can show last sent, next due and failures.
+  const kinds=["EMAIL","PUSH","TELEGRAM"] as const;
+  const deliveries=Object.fromEntries(await Promise.all(kinds.map(async kind=>{
+    const [sent,failed,next]=await Promise.all([
+      prisma.railJob.findFirst({where:{userId:user.id,kind,state:"SENT"},orderBy:{sentAt:"desc"},select:{sentAt:true}}),
+      prisma.railJob.findFirst({where:{userId:user.id,kind,state:"FAILED"},orderBy:{updatedAt:"desc"},select:{updatedAt:true,lastError:true}}),
+      prisma.railJob.findFirst({where:{userId:user.id,kind,state:"PENDING"},orderBy:{dueAt:"asc"},select:{dueAt:true}}),
+    ]);
+    const failing=failed&&(!sent?.sentAt||failed.updatedAt>sent.sentAt)?{at:failed.updatedAt.toISOString(),error:failed.lastError??"Delivery failed."}:null;
+    return [kind,{lastSent:sent?.sentAt?.toISOString()??null,next:next?.dueAt.toISOString()??null,failing}];
+  })));
   return jsonData({emailReady:Boolean(delivery.smtpUrl),emailVerified:user.emailVerified,
     telegramPairingPending:Boolean(current&&telegram?.linkTokenHash&&telegram.linkExpiresAt&&telegram.linkExpiresAt>new Date()),
     telegramLoginReady:policy.telegramEnabled&&telegramLoginConfigured(config),telegramBotUsername:config.telegram?.botUsername??"",
     telegramReady:policy.telegramEnabled&&telegramConfigured(config),telegram:current&&telegram?.chatId?{enabled:telegram.enabled,username:telegram.username}:null,
-    policy,googleReady:policy.googleCalendarEnabled&&await googleReady(),google});
+    deliveries,policy,googleReady:policy.googleCalendarEnabled&&await googleReady(),google});
 }catch(error){return routeError(error,request);}}
 
 /** Updates only the authenticated account's current Google Calendar connection. */

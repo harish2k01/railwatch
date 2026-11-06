@@ -10,7 +10,7 @@ import {addDays,daysBetween,isDay,todayIST,type Journey} from "./travel-planner"
 export const planningQuerySchema=z.object({view:z.enum(["dashboard","calendar"]),from:z.string().refine(isDay).optional(),to:z.string().refine(isDay).optional(),cursor:z.string().max(512).default("")});
 export type PlanningQuery=z.infer<typeof planningQuerySchema>;
 export type CalendarCounts=Record<string,{journeys:number;bookings:number;cancellations:number}>;
-export type DashboardView={revision:number;conflicts:Journey[];totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number;noTicket?:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
+export type DashboardView={remindersOn?:boolean;revision:number;conflicts:Journey[];totals:{booked:number;ready:number;completed:number;toCancel:number;attention:number;upcoming:number;noTicket?:number};attention:Journey[];upcoming:Journey[];bookingSoon:Journey[];week:CalendarCounts};
 export type CalendarView={revision:number;journeys:Journey[];counts:CalendarCounts;total:number;nextCursor:string|null};
 /** Decrypts only the explicitly selected index records. */
 function decode(rows:{payload:string}[]){return rows.map(row=>JSON.parse(decryptSecret(row.payload)!) as Journey);}
@@ -56,7 +56,12 @@ export async function readPlanningView(userId:string,input:PlanningQuery,now=new
       const holidays=(await storedPlanner(tx,userId,workspace,[])).holidays.map(h=>h.date).filter(d=>d>=today);
       const onTimeOff=holidays.length?await tx.railJourney.findMany({where:{...active,date:{in:[...new Set(holidays)].slice(0,400)},status:{in:["needs_booking","booked"]}},orderBy:[{date:"asc"},{id:"asc"}],take:20,select:{payload:true}}):[];
       const conflicts=decode(onTimeOff).filter(j=>!j.timeOffKept);
-      return {revision,conflicts,totals,attention:decode([...ready,...cancelling]),upcoming:decode(upcoming),bookingSoon:decode(bookingSoon),week};
+      // Whether any reminder channel can reach this user (push device, Telegram, or verified email that is switched on).
+      const [pushes,telegram,user]=await Promise.all([tx.railPush.count({where:{userId}}),tx.railTelegram.findUnique({where:{userId},select:{enabled:true,chatId:true}}),tx.user.findUnique({where:{id:userId},select:{emailVerifiedAt:true}})]);
+      let emailEnabled=false;try{emailEnabled=Boolean((JSON.parse(decryptSecret(workspace.payload)??"{}") as {settings?:{emailEnabled?:boolean}}).settings?.emailEnabled);}catch{/* unreadable payload: treat email as off */}
+      const emailOn=Boolean(user?.emailVerifiedAt)&&emailEnabled;
+      const remindersOn=pushes>0||Boolean(telegram?.enabled&&telegram.chatId)||emailOn;
+      return {remindersOn,revision,conflicts,totals,attention:decode([...ready,...cancelling]),upcoming:decode(upcoming),bookingSoon:decode(bookingSoon),week};
     }
     const from=input.from!,to=input.to!,query=stableHash(userId+JSON.stringify({...input,cursor:""}));
     let after:string|undefined;
