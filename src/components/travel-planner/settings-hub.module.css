@@ -33,3 +33,5 @@
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:860px){.top{margin-top:0}.nav{position:static;max-width:none}}
 .toggleRow[data-warn]{background:var(--rw-attention-bg)}.toggleRow[data-warn] strong{color:var(--rw-attention-ink)}
+.navItem[aria-current=page]{background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:600}
+@media(prefers-reduced-motion:no-preference){.content>*{animation:sectionIn .18s ease-out}}@keyframes sectionIn{from{opacity:0}to{opacity:1}}

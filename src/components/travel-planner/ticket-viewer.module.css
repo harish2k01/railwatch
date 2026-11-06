@@ -26,3 +26,4 @@
 .image{display:block;max-width:100%;height:auto;margin:auto}
 @media(max-width:600px){.dialog.dialog{width:100vw;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0}.dialog>header{padding:calc(10px + env(safe-area-inset-top)) 12px 10px;min-height:54px}.dialog>header h2{font-size:17px}.toolbar{padding:6px 8px;gap:3px}.tools{gap:2px}.toolbar button{min-width:32px;min-height:40px;padding:5px}.toolbar input{width:35px;font-size:16px}.scale{min-width:39px}.desktop{display:none!important}.search{padding:7px 10px;flex-wrap:wrap}.search input{font-size:16px}.search output{font-size:11px}.viewport :global(.pdfViewer){padding-inline:0;--page-margin:10px auto}.reader{padding-bottom:env(safe-area-inset-bottom)}}
 @media(pointer:coarse){.toolbar button,.search button{min-height:44px}.toolbar .tools:last-child button{min-width:36px}}
+.loading{display:flex;align-items:center;justify-content:center;gap:12px}

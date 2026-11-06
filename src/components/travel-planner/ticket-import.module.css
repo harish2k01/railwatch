@@ -22,3 +22,5 @@
 .select{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--rw-attention);background:var(--rw-ground);color:var(--rw-text);font:500 14px inherit}
 .small{min-height:36px;padding:0 12px}
 .footer{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+/* Dialog body padding (the wrapper sits directly in the modal). */
+.import{padding:20px 24px 24px}

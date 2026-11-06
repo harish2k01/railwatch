@@ -27,6 +27,16 @@ export function parseTicketDetails(raw: string): TicketDetails {
     details.seat = match(/\b(?:Seat|Berth)(?:\s*(?:No\.?|Number))\s*[:\-]\s*(\d{1,3}(?:\s*[,/]\s*\d{1,3})*)/i);
     details.berth = match(/\bBerth(?:\s*Type)?\s*[:\-]\s*(Lower|Middle|Upper|Side Lower|Side Upper|LB|MB|UB|SL|SU|Chair)\b/i);
     details.departure = match(/\b(?:Departure(?: Time)?|Boarding Time)\s*[:\-]\s*((?:[01]\d|2[0-3]):[0-5]\d)/i);
+    // IRCTC ERS prints a row of labels, then a row of values in the same columns.
+    const valuesUnder = (label: RegExp) => { const m = text.match(new RegExp(label.source + String.raw`[^\n]*\n([^\n]+)`, "i")); return m?.[1]; };
+    const stationRow = valuesUnder(/Booked\s+From/)?.match(/\(([A-Z]{2,5})\)/g)?.map(code => code.slice(1, -1));
+    if (stationRow && stationRow.length >= 2) { details.from = stationRow.length >= 3 ? stationRow[1] : stationRow[0]; details.to = stationRow[stationRow.length - 1]; }
+    const idRow = valuesUnder(/\bPNR\b/);
+    if (idRow) {
+      details.pnr ??= idRow.match(/\b(\d{10})\b/)?.[1];
+      const train = idRow.match(/\b(\d{5})\s*\/\s*(.+?)(?=\s+(?:SLEEPER|AC\b|FIRST|SECOND|THIRD|EXECUTIVE|CHAIR|GENERAL)\b|\s*\(|$)/i);
+      if (train) { details.trainNumber ??= train[1]; details.trainName ??= train[2].trim(); }
+    }
     // Many tickets print passenger rows rather than labelled coach/seat fields.
     const allocation = text.match(/\b(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/i);
     if (allocation) { details.coach ??= allocation[1]; details.seat ??= allocation[2]; details.berth ??= allocation[3]; }
