@@ -15,6 +15,7 @@ enum AccountTokenType {
   INVITATION
   PASSWORD_RESET
   EMAIL_VERIFICATION
+  CALENDAR_FEED
 }
 
 model User {
