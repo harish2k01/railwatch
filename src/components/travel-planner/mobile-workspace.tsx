@@ -61,7 +61,7 @@ export function MobileMore({name,admin,missingTickets,openSettings,theme,signOut
     <button type="button" className={m.moreHead} aria-label="User settings" onClick={openSettings}><span className={m.avatar} aria-hidden="true">{(name.trim()[0]??"?").toUpperCase()}</span><span><h1>{name}</h1><small>{admin?"Admin · ":""}Profile and security</small></span></button>
     <nav aria-label="More destinations">
       <h2 className={m.moreGroup}>Plan</h2>
-      <div className={m.moreCard}>{item("/time-off","Time off")}{item("/routines","Routines")}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined,true)}</div>
+      <div className={m.moreCard}>{item("/time-off","Time off")}{item("/routines","Routines")}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined)}{item("/spend","Spend",undefined,true)}</div>
       <h2 className={m.moreGroup}>Settings</h2>
       <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders")}{item("/settings#settings-channels","Channels")}{item("/settings#settings-offline","Offline tickets")}{item("/settings#settings-data","Data and backup")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
       {admin&&<><h2 className={m.moreGroup}>Workspace</h2><div className={m.moreCard}>{item("/settings/workspace","Members and booking rules")}{item("/settings/workspace/health","System health",undefined,true)}</div></>}
