@@ -24,7 +24,7 @@ export function MobileJourneyRow({journey:j,open,label,accessibleLabel,booking=f
   const noTicket=j.status==="booked"&&!j.attachments?.length;
   const state=noTicket?"No ticket":j.status==="needs_booking"?"Planned":STATUS[j.status];
   const tone=noTicket||j.status==="cancellation_needed"?"warn":j.status==="needs_booking"?"info":j.status==="booked"?"ok":"muted";
-  const sub=label??(booking?`Booking opens · Travel ${formatDay(j.date)}`:j.departureConfirmed&&j.departure?`${formatDay(j.date,{weekday:"short"})} · ${j.departure} IST`:"");
+  const sub=label===state?"":label??(booking?`Booking opens · Travel ${formatDay(j.date)}`:j.departureConfirmed&&j.departure?`${formatDay(j.date,{weekday:"short"})} · ${j.departure} IST`:"");
   return <button className={m.row} onClick={open} aria-label={`${accessibleLabel??`Open journey ${j.from} to ${j.to}`} on ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`}><span className={m.date}><b>{formatDay(date,{day:"2-digit"})}</b><small>{(booking?formatDay(date,{month:"short"}):formatDay(date,{weekday:"short"})).toUpperCase()}</small></span><span className={m.rowText}><strong>{j.from} → {j.to}</strong>{sub?<small>{sub}</small>:<span className={m.bars} aria-hidden="true">{steps.map((on,k)=><i key={k} data-on={on||undefined}/>)}</span>}</span><span className={m.rowState} data-tone={tone}>{state}</span></button>;
 }
 /** Today on phones (canvas TodayMobile.dc.html): header, next trip, Do next, this week. */
