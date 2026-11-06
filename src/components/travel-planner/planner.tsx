@@ -49,8 +49,8 @@ import type { TicketDetails } from "@/lib/ticket-details";
 
 // Primary destinations (plan 2.1). Routines and Tickets stay as secondary links until the
 // Journeys timeline (2.4) absorbs them; Settings is the workspace area for admins.
-const NAV = [{ id: "home", label: "Today", short: "Today", icon: House }, { id: "journeys", label: "Journeys", short: "Journeys", icon: LayoutGrid }, { id: "calendar", label: "Calendar", short: "Calendar", icon: CalendarDays }, { id: "holidays", label: "Time off", short: "Time off", icon: CalendarDays }, { id: "settings", label: "Settings", short: "Settings", icon: Settings2 }, { id: "routines", label: "Routines", short: "Routines", icon: Repeat2 }, { id: "vault", label: "Tickets", short: "Tickets", icon: Files }] as const;
-const PRIMARY = new Set<string>(["home", "journeys", "calendar", "holidays", "settings"]);
+const NAV = [{ id: "home", label: "Today", short: "Today", icon: House }, { id: "journeys", label: "Journeys", short: "Journeys", icon: LayoutGrid }, { id: "calendar", label: "Calendar", short: "Calendar", icon: CalendarDays }, { id: "routines", label: "Routines", short: "Routines", icon: Repeat2 }, { id: "holidays", label: "Time off", short: "Time off", icon: CalendarDays }, { id: "vault", label: "Tickets", short: "Tickets", icon: Files }, { id: "settings", label: "Settings", short: "Settings", icon: Settings2 }] as const;
+const PRIMARY = new Set<string>(["home", "journeys", "calendar", "routines", "holidays", "vault", "settings"]);
 /** Time-of-day greeting in IST, as on the Today board. */
 const greeting = (at?: Date) => { const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Kolkata" }).format(at ?? new Date())); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
 type Tab = typeof NAV[number]["id"]|"workspace"|"users"|"integrations"|"operations";
