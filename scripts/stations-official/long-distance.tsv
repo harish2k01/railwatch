@@ -395,7 +395,7 @@ AXA	Amarsar	schedule
 AXK	Asokhar	schedule
 AXR	Alluru Road	schedule
 AY	Ayodhya Dham JN	schedule
-AYC	Ayodhya Cantt	unverified
+AYC	Ayodhya Cantt	tag2026
 AYI	Ayingudi	schedule
 AYM	Adiyakkamangalam	schedule
 AYN	Aiyanapuram	schedule
@@ -691,7 +691,7 @@ BGV	Balegundi	unverified
 BGVN	Bhigwan	schedule
 BGWD	Bagewadi	schedule
 BGX	Bagri Sajjanpur	schedule
-BGY	Bangriposi	unverified
+BGY	Bangriposi	tag2026
 BGZ	Bahadurgarh	schedule
 BH	Bharuch JN	schedule
 BHA	Bhandai JN	schedule
@@ -1184,7 +1184,7 @@ BSAE	Bansberia	schedule
 BSB	Varanasi JN	schedule
 BSBP	Bir Shibpur	schedule
 BSBR	Bansloi Bridge	schedule
-BSBS	Banaras	unverified
+BSBS	Banaras	tag2026
 BSC	Bulandshahr	schedule
 BSCK	Basuchak	schedule
 BSDA	Baniya Sanda Dhora	schedule
@@ -1862,7 +1862,7 @@ DDNA	Dudhaunda	schedule
 DDNI	Dudhnoi	schedule
 DDP	Daudpur	schedule
 DDR	Dadar	schedule
-DDU	Pt. Deen Dayal Upadhyaya JN	unverified
+DDU	Pt. Deen Dayal Upadhyaya JN	tag2026
 DDV	Dadhdevi	schedule
 DDW	Dudwa	schedule
 DDX	Dhamdhamia	schedule
@@ -1941,7 +1941,7 @@ DHND	Dhinda	schedule
 DHNE	Dhone JN	schedule
 DHNR	Dhanora Deccan	schedule
 DHO	Dholpur JN	schedule
-DHOA	Dhaulpur	unverified
+DHOA	Dhaulpur	tag2026
 DHP	Dichpalli	schedule
 DHPD	Dahapara Dham	schedule
 DHPR	Dappar	schedule
@@ -1987,6 +1987,7 @@ DJL	Dodajala Lake	schedule
 DJR	Domjur	unverified
 DJX	Dungripali	schedule
 DK	Dakor	schedule
+DKAE	Dankuni JN	tag2026
 DKB	Dakhinbari	unverified
 DKBJ	Dehar Ka Balaji	schedule
 DKC	Devarkadre	schedule
@@ -4216,6 +4217,7 @@ KTD	Kantadih	schedule
 KTDA	Katuda	unverified
 KTDD	Kataiya Dandi	schedule
 KTE	Katni JN	schedule
+KTES	Katni South	tag2026
 KTF	Kot Fatteh	schedule
 KTGA	Keutguda	schedule
 KTGD	Koth Gangad	schedule
@@ -4750,7 +4752,7 @@ MDGR	Manendragarh	schedule
 MDH	Mandhar	schedule
 MDHA	Madhada	schedule
 MDJ	Muhammadganj	schedule
-MDJN	Madar JN	unverified
+MDJN	Madar JN	tag2026
 MDKD	Madhukunda	schedule
 MDKI	Madukarai	schedule
 MDKU	Modukuru	schedule
@@ -5017,7 +5019,7 @@ MLZ	Malarna	schedule
 MMA	Muhammadabad	schedule
 MMB	Mahmudabad Avadh	schedule
 MMC	Mahamandir	schedule
-MMCT	Mumbai Central	unverified
+MMCT	Mumbai Central	tag2026
 MMD	Maheshmunda	schedule
 MMDP	Mohamadpur	unverified
 MME	Mul Marora	schedule
@@ -5907,7 +5909,7 @@ PCM	Pavurchutram	unverified
 PCMK	Pacharmalikpura	schedule
 PCN	Panch Pipila	schedule
 PCO	Palayankottai	schedule
-PCOI	Prayagraj Chheoki JN	unverified
+PCOI	Prayagraj Chheoki JN	tag2026
 PCP	Palsap	schedule
 PCQ	Pichkurir Dhal	schedule
 PCR	Panchra	schedule
@@ -6199,6 +6201,7 @@ PPNS	Pappinisseri (Halt)	schedule
 PPO	Panposh	schedule
 PPR	Pipar Road JN	schedule
 PPT	Pirpainti	schedule
+PPTA	Patliputra JN	tag2026
 PPTN	Piprithan	unverified
 PPTR	Pushpattur	unverified
 PPU	Piparpur	schedule
@@ -6264,7 +6267,7 @@ PRUR	Prithwirajpur	unverified
 PRV	Pukkiravari	schedule
 PRWD	Parewadi	schedule
 PRY	Paraiya	schedule
-PRYJ	Prayagraj JN	unverified
+PRYJ	Prayagraj JN	tag2026
 PRZ	Parsa	schedule
 PS	Paras	schedule
 PSA	Palasa	schedule
@@ -6565,7 +6568,7 @@ RKJE	Rakhitpur	schedule
 RKK	Ratangarh Kanakwal	unverified
 RKL	Ramkola	unverified
 RKM	Raja ki Mandi	schedule
-RKMP	Rani Kamalapati	unverified
+RKMP	Rani Kamalapati	tag2026
 RKN	Rati Ka Nagla	schedule
 RKO	Ramakistapuram Gate	schedule
 RKR	Ranikund Rarah	schedule

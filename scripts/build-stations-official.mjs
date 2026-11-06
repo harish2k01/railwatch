@@ -139,8 +139,36 @@ async function longDistance(trainsFile, schedulesFile) {
   console.log(counts);
 }
 
+/**
+ * Cross-checks long-distance.tsv / dropped.tsv against Trains at a Glance (TAG), the Railway Board's official
+ * Mail/Express timetable (https://rb.indianrailways.gov.in/show-directorate/view/228, TAG-2026 table PDFs).
+ * TAG names only principal stops and gives no codes, so matching is by name, and only where exactly one of our
+ * stations has that name. Matched "unverified" rows become "tag2026"; matched dropped rows move back as "tag2026".
+ *   node scripts/build-stations-official.mjs tag <TAG pdf>...
+ */
+async function tag(files) {
+  const norm = (s) => s.toLowerCase().replace(/\(t\)|\bterminus\b/g, " terminus ").replace(/\(.*?\)/g, "").replace(/\b(jn|junction|halt|cantt?)\b\.?/g, "").replace(/[^a-z]/g, "");
+  const names = new Set();
+  // Station rows read "| <km> |   | <Station name> |".
+  for (const f of files) for (const m of (await pdfText(f)).matchAll(/\|\s*\d{1,4}\s*\|\s+\|\s*([A-Z][A-Za-z .()'-]{2,}?)\s*\|/g)) names.add(norm(m[1]));
+  const read = async (f) => (await readFile(`${DIR}/${f}`, "utf8")).split("\n").filter(Boolean);
+  const [ldHead, ...ld] = await read("long-distance.tsv"), [drHead, ...dr] = await read("dropped.tsv");
+  const all = [...ld, ...dr].map((l) => l.split("\t"));
+  const seen = new Map();
+  for (const [, name] of all) seen.set(norm(name), (seen.get(norm(name)) ?? 0) + 1);
+  const hit = (name) => names.has(norm(name)) && seen.get(norm(name)) === 1;
+  let verified = 0, rescued = 0;
+  const keepRows = ld.map((l) => { const r = l.split("\t"); if (r[2] === "unverified" && hit(r[1])) { r[2] = "tag2026"; verified++; } return r.join("\t"); });
+  const dropRows = [];
+  for (const l of dr) { const r = l.split("\t"); if (hit(r[1])) { keepRows.push([r[0], r[1], "tag2026"].join("\t")); rescued++; } else dropRows.push(l); }
+  await writeFile(`${DIR}/long-distance.tsv`, [ldHead, ...keepRows.sort()].join("\n") + "\n");
+  await writeFile(`${DIR}/dropped.tsv`, [drHead, ...dropRows].join("\n") + "\n");
+  console.log(`TAG station names: ${names.size}; unverified confirmed: ${verified}; rescued from dropped: ${rescued}`);
+}
+
 const [cmd, a, b] = process.argv.slice(2);
-if (cmd === "long-distance") await longDistance(a, b);
+if (cmd === "tag") await tag(process.argv.slice(3));
+else if (cmd === "long-distance") await longDistance(a, b);
 else if (cmd === "extract") await extract(a, b);
 else if (cmd === "build") await build(a);
 else console.error("usage: extract <zone> <file.pdf> | long-distance <trains.json> <schedules.json> | build [wikidata.json]");
