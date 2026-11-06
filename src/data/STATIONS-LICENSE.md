@@ -28,3 +28,7 @@ downloaded on 2026-11-06 from the `old<zone>` mirrors, because the relaunched zo
 Rebuild with `node scripts/build-stations-official.mjs extract <zone> <file.pdf>`, then
 `node scripts/build-stations-official.mjs build`. The build also writes `scripts/stations-official/possibly-retired.tsv`:
 codes in neither an official list nor Wikidata (datameet-only, 2017), kept for review rather than deleted.
+
+Kept current by `.github/workflows/stations-refresh.yaml` (monthly PR). Codes that are in none of the official
+lists, Wikidata or OpenStreetMap are removed and recorded in `scripts/stations-official/removed.tsv` (183 on
+2026-11-06); OpenStreetMap (ODbL) is used only to check codes, not as a data source.

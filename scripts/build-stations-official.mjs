@@ -60,7 +60,7 @@ async function build(wikidataFile) {
   const stations = new Map(JSON.parse(await readFile("src/data/stations.json", "utf8")));
   const official = new Set();
   let renamed = 0;
-  for (const f of (await readdir(DIR)).filter((f) => f.endsWith(".tsv") && f !== "possibly-retired.tsv").sort()) {
+  for (const f of (await readdir(DIR)).filter((f) => f.endsWith(".tsv") && f !== "possibly-retired.tsv" && f !== "removed.tsv").sort()) {
     let matched = 0;
     for (const line of (await readFile(`${DIR}/${f}`, "utf8")).split("\n").filter(Boolean)) {
       const [code, name] = line.split("\t");
@@ -75,6 +75,8 @@ async function build(wikidataFile) {
     }
     console.log(`${f}: ${matched} matched existing codes`);
   }
+  // Confirmed retired/invalid codes (removed.tsv) never come back on a rebuild.
+  for (const line of (await readFile(`${DIR}/removed.tsv`, "utf8").catch(() => "")).split("\n")) { const code = line.split("\t")[0]; if (code && !code.startsWith("#")) stations.delete(code); }
   const rows = [...stations].sort(([a], [b]) => a.localeCompare(b));
   await writeFile("src/data/stations.json", JSON.stringify(rows) + "\n");
   const retired = rows.filter(([c]) => !official.has(c) && !wikidata.has(c));

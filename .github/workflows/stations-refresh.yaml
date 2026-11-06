@@ -1,0 +1,42 @@
+name: Refresh station list
+
+# Monthly: pull current codes and names from Wikidata (P5696), re-apply the official zonal names and the
+# confirmed removals (scripts/stations-official/removed.tsv), and open a PR if anything changed.
+on:
+  schedule:
+    - cron: "30 3 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - name: Refresh from Wikidata
+        run: node scripts/update-stations-wikidata.mjs
+      - name: Apply official names and removals
+        run: node scripts/build-stations-official.mjs build
+      - name: Station tests
+        run: npx vitest run src/lib/stations.test.ts
+      - name: Open a PR if the list changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- src/data scripts/stations-official; then echo "No station changes."; exit 0; fi
+          branch="stations/refresh-$(date -u +%Y-%m)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add src/data scripts/stations-official
+          git commit -m "Monthly station list refresh"
+          git push -f origin "$branch"
+          gh pr create --base main --head "$branch" --label minor --title "Monthly station list refresh ($(date -u +%B\ %Y))" --body "Automatic refresh from Wikidata (P5696) with official zonal names and confirmed removals applied. Review new and renamed codes before merging; anything retired goes in \`scripts/stations-official/removed.tsv\`." || echo "PR already open."
