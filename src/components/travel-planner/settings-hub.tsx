@@ -53,6 +53,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
         <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
           <h2 id="settings-reminders-h">Reminders</h2>
           <span className={s.muted}>Normal booking opens {st.bookingWindowDays} days before travel (set by your admin). Times are IST.</span>
+          <DeliveryStatus planner={planner} go={() => nav("settings-connections")} />
           <div className={s.card}><table className={s.table}><thead><tr><th scope="col">Booking type</th><th scope="col">Day before</th><th scope="col">On the day</th><th scope="col"><span className={s.sr}>Edit</span></th></tr></thead><tbody>
             {rows.map(([name, opens, schedule]) => { const [a, b] = cells(schedule); return <tr key={name}><td><strong>{name}</strong> <span className={s.muted}>· {opens}</span></td><td>{a}</td><td>{b}</td><td><button type="button" className={s.btn} aria-label={`Edit ${name} reminders`} onClick={() => nav("settings-preferences")}>Edit</button></td></tr>; })}
             <tr><td><strong>Cancellation</strong></td><td colSpan={2}>{st.cancellationEnabled ? `Daily at ${st.cancellationTime} until confirmed` : "Off"}</td><td><button type="button" className={s.btn} aria-label="Edit cancellation reminders" onClick={() => nav("settings-preferences")}>Edit</button></td></tr>
@@ -81,4 +82,25 @@ function OfflineTickets({ sync }: { sync: () => Promise<number> }) {
   useEffect(() => { let live = true; const sup = offlineSupported(), e = sup && offlineEnabled(); void offlineCount().then(n => { if (live) { setSupported(sup); setOn(e); setCount(n); } }); return () => { live = false; }; }, []);
   async function toggle(next: boolean) { setOfflineEnabled(next); setOn(next); setBusy(true); try { if (next) await sync(); setCount(next ? await offlineCount() : 0); } finally { setBusy(false); } }
   return <section id="settings-offline" aria-labelledby="settings-offline-h" className={s.section}><h2 id="settings-offline-h">Offline tickets <span className={s.pill}>New</span></h2><div className={s.card}><div className={s.toggleRow}><span><strong>Keep upcoming tickets on this device</strong><span className={s.muted}>{!supported ? "This browser can’t store tickets securely." : on ? `${count} ${count === 1 ? "ticket" : "tickets"} for the next 3 days, encrypted, removed after travel. Opens with no signal.` : "Next 3 days, encrypted, removed after travel. Opens with no signal."}</span></span><Switch on={on} label="Keep upcoming tickets on this device" disabled={busy || !supported} onChange={next => void toggle(next)} /></div></div></section>;
+}
+
+type Delivery = { lastSent: string | null; next: string | null; failing: { at: string; error: string } | null };
+const ago = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(m, 1)} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+const when = (iso: string) => new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date(iso));
+
+/** Shows whether reminders are actually reaching the user, per channel. */
+function DeliveryStatus({ planner, go }: { planner: Planner; go: () => void }) {
+  const [data, setData] = useState<{ deliveries?: Record<string, Delivery>; emailVerified?: boolean; telegram?: { enabled: boolean } | null }>();
+  useEffect(() => { let live = true; void fetch("/api/railwatch/connections", { credentials: "same-origin" }).then(r => r.ok ? r.json() : undefined).then(j => { if (live && j) setData(j.data ?? j); }).catch(() => undefined); return () => { live = false; }; }, []);
+  if (!data?.deliveries) return null;
+  const st = planner.settings, d = data.deliveries;
+  const channels = [
+    { id: "PUSH", label: "This device", on: Boolean(d.PUSH?.lastSent || d.PUSH?.next || d.PUSH?.failing) },
+    { id: "TELEGRAM", label: "Telegram", on: Boolean(data.telegram?.enabled && st.telegramEnabled) },
+    { id: "EMAIL", label: "Email", on: Boolean(st.emailEnabled && data.emailVerified) },
+  ].filter(c => c.on);
+  return <div className={s.card} aria-label="Reminder delivery">
+    {!channels.length ? <div className={s.toggleRow} data-warn><span><strong>No reminder channel is on</strong><span className={s.muted}>You won’t be reminded when booking opens. Turn on this device, Telegram or email.</span></span><button type="button" className={s.btn} onClick={go}>Set up</button></div>
+      : channels.map(c => { const x = d[c.id]; return <div key={c.id} className={s.toggleRow} data-warn={x?.failing ? true : undefined}><span><strong>{c.label}</strong><span className={s.muted}>{x?.failing ? `Failing since ${ago(x.failing.at)}. ${x.failing.error}` : [x?.lastSent ? `Last sent ${ago(x.lastSent)}` : "Nothing sent yet", x?.next ? `next ${when(x.next)}` : ""].filter(Boolean).join(" · ")}</span></span>{x?.failing && <button type="button" className={s.btn} onClick={go}>Fix</button>}</div>; })}
+  </div>;
 }

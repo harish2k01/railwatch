@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { AlertTriangle, CalendarPlus, CheckCheck, Plus, Ticket } from "lucide-react";
 import { addDays, bookingDay, bookingTimeLabel, calendarFile, daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
@@ -69,6 +70,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
     </div> })),
   ];
   return <div className={t.today}>
+    {data.remindersOn === false && <section className={t.decision} aria-labelledby="today-reminders-off"><h2 id="today-reminders-off">Reminders are off</h2><div className={t.decisionLine}><span className={t.decisionTrip}><b>You won’t be told when booking opens</b><small>Turn on this device, Telegram or email so RailWatch can remind you.</small></span><Link className={s.secondary} href="/settings#settings-connections">Turn on reminders</Link></div></section>}
     {(data.conflicts?.length ?? 0) > 0 && <section className={t.decision} aria-labelledby="today-decision"><h2 id="today-decision">Needs a decision</h2>
       {data.conflicts.map(j => <div key={j.id} className={t.decisionLine}><button type="button" className={t.decisionTrip} onClick={() => openJourney(j)}><b>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>{STATUS[j.status]} on your time off{j.ruleId ? " · from a routine" : ""}</small></button>{skipTimeOff && <button type="button" className={s.primary} onClick={() => skipTimeOff(j)}>Skip this trip</button>}{keepTimeOff && <button type="button" className={s.secondary} onClick={() => keepTimeOff(j)}>Keep</button>}</div>)}
     </section>}
@@ -79,7 +81,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
           <div className={t.route}><Stop code={next.from} /><span aria-hidden="true" className={t.track} /><Stop code={next.to} /><span className={t.when}><b>{formatDay(next.date, { weekday: "short", day: "numeric", month: "short" })}</b><small>{(() => { const name = planner.rules.find(r => r.id === next.ruleId)?.name ?? "", leg = next.leg === "return" ? "Return" : next.ruleId ? "Onward" : ""; return [name, name.toLowerCase().includes(leg.toLowerCase()) ? "" : leg]; })().concat([ next.departureConfirmed && next.departure ? `${next.departure} IST` : ""]).filter(Boolean).join(" · ") || "One-off trip"}</small></span></div>
           {next.status === "booked" && !next.attachments?.length && <div className={t.nudge}><AlertTriangle size={20} aria-hidden="true" /><span>No ticket attached. Add it now so the train, coach and PNR are here on the day.</span>{attachTicket && <button type="button" className={s.primary} onClick={() => attachTicket(next)}>Attach ticket</button>}</div>}
           <div className={t.actions}><button type="button" className={s.secondary} onClick={() => openJourney(next)}>Open journey</button><button type="button" className={s.secondary} onClick={() => addToCalendar(planner, next)}><CalendarPlus size={16} />Add to calendar</button></div>
-        </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} /><h3>No trips coming up</h3><p>Add a journey or routine to see your next trip here.</p><button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a journey</button></div></section>}
+        </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} />{planner.rules.length ? <><h3>No trips coming up</h3><p>Your routines have nothing in the next few weeks. Plan a one-off trip or check your routines.</p></> : <><h3>Start with your regular trip</h3><p>Set up your weekly route once. RailWatch plans each journey and reminds you before booking opens.</p><Link className={s.secondary} href="/routines">Set up a routine</Link></>}<button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a one-off trip</button></div></section>}
 
         <section className={t.section} aria-labelledby="today-do-next">
           <header className={t.sectionHead}><h2 id="today-do-next">Do next</h2><span className={t.muted}>{items.length} {items.length === 1 ? "item" : "items"}</span></header>

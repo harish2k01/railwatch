@@ -23,8 +23,8 @@ export function useStationName(code: string) {
 /** Read-first journey panel (plan 2.2): stages, ticket, details, reminders and notes; edits sit behind ⋯. */
 const PILL: Record<Journey["status"], string> = { needs_booking: "Planned", booked: "Booked", skipped: "Skipped", cancellation_needed: "To cancel", cancelled: "Cancelled", completed: "Travelled" };
 
-export function JourneyDetail({ attachFile, journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
-  bookingDay?: () => void; attachFile?: (file: File) => void;
+export function JourneyDetail({ skip, restore, attachFile, journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
+  bookingDay?: () => void; attachFile?: (file: File) => void; skip?: () => void; restore?: () => void;
   journey: Journey; today: string; routine?: string; reminders: string; uploadsEnabled: boolean;
   edit: () => void; attach: () => void; view: (file: TicketAttachment) => void; cancel: () => void; remove?: () => void;
 }) {
@@ -45,7 +45,7 @@ export function JourneyDetail({ attachFile, journey: j, today, routine, reminder
     : booked && !pdfs.length && uploadsEnabled ? { label: "Attach ticket", run: choose }
     : j.status === "needs_booking" && bookingDay && daysUntilOpen(j, today) <= 1 ? { label: "Booking day", run: bookingDay }
     : j.status === "needs_booking" ? { label: "Record booked ticket", run: attach } : undefined;
-  const actions = [{ label: "Edit journey", onClick: edit }, ...(bookingDay ? [{ label: "Booking day", onClick: bookingDay }] : []), ...(j.status === "cancellation_needed" ? [{ label: "Confirm cancellation", onClick: cancel }] : []), ...(remove ? [{ label: "Delete journey", onClick: remove, danger: true }] : [])];
+  const actions = [{ label: "Edit journey", onClick: edit }, ...(bookingDay ? [{ label: "Booking day", onClick: bookingDay }] : []), ...(j.status === "cancellation_needed" ? [{ label: "Confirm cancellation", onClick: cancel }] : []), ...(skip ? [{ label: "Skip this trip", onClick: skip }] : []), ...(restore ? [{ label: "Restore trip", onClick: restore }] : []), ...(remove ? [{ label: "Delete journey", onClick: remove, danger: true }] : [])];
   return <div className={d.detail}>
     <header className={d.head}>
       <div>

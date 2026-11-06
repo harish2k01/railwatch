@@ -21,7 +21,8 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
   const tripsIn = (start: string, end: string) => active.filter(j => j.date >= start && j.date <= end);
   const offDays = new Set(holidays.filter(h => h.date >= today).map(h => h.date));
   const affected = active.filter(j => j.date >= today && offDays.has(j.date) && !kept.includes(j.id) && !j.timeOffKept).sort((a, b) => a.date.localeCompare(b.date));
-  const upcomingBreaks = breaks.filter(b => b.start >= today);
+  // A break already under way still counts (e.g. a holiday right after leave you are on now).
+  const upcomingBreaks = breaks.filter(b => b.end >= today);
   /** "2 – 6 Nov · 5 days · ends tomorrow" or "Mon, 9 Nov · company holiday", as on the board. */
   const detail = (g: (typeof groups)[number]) => {
     if (g.start === g.end) return `${formatDay(g.start, { weekday: "short", day: "numeric", month: "short" })} · ${g.type === "company" ? "company holiday" : "leave"}`;
@@ -51,7 +52,7 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
       <section className={s.card + " " + s.weekends} aria-labelledby="time-off-weekends"><h2 id="time-off-weekends">Long weekends ahead</h2>
         {upcomingBreaks.length ? upcomingBreaks.map(item => <div key={item.start} className={s.tile}>
           <div className={s.tileHead}><strong>{item.names.join(" + ")}</strong><span>{item.days} days off</span></div>
-          <span className={s.muted}>{formatDay(item.start, { weekday: "short", day: "numeric" })} – {formatDay(item.end, { weekday: "short", day: "numeric", month: "short" })} · {item.bookingAlreadyOpen ? "booking is open" : `booking opens ${short(item.planBy)}`}</span>
+          <span className={s.muted}>{formatDay(item.start, { weekday: "short", day: "numeric" })} – {formatDay(item.end, { weekday: "short", day: "numeric", month: "short" })} · {item.start <= today ? "under way now" : item.bookingAlreadyOpen ? "booking is open" : `booking opens ${short(item.planBy)}`}</span>
           <button type="button" className={s.link} onClick={() => plan(item.start)} aria-label={`Plan a trip for ${item.names.join(" + ")}`}>Plan a trip →</button>
         </div>) : <p className={s.muted}>No upcoming long weekends in your current time off.</p>}
       </section>

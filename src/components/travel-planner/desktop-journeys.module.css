@@ -57,3 +57,25 @@
 .timelinePill{height:24px;display:inline-flex;align-items:center;padding:0 10px;font-weight:600}
 .routineGroup{border-radius:12px;padding:12px 14px;background:var(--rw-surface)}
 .timelineRow[aria-current=true]{background:var(--rw-brand-soft);border-color:var(--rw-brand)}
+
+/* Compact status board: one line per trip so about 18 fit per column. */
+.board.board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start}
+.board .column{flex:1 1 0;min-width:0;padding:10px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.board .collapsed{flex:0 0 44px;padding:0;background:transparent;border:1px dashed var(--rw-line)}
+.board .collapsedToggle{width:42px;min-height:180px;background:none;color:var(--rw-muted);font:600 12px inherit}
+.board .cards{gap:4px}
+.board .card{display:flex;align-items:center;border-radius:8px;background:var(--rw-ground);border:1px solid transparent}
+.board .card:hover{border-color:var(--rw-line)}
+.board .card[aria-current]{border-color:var(--rw-brand);background:var(--rw-brand-soft)}
+.board .cardOpen{display:flex;align-items:center;gap:8px;padding:7px 8px;min-height:36px;font-size:13px;color:var(--rw-text)}
+.cardDate{flex:none;width:76px;color:var(--rw-muted);font-weight:600;font-size:12px}
+.board .cardRoute{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cardFlag{flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--rw-surface-2);color:var(--rw-muted)}
+.cardFlag[data-tone=warn]{background:var(--rw-attention-bg);color:var(--rw-attention-ink)}
+.cardFlag[data-tone=info]{background:var(--rw-open-bg);color:var(--rw-open-ink)}
+.cardFlag[data-tone=ok]{background:var(--rw-booked-bg);color:var(--rw-booked-ink)}
+.board .cardMenu{position:static;padding-right:4px}
+.board .cardMenu button{min-height:28px;width:28px;padding:0}
+.board .urgent{border-color:color-mix(in srgb,var(--rw-attention) 50%,transparent)}
+@media(max-width:1100px){.board.board{flex-wrap:wrap}.board .column{flex-basis:calc(50% - 10px)}}
+.board .cardOpen{width:auto;flex:1 1 auto;min-width:0}.board .cardFlag{max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.board .card{min-width:0;overflow:hidden}

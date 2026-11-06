@@ -1,3 +1,4 @@
+import { encryptSecret } from "./crypto";
 import { journeyLink } from "./journey-links";
 import {nextAccountBatch,planAccountReminders} from "./reminder-planning";
 import {storedPlanner} from "./workspace-storage";
@@ -52,7 +53,7 @@ export async function processRailWatch(now=new Date()){
   for(const {userId} of batch.accounts){try{await planAccountReminders(userId,policy,telegramProviderId,now,reminderJobs);}catch(error){planningFailures++;logger.error("scheduler.account_failed",{accountId:userId,errorType:error instanceof Error?error.name:"UnknownError"});}}
   await prisma.railOperations.upsert({where:{id:"scheduler"},create:{id:"scheduler",accountCursor:batch.cursor},update:{accountCursor:batch.cursor}});
   const available={dueAt:{lte:now},attempts:{lt:5},OR:[{state:"PENDING"},{state:"FAILED"},{state:"SENDING",leaseUntil:{lt:now}}]};
-  const jobs=await prisma.railJob.findMany({where:available,orderBy:{dueAt:"asc"},take:100});let sent=0;
+  const jobs=await prisma.railJob.findMany({where:available,orderBy:{dueAt:"asc"},take:100});let sent=0,failedRun=0;
   for(const job of jobs){const lease=randomUUID();const claim=await prisma.railJob.updateMany({where:{id:job.id,...available},data:{state:"SENDING",lease,leaseUntil:new Date(Math.max(Date.now(),now.getTime())+120000),attempts:{increment:1}}});if(!claim.count)continue;
     try{
       const currentPolicy=await getFeaturePolicy();const currentConfig=await getProviderConfiguration();const workspace=await prisma.railWorkspace.findUnique({where:{userId:job.userId},include:{user:{select:{isActive:true,phoneNumber:true,email:true,emailVerifiedAt:true}}}});const planner=workspace?applyAccountSettings(await storedPlanner(prisma,job.userId,workspace,[reminderJourneyId(job.payload)??""]),currentPolicy,workspace.user.phoneNumber??"",await prisma.railTelegram.findUnique({where:{userId:job.userId}}),telegramConfigured(currentConfig)?currentConfig.telegram!.id:undefined):undefined;
@@ -69,7 +70,18 @@ export async function processRailWatch(now=new Date()){
       if(job.kind==="EMAIL"){const result=await sendBookingEmail(workspace!.user.email,journey);if(!result.sent)throw new Error("Email setup is incomplete.");}
       const providerId=job.kind==="TELEGRAM"?await sendTelegram(planner!.settings.telegramChatId,telegramBookingMessage(journey),planner!.settings.telegramProviderId,`${process.env.APP_URL??"http://localhost:3000"}${journeyLink(journey.id)}`):undefined;
       await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"SENT",sentAt:now,providerId,lastError:null,deferredUntil:null,lease:null,leaseUntil:null}});sent++;logger.info("reminder.delivered",{jobId:job.id,kind:job.kind});
-    }catch(error){logger.error("reminder.delivery_failed",{jobId:job.id,kind:job.kind,attempt:job.attempts,errorType:error instanceof Error?error.name:"UnknownError"});await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"FAILED",dueAt:new Date(now.getTime()+Math.min(60,2**(job.attempts+1))*60000),lastError:"Delivery failed. Check the provider configuration.",lease:null,leaseUntil:null}});}
+    }catch(error){failedRun++;logger.error("reminder.delivery_failed",{jobId:job.id,kind:job.kind,attempt:job.attempts,errorType:error instanceof Error?error.name:"UnknownError"});await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"FAILED",dueAt:new Date(now.getTime()+Math.min(60,2**(job.attempts+1))*60000),lastError:"Delivery failed. Check the provider configuration.",lease:null,leaseUntil:null}});}
   }
+  if(failedRun)await alertAdmins(failedRun,now).catch(error=>logger.error("ops.alert_failed",{errorType:error instanceof Error?error.name:"UnknownError"}));
   const calendars=await syncGoogleCalendars();return {accounts:batch.accounts.length,sent,calendars,...(planningFailures?{planningFailures}:{})};
+}
+
+/** Tells administrators in their bell when reminders fail to send (at most once an hour). */
+async function alertAdmins(failed:number,now:Date){
+  const admins=await prisma.user.findMany({where:{role:"ADMIN",isActive:true},select:{id:true}});
+  if(!admins.length)return;
+  const hour=now.toISOString().slice(0,13);
+  const message=`${failed} ${failed===1?"reminder":"reminders"} failed to send. Open Settings → System health to see which channel and why.`;
+  await prisma.railNotification.createMany({data:admins.map(a=>({userId:a.id,key:"ops-delivery-failed-"+hour,dueAt:now,payload:encryptSecret(JSON.stringify({journeyId:"",message}))})),skipDuplicates:true});
+  logger.warn("ops.delivery_failures",{failed,admins:admins.length});
 }

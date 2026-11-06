@@ -90,3 +90,4 @@
 .ev span{flex:1}.ev small{font-size:12px}
 .ev[data-kind=off]{background:var(--rw-timeoff-bg);color:var(--rw-timeoff-ink)}
 .heading{flex-wrap:wrap;min-width:0}.datePick input{width:142px;max-width:100%}.week{min-width:0}.week button{min-width:0}
+.segCount{font-weight:700;opacity:.8}
