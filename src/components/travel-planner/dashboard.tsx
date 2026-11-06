@@ -1,4 +1,5 @@
 "use client";
+import { ask } from "./confirm";
 import Link from "next/link";
 
 import { AlertTriangle, CalendarPlus, CheckCheck, Plus, Ticket } from "lucide-react";
@@ -53,7 +54,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
     ...data.attention.map(j => ({ key: "a" + j.id, node: <div className={t.row} data-attention>
       <button type="button" className={`${s.dashboardRow} ${t.rowMain}`} onClick={() => openJourney(j)}><span className={j.status === "cancellation_needed" ? t.tileCancel : t.tileOpen}><b>{j.date.slice(-2)}</b><small>{formatDay(j.date, { month: "short" })}</small></span><span className={t.rowText}><b>{j.status === "cancellation_needed" ? "Cancellation to confirm" : missed(j) ? `Not booked yet · Tatkal opens ${tatkal(j)}` : "Booking is open"}</b><small>{stationLabel(j.from)} → {stationLabel(j.to)} · travel {formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</small></span></button>
       <span className={t.rowActions}>{setStatus && (j.status === "cancellation_needed"
-        ? <button type="button" className={s.secondary} onClick={() => { if (confirm("Have you cancelled this ticket through IRCTC?")) setStatus(j, "cancelled"); }}>Confirm cancellation</button>
+        ? <button type="button" className={s.secondary} onClick={async () => { if (await ask("Have you cancelled this ticket through IRCTC?")) setStatus(j, "cancelled"); }}>Confirm cancellation</button>
         : <>{missed(j) && openBookingDay && <button type="button" className={s.secondary} onClick={() => openBookingDay(j)}>Try Tatkal</button>}<button type="button" className={s.secondary} onClick={() => setStatus(j, "booked")}>Mark booked</button></>)}</span>
     </div> })),
     ...waitlisted.map(j => ({ key: "w" + j.id, node: <div className={t.row} data-attention>
