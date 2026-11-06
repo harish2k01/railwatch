@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Check, Paperclip, FileText } from "lucide-react";
 import { formatDay, type Journey, type TicketAttachment } from "@/lib/travel-planner";
 import { journeyStages } from "@/lib/journey-stages";
@@ -23,12 +23,15 @@ export function useStationName(code: string) {
 /** Read-first journey panel (plan 2.2): stages, ticket, details, reminders and notes; edits sit behind ⋯. */
 const PILL: Record<Journey["status"], string> = { needs_booking: "Planned", booked: "Booked", skipped: "Skipped", cancellation_needed: "To cancel", cancelled: "Cancelled", completed: "Travelled" };
 
-export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
-  bookingDay?: () => void;
+export function JourneyDetail({ attachFile, journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
+  bookingDay?: () => void; attachFile?: (file: File) => void;
   journey: Journey; today: string; routine?: string; reminders: string; uploadsEnabled: boolean;
   edit: () => void; attach: () => void; view: (file: TicketAttachment) => void; cancel: () => void; remove?: () => void;
 }) {
   const mobile = useMobileWorkspace();
+  const pickerId = useId();
+  const [dragging, setDragging] = useState(false);
+  const choose = attachFile ? () => (document.getElementById(pickerId) as HTMLInputElement | null)?.click() : attach;
   const from = useStationName(j.from), to = useStationName(j.to);
   const pdfs = j.attachments?.filter((f) => f.type === "application/pdf") ?? [];
   const stages = journeyStages(j, today, routine);
@@ -39,7 +42,7 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
   ];
   const booked = j.status === "booked";
   const main = j.status === "cancellation_needed" ? { label: "Confirm cancellation", run: cancel }
-    : booked && !pdfs.length && uploadsEnabled ? { label: "Attach ticket", run: attach }
+    : booked && !pdfs.length && uploadsEnabled ? { label: "Attach ticket", run: choose }
     : j.status === "needs_booking" && bookingDay && daysUntilOpen(j, today) <= 1 ? { label: "Booking day", run: bookingDay }
     : j.status === "needs_booking" ? { label: "Record booked ticket", run: attach } : undefined;
   const actions = [{ label: "Edit journey", onClick: edit }, ...(bookingDay ? [{ label: "Booking day", onClick: bookingDay }] : []), ...(j.status === "cancellation_needed" ? [{ label: "Confirm cancellation", onClick: cancel }] : []), ...(remove ? [{ label: "Delete journey", onClick: remove, danger: true }] : [])];
@@ -57,7 +60,7 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
     <section aria-labelledby="journey-ticket" className={d.section}>
       <h3 id="journey-ticket">{mobile ? "Ticket details" : "Ticket"}</h3>
       {pdfs.length ? <ul className={d.files}>{pdfs.map((file, i) => <li key={file.id}><button type="button" className={s.secondary} onClick={() => view(file)}><FileText size={16} />View ticket{pdfs.length > 1 ? ` ${i + 1}` : ""}</button></li>)}</ul>
-        : mobile ? null : uploadsEnabled && j.status !== "cancelled" ? <button type="button" className={d.drop} onClick={attach}><Paperclip size={22} aria-hidden="true" /><span>Drop the IRCTC PDF here</span><small>Train, coach, berth and PNR are read on this device and filled in below.</small><span className={`${s.primary} ${d.choose}`}>Choose file</span></button>
+        : mobile ? null : uploadsEnabled && j.status !== "cancelled" ? <button type="button" className={d.drop} data-dragging={dragging || undefined} onClick={choose} onDragOver={e => { if (!attachFile) return; e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { if (!attachFile) return; e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) attachFile(f); }}><Paperclip size={22} aria-hidden="true" /><span>Drop the IRCTC PDF here</span><small>Train, coach, berth and PNR are read on this device and filled in below.</small><span className={`${s.primary} ${d.choose}`}>Choose file</span></button>
         : <p className={d.note}>No ticket attached.</p>}
       <dl className={d.grid}>{details.map(([label, value]) => <div key={label}><dt>{label}</dt><dd data-empty={!value || undefined}>{value || "Not set"}</dd></div>)}</dl>
     </section>
@@ -67,6 +70,7 @@ export function JourneyDetail({ journey: j, today, routine, reminders, uploadsEn
       <div className={d.line}><span>Notes</span>{j.notes ? <span className={d.noteText}>{j.notes}</span> : <button type="button" className={d.link} onClick={edit}>Add note</button>}</div>
       <p className={s.help}>Book or cancel through IRCTC. RailWatch records your plans.</p>
     </section>
-    {main && <footer className={d.sticky}><button type="button" className={s.primary} onClick={main.run}>{main.label}</button></footer>}
+    {attachFile && <input id={pickerId} type="file" accept="application/pdf,.pdf" hidden aria-label="Choose ticket PDF" onChange={e => { const f = e.target.files?.[0]; if (f) attachFile(f); e.target.value = ""; }} />}
+    {main && <footer className={d.sticky}><button type="button" className={s.primary} onClick={() => main.run()}>{main.label}</button></footer>}
   </div>;
 }

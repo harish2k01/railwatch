@@ -282,3 +282,5 @@
 .profileOnly [aria-label="Open profile menu"]{display:none}
 /* The docked header floats over the content; only its close button takes clicks. */
 .dockedModal .modalHead{pointer-events:none}.dockedModal .modalHead button{pointer-events:auto}
+/* The docked settings panel is a non-modal dialog mounted before the page; keep it above page controls. */
+.profileDocked,.dockedModal{z-index:40}
