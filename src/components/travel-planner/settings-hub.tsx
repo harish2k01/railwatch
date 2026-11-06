@@ -7,8 +7,6 @@ import { legacySchedule } from "./forms";
 import { PwaInstall } from "../pwa-install";
 import s from "./settings-hub.module.css";
 
-type Tab = "profile" | "preferences" | "connections" | "security";
-
 /** "20:00" style cells for one schedule: reminders the day before, and on the day (+N more). */
 function cells(schedule: ReminderSchedule) {
   const before = schedule.filter(r => r.daysBefore >= 1).sort((a, b) => a.time.localeCompare(b.time)), day = schedule.filter(r => r.daysBefore === 0).sort((a, b) => a.time.localeCompare(b.time));
@@ -22,8 +20,8 @@ function Switch({ on, label, onChange, disabled }: { on: boolean; label: string;
 }
 
 /** Settings (plan 2.8, canvas Settings.dc.html): section nav, Reminders table, where reminders go, offline tickets, data. */
-export function SettingsHub({ admin, planner, saving, openSection, saveSettings, backup, restore, exportCalendar, syncOffline }: {
-  admin: boolean; planner: Planner; saving: boolean; openSection: (tab: Tab) => void; saveSettings: (next: Planner["settings"]) => void;
+export function SettingsHub({ personal, admin, planner, saving, saveSettings, backup, restore, exportCalendar, syncOffline }: {
+  personal: React.ReactNode; admin: boolean; planner: Planner; saving: boolean; saveSettings: (next: Planner["settings"]) => void;
   backup: () => void; restore: (file: File) => void; exportCalendar: () => void; syncOffline: () => Promise<number>;
 }) {
   const st = planner.settings;
@@ -37,12 +35,13 @@ export function SettingsHub({ admin, planner, saving, openSection, saveSettings,
     <div className={s.layout}>
       <nav aria-label="Settings sections" className={s.nav}>
         <span className={s.navGroup}>You</span>
-        <button type="button" className={s.navItem} onClick={() => openSection("profile")}>Profile</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-profile")}>Profile</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-preferences")}>Preferences</button>
         <button type="button" className={s.navItem} onClick={() => nav("settings-reminders")}>Reminders</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-channels")}>Channels</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-connections")}>Connections</button>
         <button type="button" className={s.navItem} onClick={() => nav("settings-offline")}>Offline tickets</button>
         <button type="button" className={s.navItem} onClick={() => nav("settings-data")}>Data and backup</button>
-        <button type="button" className={s.navItem} onClick={() => openSection("security")}>Security</button>
+        <button type="button" className={s.navItem} onClick={() => nav("settings-security")}>Security</button>
         {admin && <><span className={s.navGroup}>Workspace · admin</span>
           <Link className={s.navItem} href="/settings/workspace">Booking rules</Link>
           <Link className={s.navItem} href="/settings/workspace/members">Members</Link>
@@ -50,23 +49,16 @@ export function SettingsHub({ admin, planner, saving, openSection, saveSettings,
           <Link className={s.navItem} href="/settings/workspace/health">System health</Link></>}
       </nav>
       <div className={s.content}>
+        {personal}
         <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
           <h2 id="settings-reminders-h">Reminders</h2>
           <span className={s.muted}>Normal booking opens {st.bookingWindowDays} days before travel (set by your admin). Times are IST.</span>
           <div className={s.card}><table className={s.table}><thead><tr><th scope="col">Booking type</th><th scope="col">Day before</th><th scope="col">On the day</th><th scope="col"><span className={s.sr}>Edit</span></th></tr></thead><tbody>
-            {rows.map(([name, opens, schedule]) => { const [a, b] = cells(schedule); return <tr key={name}><td><strong>{name}</strong> <span className={s.muted}>· {opens}</span></td><td>{a}</td><td>{b}</td><td><button type="button" className={s.btn} aria-label={`Edit ${name} reminders`} onClick={() => openSection("preferences")}>Edit</button></td></tr>; })}
-            <tr><td><strong>Cancellation</strong></td><td colSpan={2}>{st.cancellationEnabled ? `Daily at ${st.cancellationTime} until confirmed` : "Off"}</td><td><button type="button" className={s.btn} aria-label="Edit cancellation reminders" onClick={() => openSection("preferences")}>Edit</button></td></tr>
+            {rows.map(([name, opens, schedule]) => { const [a, b] = cells(schedule); return <tr key={name}><td><strong>{name}</strong> <span className={s.muted}>· {opens}</span></td><td>{a}</td><td>{b}</td><td><button type="button" className={s.btn} aria-label={`Edit ${name} reminders`} onClick={() => nav("settings-preferences")}>Edit</button></td></tr>; })}
+            <tr><td><strong>Cancellation</strong></td><td colSpan={2}>{st.cancellationEnabled ? `Daily at ${st.cancellationTime} until confirmed` : "Off"}</td><td><button type="button" className={s.btn} aria-label="Edit cancellation reminders" onClick={() => nav("settings-preferences")}>Edit</button></td></tr>
             <tr><td><strong>Chart check</strong> <span className={s.pill}>New</span></td><td colSpan={2}>4 hours before departure, for RAC and waitlist tickets</td><td /></tr>
           </tbody></table></div>
           <div className={s.card}><div className={s.toggleRow}><span><strong>Quiet hours</strong><span className={s.muted}>Hold non-urgent reminders overnight{quiet && st.quietHours ? ` (${st.quietHours.start}–${st.quietHours.end})` : ""}</span></span><Switch on={quiet} label="Quiet hours" disabled={saving} onChange={on => saveSettings({ ...st, quietHours: { start: st.quietHours?.start ?? "22:00", end: st.quietHours?.end ?? "07:00", enabled: on } })} /></div></div>
-        </section>
-        <section id="settings-channels" aria-labelledby="settings-channels-h" className={s.section}>
-          <h2 id="settings-channels-h">Where reminders go</h2>
-          <div className={s.card}>
-            <div className={s.toggleRow}><span><strong>This device</strong><span className={s.muted}>Push notifications with Snooze and Mark booked buttons</span></span><button type="button" className={s.btn} onClick={() => openSection("connections")}>Set up</button></div>
-            <div className={s.toggleRow}><span><strong>Telegram</strong><span className={s.muted}>{st.telegramEnabled ? "Connected" : "Pair with a one-time code"}</span></span><button type="button" className={s.btn} onClick={() => openSection("connections")}>{st.telegramEnabled ? "Manage" : "Connect"}</button></div>
-            <div className={s.toggleRow}><span><strong>Email</strong><span className={s.muted}>{st.emailEnabled ? "On" : "Verify your address first"}</span></span><button type="button" className={s.btn} onClick={() => openSection(st.emailEnabled ? "connections" : "profile")}>{st.emailEnabled ? "Manage" : "Verify"}</button></div>
-          </div>
         </section>
         <OfflineTickets sync={syncOffline} />
         <section id="settings-data" aria-labelledby="settings-data-h" className={s.section}>
