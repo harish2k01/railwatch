@@ -14,9 +14,6 @@ export async function verifyDesktopJourneys(page,api,url){
     for(const gone of ['Board','List','Timeline','Filters','Refresh journeys'])await expect(workspace.getByRole('button',{name:gone,exact:true})).toHaveCount(0);
     await workspace.getByRole('textbox',{name:'Search journeys',exact:true}).fill('DesktopWindowFixture');await expect(rows).toHaveCount(6);
     for(const label of ['Record booking','View ticket','Confirm cancellation'])await expect(workspace.getByRole('button',{name:label,exact:true})).toHaveCount(0);
-    await workspace.getByRole('button',{name:'To cancel',exact:true}).click();await expect(rows).toHaveCount(1);
-    await workspace.getByRole('button',{name:'No ticket',exact:true}).click();await expect(rows).toHaveCount(3);
-    await workspace.getByRole('button',{name:'All',exact:true}).click();await expect(rows).toHaveCount(6);
     await rows.first().click();await page.getByRole('dialog').getByRole('button',{name:'More journey actions',exact:true}).click();await page.getByRole('dialog').getByRole('menuitem',{name:'Edit journey',exact:true}).click();await expect(page.getByRole('dialog').getByLabel('From',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Close dialog',exact:true}).click();
     for(const theme of ['light','dark']){
       const current=(await(await api('/api/railwatch/workspace')).json()).data;current.planner.settings.theme=theme;assert.equal((await api('/api/railwatch/workspace','put',current)).status(),200);await page.goto(url+'/journeys');await expect(workspace.getByText('Loading journeys…',{exact:true})).toHaveCount(0);

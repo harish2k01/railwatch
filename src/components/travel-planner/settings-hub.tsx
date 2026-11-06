@@ -1,4 +1,5 @@
 "use client";
+import { ADMIN_SECTIONS } from "./settings-nav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offlineCount, offlineEnabled, offlineSupported, setOfflineEnabled } from "@/lib/offline-tickets";
@@ -49,10 +50,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
         <button type="button" className={s.navItem} aria-current={section === "data" ? "page" : undefined} onClick={() => nav("settings-data")}>Data and backup</button>
         <button type="button" className={s.navItem} aria-current={section === "security" ? "page" : undefined} onClick={() => nav("settings-security")}>Security</button>
         {admin && <><span className={s.navGroup}>Workspace · admin</span>
-          <Link className={s.navItem} href="/settings/workspace">Booking rules</Link>
-          <Link className={s.navItem} href="/settings/workspace/members">Members</Link>
-          <Link className={s.navItem} href="/settings/workspace/integrations">Integrations</Link>
-          <Link className={s.navItem} href="/settings/workspace/health">System health</Link></>}
+          {ADMIN_SECTIONS.map(x => <Link key={x.id} className={s.navItem} href={x.href}>{x.label}</Link>)}</>}
       </nav>
       <div className={s.content}>
         {["profile", "preferences", "connections", "security"].includes(section) && personal(section)}
