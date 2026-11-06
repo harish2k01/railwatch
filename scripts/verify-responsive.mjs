@@ -51,7 +51,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         }
         await expect(page.getByRole('region',{name:'Booked column',exact:true})).toHaveCount(0);
         await expect(page.getByRole('button',{name:'Booked',exact:true})).toHaveAttribute('aria-pressed','true');
-        if(width===390){const datedJourney=page.getByRole('button',{name:/Open journey/}).first();await datedJourney.waitFor();await expect(datedJourney).toHaveAccessibleName(/ on .*\d{4}$/);assert.match(await datedJourney.innerText(),/\b\d{4}\b/,'Journey row retains year beside date tile');await page.screenshot({path:`build/railwatch-qa/mobile-list-${theme}.png`,animations:'disabled'});}
+        if(width===390){const datedJourney=page.getByRole('button',{name:/Open journey/}).first();await datedJourney.waitFor();await expect(datedJourney).toHaveAccessibleName(/ on .*\d{4}$/);assert.match(await datedJourney.innerText(),/^\d{2}\n[A-Z]{3}\n/,'Journey row shows the day and weekday tile; the year stays in the accessible name');await page.screenshot({path:`build/railwatch-qa/mobile-list-${theme}.png`,animations:'disabled'});}
         await page.getByRole('button',{name:'Planned',exact:true}).click();
         await expect(page.getByRole('button',{name:'Planned',exact:true})).toHaveAttribute('aria-pressed','true');
         await mobileNav.getByRole('button',{name:'More',exact:true}).click();
