@@ -61,5 +61,5 @@
 .decisionTrip small{color:var(--rw-muted);font-size:13px}
 @media(max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
 .badgeWarn{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--rw-attention-bg);color:var(--rw-attention-ink);font-size:12px;font-weight:700}
-@media(prefers-reduced-motion:no-preference){[data-attention]{animation:rowIn .24s ease-out both}}
+@media(prefers-reduced-motion:no-preference){.row[data-attention]{animation:rowIn .24s ease-out both}}
 @keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
