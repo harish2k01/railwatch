@@ -1,0 +1,1234 @@
+# code	name	reason (local = only EMU/MEMU/DEMU/suburban/toy trains stop; metro)
+AABH	Ambika Bhawani Halt	local
+AAK	Ankai Killa	local
+ACAB	A-cabin Bondamunda	local
+ACN	Adhichchanur	local
+ACU	Achuara Halt	local
+ADRE	Adra East cabin	local
+ADSR	Adsr	local
+ADST	Adisaptagram	local
+ADX	Adapur	local
+AG	Aranghata	local
+AGE	Angai	local
+AGM	Agaram Sibbandi	local
+AHMP	Adarsh Manpur	local
+AIPP	Athipattu Pudhunagar	local
+AJJN	Arakkonam Jn North	local
+AJK	Ajjakolu	local
+AJLE	Azimganj Jn cabin	local
+AJM	Adraj Moti	local
+AJR	Ajaibpur	local
+AJUG	Abjuganj	local
+AKRA	Akra	local
+ALAL	Alal	local
+ALL	Alal	local
+ALUR	Alur Halt	local
+AMGA	Amjonga	local
+AMJ	Amin Gaon	local
+AMLO	Amlo	local
+AMLR	Amala Nagar	local
+AMRI	Anaj Mandi	local
+AMV	Lucknow Alambagh	local
+AND	Andampaliam	local
+ANJE	Angarpathra Halt	local
+ANM	Anamalai Road (Halt)	local
+ANPM	Anupalem	local
+ANQ	Amnapur	local
+APCH	Alipurduar College	local
+APQ	Aditpara	local
+ARH	Amhera	local
+ARPL	Arepalli Halt	local
+ARS	Arasur	local
+ARU	Arasalu	local
+ARV	Arani Road	local
+ASAR	Asra Halt	local
+ASNE	Asansol East	local
+AVC	Amaravati Colony JN	local
+AWM	Aswapuram	local
+AWPR	Awapur	local
+AYB	Aliyabad	local
+AYD	Ayandur	local
+BA	Bandra	local
+BAAR	Bandar	local
+BAGD	Bagwada	local
+BAHW	Bahirkhanda	local
+BAJN	Bajana	local
+BARJ	Bharatgarh	local
+BARN	Baranagar Road	local
+BARU	Baharu	local
+BAWD	Bhadwad	local
+BBAE	Baidyabati	local
+BBDA	Barbenda	local
+BBDB	B.B.D Bag	local
+BBKR	Baba Bakalaraya	local
+BBLA	Bhyabla Halt	local
+BBR	Bagbazar	local
+BBRM	Baba Bhagwan Ram Halt	local
+BBSL	Baba Sodhal Nagar	local
+BBSN	New Bhubaneswar	local
+BBT	Birati	local
+BCGM	Boinchigram	local
+BCPR	Bachharpur Halt	local
+BCYN	Budhdevchak Y Nagar	local
+BDA	Vadodara C cabin	local
+BDJR	Bhadora Jagir	local
+BDK	Bedag	local
+BDLC	Bonidanga Link cabin	local
+BDPA	Badalpur	local
+BDQ	Budora	local
+BDUA	Basudeopur Chandail Halt	local
+BDV	Badanavalu	local
+BDYK	Bindayaka	local
+BDYP	Bidyadharpur	local
+BEC	Berach Jn cabin	local
+BEHT	Bihat Halt	local
+BEQ	Belur	local
+BFN	Bugana	local
+BFZ	Bhandatikuri	local
+BGAR	Bangari	local
+BGB	Budge Budge	local
+BGF	Bagila	local
+BGJT	Baghajatin	local
+BGL	Bogula	local
+BGMU	Bangarmau	local
+BGRD	Beliaghata Road	local
+BGRM	Biggabas Ramsara	local
+BGRR	Bagarpur Halt	local
+BGW	Begdewadi	local
+BGWI	Begdaewadi	local
+BHAD	Barhapur Halt	local
+BHAS	Bhojras	local
+BHAW	Block Hut A (bha)	local
+BHBT	Block Hut Basantpur	local
+BHBV	Block Hut B	local
+BHCH	Block Cabin Chakki Bank	local
+BHGH	Bahirgachhi	local
+BHKA	Bahira Kalibari	local
+BHNA	Bhaina	local
+BHNP	Bishanpur Halt	local
+BHOI	Dhandarikalan Block Hut	local
+BHPA	Bahirpua Halt	local
+BHR	Bhadreswar	local
+BHSA	Bhisa Halt	local
+BIE	Bhistenhatti	local
+BIGA	Bigga	local
+BIGH	Bagrigram Halt	local
+BIRP	Birarajpur	local
+BJWS	Bojawas	local
+BKAC	Barkakana Avoiding cabin	local
+BKCA	Bokaro Steel City A cabin	local
+BKHR	Bakhri	local
+BKIT	Binkadakatti	local
+BKKI	Bakarkudi	local
+BKNA	Bakaina Halt	local
+BKSN	Bksc North cabin	local
+BKTB	Bindukuri	local
+BLAE	Balarambati	local
+BLCA	Block Hut Beas	local
+BLHR	Balahapur Halt	local
+BLME	Bholldih	local
+BLN	Ballygunge JN	local
+BLPE	Balapalle	local
+BLRE	Belsiri	local
+BLRI	Belari Halt	local
+BLYG	Bally Ghat	local
+BLYH	Bally Halt	local
+BM	Bodma	local
+BMAE	Belmuri	local
+BMGN	Bamuni Gaon	local
+BMM	Bhaskarpara	local
+BMMP	Bommaipalli	local
+BMNL	Bamanwali Halt	local
+BMRN	Bhimrana	local
+BMW	Bamhni	local
+BNCR	Banchari	local
+BND	Bhandup	local
+BNGM	Bangurgram Halt	local
+BNGO	Bingaon	local
+BNJN	Binjana	local
+BNKA	Bankimnagar	local
+BNLY	Bhanupli	local
+BNNR	Bhindar	local
+BNPT	Benipatti Pirapur	local
+BNWS	Bhanwsa	local
+BPAE	Begampur	local
+BPN	Banpur	local
+BPZA	Bharathapuzha H	local
+BQT	Baktarnagar Halt	local
+BQY	Belerhat	local
+BRBD	Borabanda	local
+BRBR	Barbera	local
+BRDB	Barda	local
+BRGJ	Bargaon Gujar	local
+BRGL	Burgula Halt	local
+BRGP	Bajrangpura	local
+BRGY	Vadodara D cabin	local
+BRGZ	Vadodara E cabin	local
+BRHD	Baba Raghuni Halt Dwarika	local
+BRJ	Brace Bridge	local
+BRKB	Bharatkhand Halt	local
+BRKY	Boraki	local
+BRL	Barwala Road	local
+BRLI	Barauli	local
+BROR	Berore	local
+BRP	Baruipur JN	local
+BRPA	Baruipara	local
+BRPK	Bisharpara Kodalia	local
+BRSQ	Brar Square	local
+BRTA	Bartara	local
+BRWH	Baherwa Halt	local
+BRZR	Barari Bazar	local
+BS	Banisar	local
+BSA	Bhainsa	local
+BSBN	Bhusawal B cabin	local
+BSBY	Varanasi Yard	local
+BSCN	Bhusawal C cabin	local
+BSCP	Baskatwa B. H.	local
+BSD	Basuldanga	local
+BSGD	Bais Godam	local
+BSHT	Basirhat	local
+BSLA	Bhasila	local
+BSPD	Biaspind	local
+BSPK	Bispur	local
+BSRA	Basarhia Halt	local
+BSWD	Bhemswadi	local
+BT	Barasat JN	local
+BTIB	Bhatinda B cabin	local
+BTNR	Bharatnagar	local
+BTPG	Bethberia Ghola	local
+BTPH	Chakia Thermal Halt	local
+BTR	Butari	local
+BTRO	Bastoi Halt	local
+BTTN	Bhatian	local
+BTWN	Betwa cabin	local
+BUBR	Bhutakia Bhimsa	local
+BUGN	Bhurjiha Baragn	local
+BUM	Bommasamudram	local
+BUTA	Jangalmahal Bhadutala	local
+BVS	Bhivpuri Road	local
+BWV	Bhiwapur	local
+BY	Byculla	local
+BYE	Bansi Bohera	local
+BYO	Bayaluvaddigeri	local
+BYPY	Baiyyappanahalli Yard cabin	local
+BYSA	Basulya Sutahata	local
+BZB	Burra Bazar	local
+BZE	Baseria	local
+BZL	Belanagar	local
+CABN	Bhilai cabin	local
+CAO	Chauradano	local
+CASA	Chhansara	local
+CCAB	Bmy C cabin	local
+CCLW	CC link-West	local
+CCRL	CC Railwayly Link cabin	local
+CDAE	Chandanpur	local
+CDBN	Chedhabanni Halt	local
+CDNR	Chandanagar	local
+CDQ	Chadotar	local
+CDS	Chandisar	local
+CEME	Chegro	local
+CG	Canning	local
+CHAH	Chailaha Halt	local
+CHC	Chanchai	local
+CHDA	Chanda (halt)	local
+CHG	Chinchpokli	local
+CHIB	Chirai Bg	local
+CHIT	Chithari Halt	local
+CHJC	Chitoda	local
+CHNR	Chhan Arorian	local
+CHQ	Choka	local
+CHT	Champahati	local
+CIA	Chheharta	local
+CIKA	Chikna	local
+CIN	Chintakunta	local
+CJE	Kanchipuram East	local
+CKKD	Charkheda Khurd	local
+CKKN	Chak Kalan	local
+CKRD	Chakmakrand	local
+CLA	Kurla	local
+CLDB	Chandlodiya (b)	local
+CLHT	Chulheta	local
+CLKN	Chuchela Kalan	local
+CLMD	Chullimada	local
+CLPE	Challavaripalle	local
+CMP	Chromepet	local
+CNJO	Juhi Outer cabin	local
+CNKP	Chanakyapuri	local
+CNM	Chengmari	local
+CNX	Chandauna Halt	local
+CNY	Kolanalli	local
+CORD	Bilaspur Chord cabin	local
+CPM	Cholapuram	local
+CPNL	Kanpur C Panel	local
+CPPR	Champapur Halt	local
+CPW	Choti Padoli	local
+CPY	Chapramari	local
+CQR	Champapukur	local
+CRAE	Cheragram Bh.	local
+CRD	Currey Road	local
+CRPM	Chandrampalem	local
+CRWL	Chak Rakhwal	local
+CRZ	Caranzol	local
+CSDR	Channasandra	local
+CSY	Cossye Halt	local
+CTLI	Chatouli	local
+CTM	Kattangulathur	local
+CTMP	Chit Makandpur	local
+CTTP	Chitrapur	local
+CUL	Chuli	local
+CYZ	Chipyana Buzurg	local
+D	Deula	local
+DAC	Dahinsara JN	local
+DAH	Dehare	local
+DALF	Dali Ganj	local
+DAR	Danwar	local
+DAVJ	D.A.V.C.H. Jalandhar	local
+DBLG	Dibolong	local
+DBLI	Debrabandhauli Halt	local
+DBP	Debipur	local
+DBT	Dakshin Barasat	local
+DCAB	Dcab	local
+DCOP	Durgapur Coke Oven Plant	local
+DCTL	Dombivli Ctl	local
+DDAM	Daund A Mmr	local
+DDAP	Daund Patas Road	local
+DDC	Dum Dum Cantt	local
+DDGJ	Deedarganj	local
+DDJA	Daund Goods Yard	local
+DDS	Dudh Sagar	local
+DEA	Diara	local
+DET	Det	local
+DGNR	Durganagar	local
+DH	Diamond Harbour	local
+DHBI	Dhabauli Halt	local
+DHK	Dhakuria	local
+DHMA	Dhamarda	local
+DHNL	Dhanala	local
+DHWS	Dhosawas	local
+DI	Dombivli	local
+DIC	Dahisar	local
+DIW	Dhilwan	local
+DIWR	Diwr	local
+DJB	Dijaobra	local
+DJS	Dhurant Jwas Halt	local
+DKCH	Dakacha	local
+DKDE	Dankaur	local
+DKDP	Dakshin Durgapur	local
+DKGN	Dekargaon	local
+DKJR	Dhekiajuli Road	local
+DKQ	Dhani Kasar	local
+DKUR	Dokur	local
+DKW	Dhanakwada	local
+DLA	Doulta	local
+DLPI	Indrapuri	local
+DLPR	Dayalpur	local
+DMCA	Damaracherla	local
+DMU	Dhamua	local
+DNH	Deonagar	local
+DNHL	Dhaniakhali	local
+DNL	Dhanoli	local
+DOGL	Donigal	local
+DON	Donta	local
+DPDP	Dhapdhapi	local
+DPO	Damanpur	local
+DQV	Daula Kot Bhai	local
+DRE	Dhogri	local
+DRGU	Damrughutu	local
+DRQ	Dharminiya	local
+DRRN	Dr. R K Nagar	local
+DSAP	Delhi Shahdara A Panel	local
+DSBC	Delhi Shahdara Block cabin	local
+DSBP	Delhi Shahdara B Panel	local
+DSME	Dasara	local
+DSNR	Dasnagar	local
+DSPN	Deshapran	local
+DSX	Desang	local
+DTRA	Dantra	local
+DTVL	Dativali	local
+DUAN	Duan	local
+DUH	Dudda	local
+DUP	Dhulipalla Halt	local
+DV	Dhuva	local
+DVBH	Makudan Virapandi Block Hut	local
+DVGM	Devgam	local
+DVY	Devaliya	local
+DWF	Dudh Sagar Water Fall	local
+DWJN	Diva Jn. cabin	local
+DWL	Dhuwala	local
+DYS	Dalapathy Samudram	local
+DZK	Durgachak	local
+EDA	Itwan Dundaila	local
+EDG	Eden Garden	local
+EOC	Udl East Outer cabin	local
+EOCM	Eocm	local
+ERSC	Ernakulam Jn. C	local
+ERSD	Ernakulam D cabin	local
+ETB	Itarsi B cabin	local
+ETF	Itarsi F cabin	local
+FAH	Fateha Halt	local
+FNB	Fatehnagar	local
+FOCM	Flyover cabin, Pandit Deen Dayal Upadhyaya Nagar	local
+GAI	Gouchhari	local
+GALA	Gunadala	local
+GBRA	Gobra	local
+GC	Ghatkopar	local
+GCAB	Gcab	local
+GCN	Gocharan	local
+GEDE	Gede	local
+GGSY	Ganga Sahai	local
+GGTA	Ghoraghata	local
+GGV	Ghoradasghona	local
+GHER	Gher	local
+GHN	Ghorparan	local
+GHPU	Gandhipuram Halt	local
+GIA	Garia	local
+GIBP	Ghogi Bariarpur Halt	local
+GIMC	Gandhidham cabin	local
+GIT	Ghorpuri Transh	local
+GJS	Gajsinghpur	local
+GKHT	Gram Kharika	local
+GKPE	Gorakhpur East	local
+GM	Garmadi	local
+GMC	Kanpur Goods Marshal	local
+GMK	Gulma Khola	local
+GMN	Goregaon	local
+GMX	Gurmura	local
+GMZ	Gumanihat	local
+GNCN	Gurla N cabin	local
+GNGR	Gungrana	local
+GNQ	Godhani	local
+GNRL	Gangraul	local
+GNST	Gandhi Smriti	local
+GOF	Ghutiari Sharif	local
+GOG	Ghorghat Halt	local
+GOPL	Gopalganj	local
+GOX	Gobindpur Dugli	local
+GPLG	Gopalpurgram	local
+GPPR	Gopalpur	local
+GPW	Ghaunspur	local
+GQD	Gourdaha Halt	local
+GQLN	Gurla N	local
+GQLW	Gurla W	local
+GRAE	Gurap	local
+GRBH	Garea Bihar	local
+GRFB	Gambhir Br	local
+GRH	Ghorasahan	local
+GRMT	Gur Market	local
+GRNA	Gurhanwa	local
+GRP	Gangpur	local
+GSA	Guagachha	local
+GTLW	Guntakal West	local
+GTY	Golapatti	local
+GUL	Gujjangivalasa	local
+GURN	Girudasnagar	local
+GUSB	Ghumasan Bg	local
+GUZ	Gumani Hat	local
+GVDP	Govindpur	local
+GVR	Goreswar	local
+GWH	Ghoswar	local
+GYJ	Gooty JN cabin	local
+HBLN	H. B. L. Nagar	local
+HBQ	Hubli East Cab	local
+HCAB	Bmy H cabin	local
+HGA	Hogla	local
+HGY	Hooghly	local
+HHP	Harhar Fatehpur	local
+HHR	Hridaypur	local
+HIH	Hajigarh	local
+HJLI	Hugrajuli	local
+HJN	Howrah Jn. cabin	local
+HLIN	Holding Line	local
+HLKT	Halakatta	local
+HLTS	Halkatta Sharief	local
+HMPR	Hamrapur	local
+HMZ	Hind Motor	local
+HNB	Hasnabad	local
+HNC	Hindan cabin	local
+HNHL	Harnahalli	local
+HNMN	Hanuman Station	local
+HNU	Hanspura	local
+HPH	Hanumapura	local
+HPKA	Hinotia Pipalkhera	local
+HPL	Haripal	local
+HRD	Harsud	local
+HRNG	Harpur Nag Halt	local
+HRO	Haroa Road	local
+HRSN	Harisinga	local
+HRSR	Harishnagar	local
+HSJ	Hussain Sagar JN	local
+HSM	Hausnagar	local
+HT	Hotor	local
+HTCY	HITEC City	local
+HTJ	Hathras Road	local
+HWHG	Howrah Goods	local
+HXR	Hansapore	local
+ICP	Ichchiputtur	local
+IDGH	Indargarh	local
+IFCO	Iffco cabin	local
+IGRL	Ingorala	local
+IKC	Ikarchala	local
+INCI	Ishanchandi Halt	local
+INDRG	Indira Nagar	local
+INJ	Innanje	local
+IPG	Ippaguda	local
+IPRA	Islampara	local
+ITKL	Itayakalan	local
+ITMA	Itarsi Marshaling Yard	local
+IVL	Ilavelangal	local
+JCNR	Juchandra	local
+JDDA	Jetha	local
+JDP	Jadavpur	local
+JDPR	Oro Jagadishpur	local
+JGA	Jogiara	local
+JGBR	Jogeshwar Bihar	local
+JGF	Jogidih	local
+JGKS	Jigni Khas	local
+JGLP	Jatingalampur	local
+JGX	Jariagarh	local
+JHH	Jhalra Halt	local
+JHP	Juhjarpur	local
+JHSA	Jhansi A cabin	local
+JIGT	Jirighat	local
+JITE	Jite	local
+JKL	Jalalkhalli Halt	local
+JLG	Jalgaon Deccan	local
+JMBL	Jambhali Halt	local
+JMKL	Jamunia Kalan	local
+JMM	Jaimurtinagar	local
+JMX	Jamuni	local
+JN	Jhund	local
+JNM	Joynagar Majilpur	local
+JNNA	Jamuniatanr Halt	local
+JNUK	Jaunpur Kutcherry	local
+JOK	Jodhka	local
+JON	Jonha	local
+JOS	Jogeshwari	local
+JOX	Janai Road	local
+JPML	Jai Prakash Mahuli	local
+JPQ	Jhapandanga	local
+JRAE	Jaugram	local
+JRKT	Jadramakunti	local
+JSGR	Jharsuguda Road	local
+JSI	Jasali	local
+JSL	Jassowal Halt	local
+JSPN	Jaspalon	local
+JSPR	Jashapar	local
+JSRY	Jharsuguda R Yard	local
+JTX	Jatpipli	local
+JUCT	Jodhpur Cantt	local
+JUH	Jujharpur	local
+JUNX	Junona Halt	local
+KAJG	Karanjgaon	local
+KAMP	Kamalpur	local
+KAPP	Khariapipra Halt	local
+KARD	Kaman Road	local
+KARR	Kharar	local
+KATA	Katili	local
+KATB	Khatkura	local
+KATR	Katariya	local
+KAVM	Kathivakkam	local
+KBEL	Belgachia Metro Station	metro
+KBGH	Kareya Kadambagachhi	local
+KBY	Khoirabari	local
+KCAB	K-cabin Bondamunda	local
+KCCN	Kccn	local
+KCEN	Central metro station	metro
+KCWC	Chandni Chowk metro station	metro
+KCYN	Kachhiyana Halt	local
+KDBR	Khadki Bazar	local
+KDGL	Kondrapol	local
+KDMI	Dum Dum metro station	metro
+KDRL	Kondrapol	local
+KDSD	Kudsad	local
+KDX	Kada Bari Halt	local
+KEMA	Kukma	local
+KEQ	Kachhpura	local
+KESP	Esplanade metro station	metro
+KESR	Kesri Singhpur	local
+KFN	Kanor	local
+KGFE	Kathghar East	local
+KGIH	Kalgurki Halt	local
+KGK	Kankurgachhi Road	local
+KGPK	Girish Park Metro Station	metro
+KGTN	Gitanjali Metro Station	metro
+KHAR	Khar Road	local
+KHBV	Kharbao	local
+KHDB	Khodiyar	local
+KHGR	Kashinagar	local
+KHN	Khanyan	local
+KHNP	Khanapur	local
+KHNR	Kachnara	local
+KHQ	Kharik	local
+KHSN	Khera Sandhan Halt	local
+KHST	Kashanatti	local
+KHW	Kheroda	local
+KHXB	Khakhrechi	local
+KILE	Kandivali	local
+KIRB	Katihar Cbo Mb	local
+KIRP	Khidirpur	local
+KISN	Kalisen	local
+KJMG	Kanjurmarg	local
+KJPK	Jatin Das Park metro station	metro
+KKAE	Kaikala	local
+KKF	Kankaria	local
+KKHG	Kalighat metro station	metro
+KKNZ	Kavi Nazrul metro station	metro
+KKR	Khakhrala Road	local
+KKVS	Kavi Subhash metro station	metro
+KLA	Kulwa	local
+KLGD	Kollengode	local
+KLHD	Kolhadi	local
+KLKR	Kalikapur	local
+KLNT	Kalinagar	local
+KLVA	Kalwa	local
+KLVD	Kalavad	local
+KLW	Kulpi	local
+KMDI	Maidan metro station	metro
+KMGH	Kamarganj	local
+KMHR	Mahatma Gandhi Road metro station	metro
+KMHT	Karmahat	local
+KMLP	Kommarapudi	local
+KMM	Kannamangalam	local
+KMNN	Khamanon	local
+KMPH	Kamalpur Halt	local
+KMPT	Komatipalli	local
+KMQA	Komali	local
+KMSN	Masterda Surya Sen metro station	metro
+KMUK	Mahanayak Uttam Kumar metro station	metro
+KMZA	Kankra Mirzanagar	local
+KNAP	Noapara metro station	metro
+KNB	Kaniyambadi	local
+KNBN	Netaji metro station	metro
+KNDV	Krishnadevaraya halt	local
+KNGT	Karnawas	local
+KNHE	Kanhe	local
+KNJJ	Kannjara Halt	local
+KNKP	Kondikoppa	local
+KNM	Kanimahuli	local
+KNRA	Kachnaria	local
+KNRI	Kunuri	local
+KNTJ	Netaji Bhavan metro station	metro
+KNWS	Karanwas	local
+KOG	Konnagar	local
+KOLA	Kotla	local
+KOLE	Kole	local
+KOPR	Kopar	local
+KOTT	Kottur	local
+KOWN	Khowang	local
+KOX	Kachujor	local
+KPCM	Kunwarpur Chintamanpur	local
+KPH	Kamepalli	local
+KPM	Kumarapuram	local
+KPSK	Park Street metro station	metro
+KQLS	Kamarkundu	local
+KQX	Kochujor	local
+KRBR	Kerkhabari	local
+KRCA	Karachiya Yard	local
+KRHT	Kharahat	local
+KRMB	Karmabad Bh	local
+KRPB	Koraput B cabin B.H.	local
+KRPC	Kharia-pipra Halt	local
+KRSB	Rabindra Sarobar metro station	metro
+KRSD	Rabindra Sadan metro station	metro
+KRSH	Karamgarh Sdrgh	local
+KRTN	Kirti Nagar	local
+KRXM	Krishna Mohan	local
+KSA	Khasa	local
+KSBI	Kashiabari	local
+KSBP	Keshabpur	local
+KSHO	Shobhabazar Sutanuti metro station	metro
+KSHR	Keshwari	local
+KSHY	Shyambazaar metro station	metro
+KSKD	Shahid Khudiram metro station	metro
+KSLA	Kesla	local
+KTAL	Kathalal	local
+KTCR	Kothacheruvu	local
+KTKU	Kottekad	local
+KTLN	Khat Labana	local
+KTSC	Kota Jn South C	local
+KUCH	Kuchavaram	local
+KUHI	Kuhi	local
+KURN	Khukrana	local
+KUTR	Kulathur	local
+KWBR	Katwar Bazaar	local
+KWC	Kundwa Chainpur	local
+KWDP	Kakdwip	local
+KWKC	Kherwa Kocha	local
+KXR	Kuria	local
+KXZ	Kesariya Road	local
+KYG	Kidiyanagar	local
+KYO	Khandikar	local
+KYP	Kalyanpur	local
+KYSB	Kaiyal Sedhavi	local
+KZJE	Kazipet E cabin	local
+KZJF	Kazipet F cabin	local
+KZPE	Kazipara Halt	local
+LAA	Lakhpat	local
+LAC	Lachhipura	local
+LATI	Latia cabin	local
+LBH	Dilkusha cabin	local
+LBTL	Lebutala	local
+LBZ	Lalbag Bh	local
+LCN	Lalpur Chandra	local
+LDCY	Lodhi Colony	local
+LEB	Lemuabad	local
+LGD	Lallaguda	local
+LHK	Laihra Khana	local
+LIM	Sonalium	local
+LJKR	Lajkura cabin	local
+LKF	Lake Gardens	local
+LKJN	Link Jn. cabin	local
+LKPR	Lakshmikantapur	local
+LKX	Lakshmipur	local
+LLH	Liluah	local
+LLKN	Lal Kalan	local
+LMGS	Lumding South	local
+LNKC	Link C-cabin	local
+LNMA	Lakhan Majra	local
+LNQ	Lakhnauria	local
+LNWT	Lucknow West (alh)	local
+LOK	Loknath	local
+LOL	Loliem	local
+LPNR	Lajpat Nagar	local
+LRB	Larabad	local
+LRJC	Laksar North cabin	local
+LW	Lorwada	local
+MABG	Matana Buzurg	local
+MABN	Maban	local
+MADP	Madhapur Road	local
+MAE	Matheran	local
+MAK	Mallikpur	local
+MAUL	Mauli Block Hut	local
+MBE	Mirzapur Bankipur	local
+MBQ	Mumbra	local
+MBWC	Moradabad West	local
+MCL	Madimangalam	local
+MCO	Motihari Court	local
+MDBP	Madhabpur	local
+MDD	Malad	local
+MDG	Mandal Ghat	local
+MDLM	Mundalaram	local
+MDSE	Madhusudanpur	local
+MDVE	Mahendra Vadi	local
+MEG	Meleng	local
+MGMY	Mughal Sarai Marshaling Yard	local
+MGPI	Mangarpatti Halt	local
+MGRD	Magardoh	local
+MGSJ	Magnesite JN	local
+MGT	Magra Hat	local
+MGTD	Meghpur Titodi	local
+MHKT	Mohkhuti	local
+MHLC	Monkey Hill	local
+MHN	Mahanadi	local
+MHWL	Machrowar	local
+MIB	Nagpur Moti Bagh	local
+MIG	Midghat	local
+MIJ	Majhdia	local
+MILA	Milakpur Halt	local
+MIRA	Mira Road	local
+MITA	Mitha	local
+MIU	Maripat	local
+MJBT	Majbat	local
+MJKN	Majri Khadan	local
+MJM	Manjhauligram H	local
+MJT	Majherhat	local
+MKK	Kodambakkam	local
+MLH	Manaklao	local
+MLIH	Mauli Halt	local
+MLMG	Mallemadugu	local
+MLND	Mulund	local
+MLPM	Melpakkam	local
+MLYA	Malia	local
+MLYC	Maula Ali	local
+MLYG	Mlyg	local
+MM	Mahim JN	local
+MMDA	Muthalamada	local
+MMDL	Mohini Mandal halt	local
+MMG	Madhyamgram	local
+MMP	Mambalappattu Jn	local
+MMPR	Mamdapur	local
+MMRB	Manmad B cabin	local
+MN	Meenambakkam	local
+MNDV	Mandawariya	local
+MNGT	Mysore New Goods terminus	local
+MNME	Manamadurai East	local
+MNPT	Mungilipattu	local
+MNS	Manshahi	local
+MNVL	Mnvl	local
+MOD	Morampudi	local
+MOLK	Molakarampatti	local
+MOW	Mananwala	local
+MOX	Moran	local
+MPE	Malatipur	local
+MPF	Muirpur Road	local
+MPK	Chennai Park	local
+MPN	Madhyampur	local
+MPNH	Majnupur Nawada	local
+MPRD	Mathurapur Road	local
+MQJ	Maradam Halt	local
+MRD	Manund	local
+MRLA	Mariyala Gangavadi	local
+MRLM	Marudalam	local
+MRPM	Mathurapur Mor Halt	local
+MRTA	Muraitha	local
+MRU	Matunga Road	local
+MRYA	Meriyana	local
+MSAE	Masagram	local
+MSBR	Musahibpur	local
+MSC	Chetput	local
+MSD	Masjid	local
+MSDG	Mhasoba Dongargaon	local
+MSDL	Mahisadal	local
+MSHW	Musharwa Halt	local
+MSMI	Misamari	local
+MSV	Mustara	local
+MTAP	Matania Anantapur	local
+MTDI	Maltekdi	local
+MTFA	Mertala Phaleya	local
+MTN	Matunga	local
+MTSK	Mota Surka	local
+MTV	Matalkunta	local
+MU	Makansar	local
+MUU	Mankundu	local
+MUY	Mugaiyur	local
+MVRM	Mallavaram	local
+MVS	Manavasi	local
+MWC	Mandawali Chander Vihar	local
+MWUE	Mehrawal	local
+MWZ	Mahisadhari	local
+MX	Mahalaxmi	local
+MXM	Minatchipuram	local
+MYHT	Mayurhat	local
+MYKR	Matyakheri Halt	local
+MZN	Mahmudpur Saraiyan	local
+MZV	Maralahalli	local
+NACC	New Alipur	local
+NAI	Nungi	local
+NAKD	Naik Dih	local
+NAND	Nandikoor	local
+NARA	Nara Halt	local
+NBAE	Nabagram	local
+NBE	New Barrackpur	local
+NBK	Nungambakkam	local
+NBQY	New Bongaigaon Yard	local
+NCHS	Nature Cure Hospital	local
+NCP	Nishchindapur	local
+NCPM	Nischindipur Market	local
+NDAZ	Naya Azadpur	local
+NDGJ	Nandaigajan	local
+NDIM	Nandaigram Halt	local
+NDKR	Nandakumar	local
+NDPL	Nandipalli	local
+NEWC	New West cabin	local
+NFKB	New Farakka-B cabin	local
+NGC	New Guwahati	local
+NGON	Naugaon	local
+NGV	Naglavi	local
+NGWN	Noganwan	local
+NGY	Nath Ganj	local
+NHGJ	New Harangajao	local
+NHLG	New Haflong	local
+NHU	Nahur	local
+NIDI	Nidi	local
+NIG	Naigaon	local
+NIMG	Nima Gopalpur	local
+NKG	Narkaldenga Coaching Yard	local
+NKJ	New Katni JN	local
+NKL	Nalikul	local
+NKPL	Narketpalli	local
+NKU	Nakardei	local
+NLL	Nalli	local
+NLNR	Nulenur Halt	local
+NLQ	Nangal Pathani Halt	local
+NMC	Nimcha Halt	local
+NMDA	New Morinda JN	local
+NMDR	Nimdhari	local
+NMF	Nimo Halt	local
+NMGT	Nimshirgaon Tamdalge	local
+NMKA	Namkhana	local
+NMLU	Nemakallu	local
+NMM	New Misamari	local
+NMO	Nedi Mollyanur	local
+NMY	Noonmati	local
+NNB	Nimblak	local
+NNCN	Nagnath cabin	local
+NOY	Noyal	local
+NPB	Nagapattinam Beach	local
+NPMR	Narayan Pakuria Murail	local
+NPZ	Nawapatra	local
+NRH	Nahargarh	local
+NRKG	Narkatiaganj	local
+NROD	Nari Road	local
+NRPR	Narendrapur	local
+NRV	Nariyar	local
+NRVR	Naraina Vihar	local
+NSF	Nasibpur	local
+NSKL	Naskhal	local
+NSN	Nasirpur Halt	local
+NSP	Nalla Sopara	local
+NSRH	Niz-sariha Halt	local
+NSZ	Bhopal Nishatpura	local
+NTA	Netra	local
+NTDM	Nityanand Dham	local
+NTS	Nattrasankottai	local
+NTVT	Nethravathi	local
+NVD	Navalgund Road	local
+NWBV	Vijayawada New West cabin	local
+NXH	Nidaghatta	local
+NZG	Nazarbag	local
+OBAC	Obra A Cabin	local
+OHAN	Ohan cabin	local
+OMB	Umbermali	local
+OPN	Onnupuram Halt	local
+PAIL	Pali Halt	local
+PASG	Panisagar	local
+PATI	Parsa Tiwari	local
+PATM	Patam Halt	local
+PBZ	Porabazar	local
+PCAB	Pcab	local
+PCF	Penchi	local
+PCLM	Panchalam	local
+PDF	Padampur	local
+PDGM	Pudunagaram	local
+PDJ	Phiding	local
+PDPH	Padapahar JN	local
+PDPK	Padmapukur	local
+PFL	Piprala	local
+PGDP	Pagidipalli	local
+PGMD	Pragati Maidan	local
+PHLG	Pahlejaghat JN	local
+PI	Padli	local
+PIGT	Pilighat	local
+PJA	Pajian	local
+PJPI	Prajapati Halt	local
+PKEO	Panskura East Outer	local
+PL	Lower Parel	local
+PLAE	Palsit	local
+PLE	Piplee	local
+PLF	Piali	local
+PLHL	Pallahalli Halt	local
+PLVR	Palam Vihar Halt	local
+PMD	Pamidi	local
+PMDB	Pamidi	local
+PNCB	Panchberia Halt	local
+PNS	Pillamshat	local
+PNSD	Pangar shinde Halt	local
+PNSR	Pnsr	local
+PNTR	Pennathur Halt	local
+POL	Pinjrapole Halt	local
+POTI	Potheri	local
+POX	Pola Patthar	local
+POY	Pollachi JN	local
+PPDA	Panchpatia Deoria Halt	local
+PPGT	Princepghat	local
+PPLC	Pimpla Chaure Halt	local
+PPNI	Paras Pani	local
+PPRH	Piprahan	local
+PPS	Pipiliya Road	local
+PPVL	Pirappanvalasai	local
+PQK	Pratap Khata	local
+PQM	Pakkam	local
+PQS	Park Circus	local
+PR	Parel	local
+PRAE	Palla Road	local
+PRDH	Pir Dulhe Shah Halt	local
+PRES	Pattabiram East Depot	local
+PRGL	Perungalathur	local
+PRK	Parkham	local
+PRL	Polur	local
+PRPM	Pt Ram Prasad Bismil	local
+PRSN	Parsa Nagar Halt	local
+PRWA	Parwakhurd Halt	local
+PRWS	Pattabiram West	local
+PSPY	Prasannayana Palli	local
+PSRY	Pashwashraya	local
+PSS	Padsali	local
+PTG	Patna Ghat	local
+PTKC	Pathankot Cantt	local
+PTKR	Patipukur	local
+PTSC	Parichaa Thermal	local
+PUPR	Punnapra	local
+PUW	Patuwas Mehrana	local
+PV	Pallavaram	local
+PWU	Paranur	local
+PYLA	Piyala Block Hut	local
+PYX	Peyanapalli	local
+PZA	Palavanthangal	local
+QBW	Qubarwala	local
+QCAB	Qcab	local
+QGT	Kolaghat	local
+RAM	Ramapuram	local
+RAS	Ras	local
+RCD	Rajchandrapur	local
+REP	Resauli	local
+REPI	Rangepalli	local
+RF	Rafaleshwar	local
+RGA	Rajgoda	local
+RGBD	Ramganga	local
+RGNH	Raghunathgarh	local
+RGX	Raghunathbari	local
+RIKD	Rishikund Halt	local
+RIS	Rishra	local
+RJB	Rajabera	local
+RJJN	Rajajan Halt	local
+RJLA	Rajla	local
+RJMA	Rajomajra	local
+RKDI	Rao Khedi	local
+RLE	Railey English Halt	local
+RLJC	Rljc	local
+RLT	Ralapet	local
+RLW	Repalliwada	local
+RMBG	Ramghat Halt	local
+RMQ	Ramri	local
+RMTR	Remount Road	local
+RPAN	Rangapara North JN	local
+RPM	Royapuram	local
+RRNH	Ramrupnagar	local
+RSC	Ramganga South	local
+RSLR	Rasulpur	local
+RSNA	Rasana Halt	local
+RSRI	Raishree	local
+RSWN	Rameshwar Nagar	local
+RTD	Ratlam A cabin	local
+RTG	Rongtong	local
+RTLM	Ratlam Jn	local
+RTME	Ratlam East cabin	local
+RTWS	Rahatwas	local
+RUT	Ratnal	local
+RVG	Revelganj Ghat Halt	local
+RVH	Raipur R-v Block	local
+RVSN	Rvs Nagar	local
+RWTB	Rowta Bagan	local
+RYM	Ramidi Halt	local
+SABD	Salabad	local
+SADL	Sadla	local
+SADP	Saidapur	local
+SALI	Sali	local
+SANH	Sanha Halt	local
+SATR	Satar Halt	local
+SBBJ	SBB Jogulamba Halt	local
+SBGR	Subhashgram	local
+SBIC	Sabarmati Bridge	local
+SBID	Sabarmati D cabin	local
+SBIS	Sabarmati South	local
+SBJ	Sarai Banjara	local
+SBTA	Sabarmati A cabin	local
+SBTF	Sabarmati F cabin	local
+SBY	Solan Brewery	local
+SDHA	Sidhari Halt	local
+SDLK	Sundlak	local
+SDPN	Sindpan	local
+SDPR	Sardar Patel Road	local
+SDPT	Sedarampattu	local
+SDRA	Sudharana	local
+SDY	Sadhoo Garh	local
+SE	Semla	local
+SEPN	Sepon	local
+SFF	Sunera Pirkheri	local
+SFNR	Indore Saifi Nagar	local
+SGAC	Sogariya	local
+SGBA	Sir Gurudas Banerjee Halt	local
+SGWF	White Field Satellite	local
+SHBA	Sahebtala	local
+SHBC	Shibaichandi	local
+SHEO	Shisho	local
+SHHT	Singhaul Halt	local
+SHLU	Shelu	local
+SHT	Sahari Halt	local
+SHWL	Sahuwala	local
+SIA	Shivlankha	local
+SICY	Shaheed Ishwar Chowdhary Halt	local
+SIE	Siddampalli	local
+SIN	Sion	local
+SISN	Sisauna	local
+SIU	Singur	local
+SIVN	Sivnar Halt	local
+SJGH	Sarai Jagdish	local
+SJPA	Sujalpur	local
+SJPR	Suryapur	local
+SKAR	Sakariya	local
+SKBN	Silakheri	local
+SKDM	Sikroda Mina	local
+SKG	Saktigarh	local
+SKHR	Sikhera Mb Halt	local
+SKPA	Shrikalyanpura	local
+SKQ	Sikandarpur	local
+SKRI	Sikaria	local
+SKSO	Sikosa	local
+SLBN	Salai Banwa	local
+SLBS	Salsala Bari	local
+SLG	Simlagarh	local
+SLGM	Sankaralingapuram	local
+SLME	Salem East	local
+SLRA	Sarala	local
+SLRW	Shelarwadi	local
+SLV	Sandalpur	local
+SMDC	Sawai Madhopur D cabin	local
+SMRL	Samrala	local
+SMTG	Sahid Matangini	local
+SN	Sukna	local
+SNBR	Sonuabari	local
+SNJL	Sanjali	local
+SNPH	Shankapur Halt	local
+SNRA	Sanwara	local
+SNRD	Sandhurst Road	local
+SNRL	Sansartali	local
+SNU	Sangrampur	local
+SNYN	Soniyana	local
+SOJ	Sarojini Nagar	local
+SOLA	Sobhabazar Ahiritola	local
+SOM	Somna	local
+SP	Saidapet	local
+SPBK	Sundarpur Barah Kalan Halt	local
+SPGN	Sripuria Gaon	local
+SPPA	Sherpur Dhipura	local
+SPR	Sonarpur JN	local
+SPRN	Salempur Halt	local
+SQZ	Vanchangiri	local
+SRBR	Surbari	local
+SRDH	Sarsadh	local
+SRKT	Sarkantra	local
+SRRB	Shoranur B cabin	local
+SRX	Sura Nussi	local
+SSP	Santoshpur	local
+SSPH	Satish Samanta	local
+SSRD	Sasan Road	local
+STC	Santacruz	local
+STDB	Sitafalmandi B	local
+STM	St. Thomas Mount	local
+STRM	Sitaramapuram	local
+SUBL	Hubli South	local
+SUF	Sesapani	local
+SUK	Sukhpur	local
+SVDK	Katra	local
+SVF	Sri Venkataperumal	local
+SVK	Sivarakottai	local
+SVTN	Shivathan	local
+SWNR	Sewa Nagar	local
+SWU	Sanaura	local
+SXA	Sagphata	local
+SXC	Sondalia	local
+SXD	Siduli	local
+SXO	Srikona	local
+SXQ	Suaheri	local
+SYAE	Liluah sorting yard	local
+SZE	Sonardih	local
+TAC	Taticherla	local
+TAK	Tarakeswar	local
+TALA	Tala	local
+TALL	Tall Jn	local
+TBMS	Tambaram Sanatorium	local
+TBU	Tharban	local
+TCNR	Tiruchanur	local
+TDH	Tindharia	local
+TELI	Teli	local
+TEP	Tempa	local
+THED	Tauheed	local
+THK	Thakurli	local
+THS	Thansit	local
+THSA	Thanisandra	local
+TJM	Turinjapuram	local
+TKDC	Tuglakabad cabin	local
+TKEC	Tuglakabad East cabin	local
+TKF	Taki Road	local
+TKPY	Turkapalli	local
+TKRA	Tikra	local
+TKRP	Tikauli Rawatpur	local
+TKTB	Thakurbari	local
+TKVR	Teknewas	local
+TKW	Thakurvadi	local
+TLB	Talwa Bazar	local
+TLG	Tollygunge	local
+TLM	Tirusulam	local
+TLO	Talandu	local
+TLTM	Talcher Thermal	local
+TLX	Taldi	local
+TMS	Tumsar Town	local
+TNDN	Thandoni	local
+TNGI	Tungi Halt	local
+TNI	Tandarai	local
+TNJE	Tentulla	local
+TNJR	Taj Nagar	local
+TNL	Tangla	local
+TNLR	Thondaimanallur	local
+TNNH	Tapaswinarayan Nagar Halt	local
+TNO	Tundu	local
+TNX	Taraknagar	local
+TPKR	Tikiapara	local
+TQR	Tektar	local
+TRA	Tangra	local
+TRK	Thirukovilur	local
+TRSR	Tarsai	local
+TRW	Tarsod	local
+TRX	Tirumani	local
+TSG	Sitapur City (thomasganj)	local
+TTN	Tulsitanr	local
+TZH	Takazhi	local
+UAR	Unawa Aithor	local
+UBCN	Ulhas Bridge cabin	local
+UDKN	Udaypur Khurd	local
+UDLE	Andal-East cabin	local
+UDLW	Andal West cabin	local
+UDX	Urdauli	local
+UJNC	Ujn C cabin	local
+UKLR	Ukilerhat	local
+ULG	Udalguri	local
+UPA	Uttarpara	local
+UPM	Urapakkam	local
+URG	Usargaon	local
+URP	Udairampur	local
+URR	Umred	local
+UTN	Uttar Radhanagar	local
+VADR	Warud	local
+VAH	Valluru Halt	local
+VBH	Vishnupur Bathua Halt	local
+VBN	Vallabhnagar	local
+VBU	Vembur	local
+VDK	Vadakannikapuram	local
+VDR	Vandalur	local
+VEM	Vempalli	local
+VGI	Vangani	local
+VJ	Virinchipuram	local
+VJRD	Vajirabad	local
+VK	Vikhroli	local
+VKM	Venkatesapuram	local
+VLDI	Vithalwadi	local
+VLE	Vellalcheruvu H	local
+VLNK	Velankanni	local
+VLP	Vile Parle	local
+VML	Vemulapadu	local
+VMLD	Vemuluripadu	local
+VO	Vellodu	local
+VOC	V. O. C. Nagar	local
+VONB	Vondh	local
+VPDA	Vidyapatidham	local
+VPY	Vyasarpadi	local
+VRDP	Varadapur	local
+VRU	Valiveru	local
+VSPR	Vishnupriya Halt	local
+VSV	Vasadva	local
+VTE	Venkatagiri Kote Halt	local
+VU	Vaghpura	local
+VVH	Vidyavihar	local
+VVKN	Vivekanand Nagar	local
+WADO	Wadoda	local
+WAIR	Wair	local
+WCB	West cabin Gaya	local
+WDHR	Wadharva	local
+WDN	Vadgaon Nila	local
+WG	Wagholi	local
+WGJ	Waris Ganj Halt	local
+WIR	Wair	local
+WKRC	Wankaner City	local
+WSC	Shivarampur	local
+WST	Washermanpet	local
+WWA	Vavaniya	local
+XSK	Sokali	local
+YADA	Yadavalli	local
+YDK	Yedekumeri	local
+YDLP	Yadalapur	local
+YGM	Yadugram Bh	local
+YJUD	Yamunanagar Jagadhari	local
+YNA	Yenor	local
+YNG	Yenugonda	local
+YSPM	Yasantapuru	local

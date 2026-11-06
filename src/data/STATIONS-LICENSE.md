@@ -32,3 +32,25 @@ codes in neither an official list nor Wikidata (datameet-only, 2017), kept for r
 Kept current by `.github/workflows/stations-refresh.yaml` (monthly PR). Codes that are in none of the official
 lists, Wikidata or OpenStreetMap are removed and recorded in `scripts/stations-official/removed.tsv` (183 on
 2026-11-06); OpenStreetMap (ODbL) is used only to check codes, not as a data source.
+
+## Long-distance filter
+
+`stations.json` keeps only stations listed in `scripts/stations-official/long-distance.tsv`. That file is generated from
+[datameet/railways](https://github.com/datameet/railways) `trains.json` + `schedules.json` (CC0, ~2017) by
+`node scripts/build-stations-official.mjs long-distance <trains.json> <schedules.json>`:
+
+- **schedule**: a Passenger or Mail/Express-class train (Pass, SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt) actually stops there.
+  Passing points have equal or missing arrival/departure and don't count.
+- **unverified**: no 2017 schedule at all (newer stations, or lines datameet lacks). Kept until checked.
+- Dropped and recorded in `dropped.tsv` (so rebuilds never re-add them): stations served only by EMU/MEMU/DEMU, MMTS/Kolkata/Delhi suburban or toy trains, and "Metro" stations.
+
+To override, edit rows in `long-distance.tsv` by hand, or run the build with `STATIONS_ALL=1` to skip the filter. New codes from the
+monthly Wikidata refresh are kept and appended to `long-distance.tsv` as `unverified-new`, and the refresh PR lists them with the counts.
+
+### Trains at a Glance 2026 (official) cross-check
+
+`node scripts/build-stations-official.mjs tag <TAG pdf>...` reads the Railway Board's
+[TAG-2026 table PDFs](https://rb.indianrailways.gov.in/show-directorate/view/228) (98 files, downloaded 2026-11-06).
+TAG lists principal Mail/Express stops by name only, with no codes. Where exactly one of our stations has that name,
+an unverified row is marked `tag2026` (10 stations) and a wrongly dropped row is restored (3: Patliputra, Katni South, Dankuni).
+TAG does not list minor halts, so it can't settle most of the unverified stations.
