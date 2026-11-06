@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import s from "./planner.module.css";
-type Action = { label: string; onClick: () => void; disabled?: boolean; danger?: boolean };
+export type Action = { label: string; onClick: () => void; disabled?: boolean; danger?: boolean };
 /** Provides keyboard-accessible secondary and destructive actions behind a single overflow button. */
 export function ActionMenu({ label, actions, disabled = false }: { label: string; actions: Action[]; disabled?: boolean }) {
   const [open, setOpen] = useState(false);

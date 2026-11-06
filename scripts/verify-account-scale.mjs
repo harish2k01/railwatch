@@ -15,7 +15,7 @@ export async function verifyAccountScale({page,api,url}) {
     await page.goto(url+'/journeys');
     const column=page.getByRole('region',{name:'Desktop journey workspace',exact:true});
     await expect(column.getByRole('button',{name:/^Open journey/}).first()).toBeVisible();const firstPage=await column.getByRole('button',{name:/^Open journey/}).count();
-    await column.getByRole('button',{name:'Load more planned',exact:true}).click();
+    await column.getByRole('button',{name:'Load more journeys',exact:true}).click();
     await expect.poll(async()=>column.getByRole('button',{name:/^Open journey/}).count()).toBeGreaterThan(firstPage);
     await page.getByRole('textbox',{name:'Search journeys',exact:true}).fill('ScaleOrigin209');
     await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(1);
