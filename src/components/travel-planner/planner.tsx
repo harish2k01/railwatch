@@ -75,6 +75,8 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   /** Skip or keep a trip that falls on time off (plan 3.1). */
   const skipTimeOff=(j:Journey)=>void commit(skipForTimeOff({...planner,journeys:planner.journeys.some(x=>x.id===j.id)?planner.journeys:[...planner.journeys,j]},j),"Trip skipped.");
   const keepTimeOff=(j:Journey)=>void update({...j,timeOffKept:true}).then(saved=>{if(saved)setNotice("Trip kept.");});
+  // Offline page and push both rely on the service worker; register it on every page, not only where the Install button is shown.
+  useEffect(()=>{if("serviceWorker" in navigator&&window.isSecureContext)void navigator.serviceWorker.register("/sw.js",{scope:"/",updateViaCache:"none"}).catch(()=>undefined);},[]);
   const saveLock=useRef(false); const [busyLabel,setBusyLabel]=useState(""); const [displayName,setDisplayName]=useState(account.name);
   const [remote,setRemote]=useState(JSON.stringify(account.planner)); const [revision,setRevision]=useState(account.revision); const [saving,setSaving]=useState(false);
   const raw=remote;
