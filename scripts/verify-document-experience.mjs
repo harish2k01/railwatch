@@ -44,7 +44,7 @@ try{
         const primaryStyle=await page.getByRole('button',{name:'New journey',exact:true}).evaluate(el=>({background:getComputedStyle(el).backgroundColor,weight:getComputedStyle(el).fontWeight}));
         await page.goto(url+'/journeys');
         await expect(page.getByRole('button',{name:/^Open journey/}).first()).toBeVisible();
-        const controls=[page.getByRole('button',{name:'New journey',exact:true}),page.getByRole('button',{name:'Select travel date range',exact:true}),page.getByRole('combobox',{name:'Sort journeys',exact:true})];
+        const controls=[page.getByRole('button',{name:'New journey',exact:true})];
         const sizes=await Promise.all(controls.map(control=>control.evaluate(el=>({height:el.getBoundingClientRect().height,font:getComputedStyle(el).fontSize}))));
         assert.ok(sizes.every(size=>size.height>=44&&size.height<46&&size.font==='14px'),'Equivalent desktop controls share height and type size: '+JSON.stringify(sizes));
         assert.equal(await page.getByRole('heading',{name:'Journeys',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight),'800');

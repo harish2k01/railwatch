@@ -13,12 +13,12 @@ export async function verifyAccountScale({page,api,url}) {
     const partial=(await (await api('/api/railwatch/workspace?partial=1')).json()).data;
     assert.equal(partial.partial,true);assert.equal(partial.planner.journeys.length,0);
     await page.goto(url+'/journeys');
-    const column=page.getByRole('region',{name:'Planned column',exact:true});
-    await expect(column.getByRole('article')).toHaveCount(30);
-    await column.getByRole('button',{name:'Load more planned',exact:true}).click();
-    await expect(column.getByRole('article')).toHaveCount(60);
+    const column=page.getByRole('region',{name:'Desktop journey workspace',exact:true});
+    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(30);
+    await column.getByRole('button',{name:'Load more journeys',exact:true}).click();
+    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(60);
     await page.getByRole('textbox',{name:'Search journeys',exact:true}).fill('ScaleOrigin209');
-    await expect(column.getByRole('article')).toHaveCount(1);
+    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(1);
     await column.getByRole('button',{name:/Open journey/}).click();await page.getByRole('dialog').getByRole('button',{name:'More journey actions',exact:true}).click();await page.getByRole('dialog').getByRole('menuitem',{name:'Edit journey',exact:true}).click();
     const dialog=page.getByRole('dialog');
     await dialog.locator('details:has(textarea[name=notes])').evaluate(el=>el.open=true);await dialog.getByLabel('Notes',{exact:true}).fill('Edited beyond the first page');
@@ -29,7 +29,7 @@ export async function verifyAccountScale({page,api,url}) {
     for(const journey of journeys)assert.equal(saved.planner.journeys.find(j=>j.id===journey.id)?.notes,journey.id==='scale-ui-209'?'Edited beyond the first page':'Preserve this record');
     for(const journey of baseline.planner.journeys)assert.ok(saved.planner.journeys.some(j=>j.id===journey.id));
     await page.getByRole('textbox',{name:'Search journeys',exact:true}).fill('');
-    await expect(column.getByRole('article')).toHaveCount(30);
+    await expect(column.getByRole('button',{name:/^Open journey/})).toHaveCount(30);
     await page.screenshot({path:'build/railwatch-qa/account-scale-board.png',animations:'disabled'});
     const dashboard=(await (await api('/api/railwatch/views?view=dashboard')).json()).data;
     assert.equal(dashboard.totals.booked,saved.planner.journeys.filter(j=>!j.archivedAt&&j.status==='booked'&&j.date>=today).length);
