@@ -1,0 +1,11 @@
+/* App-styled station suggestions (replaces the native datalist popup). */
+.wrap{position:relative;display:block;min-width:0}
+.wrap>input{width:100%}
+.list{position:absolute;z-index:30;top:calc(100% + 6px);left:0;right:0;margin:0;padding:6px;list-style:none;max-height:280px;overflow:auto;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line);box-shadow:0 12px 32px #0004;animation:pop .14s ease-out}
+.option{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--rw-text)}
+.option b{font-size:14px;font-weight:800}
+.option span{font-size:13px;color:var(--rw-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.option small{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink)}
+.option[aria-selected=true]{background:var(--rw-brand-soft)}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.list{animation:none}}

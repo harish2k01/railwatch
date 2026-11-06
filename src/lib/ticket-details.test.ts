@@ -21,3 +21,17 @@ it("reads nested QR passengers and normalized keys",()=>{expect(parseTicketDetai
 it("reads delimited QR text without including neighboring fields",()=>{expect(parseTicketDetails("PNR:1234567890,TrainNo:12637,TrainName:PANDIAN EXP,From:CHENNAI,To:MADURAI,Class:AC 3 Tier (3A),Coach:B1,SeatNo:42,BerthType:LOWER,DepartureTime:21:30")).toMatchObject({from:"CHENNAI",to:"MADURAI",trainNumber:"12637",trainName:"PANDIAN EXP",travelClass:"3A",coach:"B1",seat:"42",berth:"LOWER",departure:"21:30"});});
 
 it("prefers current allocation over the original booking allocation",()=>{expect(parseTicketDetails("Booking Status: CNF/B1/24/UPPER\nCurrent Status: CNF/B2/56/LOWER")).toMatchObject({coach:"B2",seat:"56",berth:"LOWER"});});
+
+it("reads an OCR-ed IRCTC ERS where labels and values sit in table rows", () => {
+  const text = ["Electronic Reservation Slip (ERS)-Normal User", "Booked From Boarding At To", "MADURAI JN. (MDU) MADURAI JN. (MDU) CHENNAI EGMORE (MS)", "Start Date* 05-Jan-2027 Departure* N.A. Arrival* N.A.", "PNR Train No./Name Class", "9876543210 12632 / NELLAI SF EXP SLEEPER CLASS (SL)", "Quota Distance Booking Date", "GENERAL (GN) 497 KM 06-Nov-2026 08:01:04 HRS", "Passenger Details", "# Name Age Gender Booking Status Current Status", "1. PASSENGER 25 M CNF/S7/27/UPPER CNF /S7/27/UPPER"].join("\n");
+  expect(parseTicketDetails(text)).toMatchObject({ pnr: "9876543210", trainNumber: "12632", trainName: "NELLAI SF EXP", travelClass: "SL", from: "MDU", to: "MS", date: "2027-01-05", coach: "S7", seat: "27", berth: "UPPER", ticketStatus: "CNF" });
+});
+
+it("reads the labels-on-their-own-lines layout, Tatkal quota and chair-car seats", () => {
+  const text = ["PNR", "4123456789", "Train No./Name", "12636/VAIGAI SF EXP", "Class", "AC CHAIR CAR (CC)", "Quota", "TATKAL (TQ)", "Booked From", "MADURAI JN (MDU)", "Start Date* 05-Jan-2027", "To", "CHENNAI EGMORE (MS)", "Booking Status Current Status", "1. A 30 M CNF/D2/45/WS CNF/D2/45/WS"].join("\n");
+  expect(parseTicketDetails(text)).toMatchObject({ pnr: "4123456789", trainNumber: "12636", travelClass: "CC", from: "MDU", to: "MS", date: "2027-01-05", coach: "D2", seat: "45", berth: "WS", bookingType: "tatkal" });
+});
+
+it("reads two-letter coach codes", () => {
+  expect(parseTicketDetails("CNF/HA1/7/LOWER")).toMatchObject({ coach: "HA1", seat: "7", berth: "LOWER" });
+});

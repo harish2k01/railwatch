@@ -290,3 +290,15 @@
 .inlineSection>h2{font-size:20px;font-weight:700;color:var(--rw-text)}
 .inlineSection form,.inlineSection>div:not(:first-child){padding:20px;border-radius:16px;background:var(--rw-surface);border:1px solid var(--rw-line)}
 .inlineSection p,.inlineSection small{color:var(--rw-muted)}
+.modal.dockedModal{width:440px;max-width:440px}.dockedModal .detail{min-width:0;overflow-wrap:anywhere}
+/* New journey: no inner scroll bar when the two-pane form fits; dropdowns can overflow the dialog. */
+.wideModal:has(form[class*=split]){scrollbar-width:thin;scrollbar-color:var(--rw-line) transparent}
+/* Motion: subtle, purposeful, and off for reduced-motion users. */
+@media(prefers-reduced-motion:no-preference){
+  .main>div>section,.main>section,.main [aria-label="Desktop journey workspace"],.main [class*=settingsWithPanel]{animation:pageFade .22s ease-out}
+  .main button,.main a{transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .1s ease,box-shadow .15s ease}
+  .main button:active:not(:disabled){transform:scale(.97)}
+  .dockedModal[open]{animation:panelIn .2s ease-out}
+}
+@keyframes pageFade{from{opacity:0}to{opacity:1}}
+@keyframes panelIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}

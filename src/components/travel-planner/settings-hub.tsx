@@ -7,6 +7,8 @@ import { legacySchedule } from "./forms";
 import { PwaInstall } from "../pwa-install";
 import s from "./settings-hub.module.css";
 
+const SECTIONS = ["profile", "preferences", "reminders", "connections", "offline", "data", "security"];
+
 /** "20:00" style cells for one schedule: reminders the day before, and on the day (+N more). */
 function cells(schedule: ReminderSchedule) {
   const before = schedule.filter(r => r.daysBefore >= 1).sort((a, b) => a.time.localeCompare(b.time)), day = schedule.filter(r => r.daysBefore === 0).sort((a, b) => a.time.localeCompare(b.time));
@@ -21,7 +23,7 @@ function Switch({ on, label, onChange, disabled }: { on: boolean; label: string;
 
 /** Settings (plan 2.8, canvas Settings.dc.html): section nav, Reminders table, where reminders go, offline tickets, data. */
 export function SettingsHub({ personal, admin, planner, saving, saveSettings, backup, restore, exportCalendar, syncOffline }: {
-  personal: React.ReactNode; admin: boolean; planner: Planner; saving: boolean; saveSettings: (next: Planner["settings"]) => void;
+  personal: (section: string) => React.ReactNode; admin: boolean; planner: Planner; saving: boolean; saveSettings: (next: Planner["settings"]) => void;
   backup: () => void; restore: (file: File) => void; exportCalendar: () => void; syncOffline: () => Promise<number>;
 }) {
   const st = planner.settings;
@@ -30,18 +32,22 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
   const nonAc = st.tatkalNonAcSchedule ?? DEFAULT_TATKAL_SCHEDULE.map(r => r.daysBefore ? r : { ...r, time: r.time.replace("09:", "10:") });
   const rows: [string, string, ReminderSchedule][] = [["Normal", "opens 08:00", normal], ["Tatkal AC", "opens 10:00", tatkal], ["Tatkal non-AC", "opens 11:00", nonAc]];
   const quiet = st.quietHours?.enabled ?? false;
-  const nav = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  // One section at a time; #settings-<id> deep links (e.g. from Today) open that section.
+  const [section, setSection] = useState("profile");
+  useEffect(() => { const sync = () => { const id = window.location.hash.replace("#settings-", ""); if (SECTIONS.includes(id)) setSection(id); }; sync(); window.addEventListener("hashchange", sync); return () => window.removeEventListener("hashchange", sync); }, []);
+  const nav = (id: string) => { const key = id.replace("settings-", ""); setSection(key); window.history.replaceState(null, "", "#" + id); };
+  const show = (key: string) => section === key;
   return <div className={s.page}>
     <div className={s.layout}>
       <nav aria-label="Settings sections" className={s.nav}>
         <span className={s.navGroup}>You</span>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-profile")}>Profile</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-preferences")}>Preferences</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-reminders")}>Reminders</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-connections")}>Connections</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-offline")}>Offline tickets</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-data")}>Data and backup</button>
-        <button type="button" className={s.navItem} onClick={() => nav("settings-security")}>Security</button>
+        <button type="button" className={s.navItem} aria-current={section === "profile" ? "page" : undefined} onClick={() => nav("settings-profile")}>Profile</button>
+        <button type="button" className={s.navItem} aria-current={section === "preferences" ? "page" : undefined} onClick={() => nav("settings-preferences")}>Preferences</button>
+        <button type="button" className={s.navItem} aria-current={section === "reminders" ? "page" : undefined} onClick={() => nav("settings-reminders")}>Reminders</button>
+        <button type="button" className={s.navItem} aria-current={section === "connections" ? "page" : undefined} onClick={() => nav("settings-connections")}>Connections</button>
+        <button type="button" className={s.navItem} aria-current={section === "offline" ? "page" : undefined} onClick={() => nav("settings-offline")}>Offline tickets</button>
+        <button type="button" className={s.navItem} aria-current={section === "data" ? "page" : undefined} onClick={() => nav("settings-data")}>Data and backup</button>
+        <button type="button" className={s.navItem} aria-current={section === "security" ? "page" : undefined} onClick={() => nav("settings-security")}>Security</button>
         {admin && <><span className={s.navGroup}>Workspace · admin</span>
           <Link className={s.navItem} href="/settings/workspace">Booking rules</Link>
           <Link className={s.navItem} href="/settings/workspace/members">Members</Link>
@@ -49,8 +55,8 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
           <Link className={s.navItem} href="/settings/workspace/health">System health</Link></>}
       </nav>
       <div className={s.content}>
-        {personal}
-        <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
+        {["profile", "preferences", "connections", "security"].includes(section) && personal(section)}
+        {show("reminders") && <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
           <h2 id="settings-reminders-h">Reminders</h2>
           <span className={s.muted}>Normal booking opens {st.bookingWindowDays} days before travel (set by your admin). Times are IST.</span>
           <DeliveryStatus planner={planner} go={() => nav("settings-connections")} />
@@ -60,9 +66,9 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
             <tr><td><strong>Chart check</strong> <span className={s.pill}>New</span></td><td colSpan={2}>4 hours before departure, for RAC and waitlist tickets</td><td /></tr>
           </tbody></table></div>
           <div className={s.card}><div className={s.toggleRow}><span><strong>Quiet hours</strong><span className={s.muted}>Hold non-urgent reminders overnight{quiet && st.quietHours ? ` (${st.quietHours.start}–${st.quietHours.end})` : ""}</span></span><Switch on={quiet} label="Quiet hours" disabled={saving} onChange={on => saveSettings({ ...st, quietHours: { start: st.quietHours?.start ?? "22:00", end: st.quietHours?.end ?? "07:00", enabled: on } })} /></div></div>
-        </section>
-        <OfflineTickets sync={syncOffline} />
-        <section id="settings-data" aria-labelledby="settings-data-h" className={s.section}>
+        </section>}
+        {show("offline") && <OfflineTickets sync={syncOffline} />}
+        {show("data") && <section id="settings-data" aria-labelledby="settings-data-h" className={s.section}>
           <h2 id="settings-data-h">Data and backup</h2>
           <div className={s.card}>
             <div className={s.toggleRow}><span><strong>Download backup</strong><span className={s.muted}>Everything in your workspace as one file</span></span><button type="button" className={s.btn} onClick={backup}>Download</button></div>
@@ -70,7 +76,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
             <div className={s.toggleRow}><span><strong>Export calendar</strong><span className={s.muted}>An .ics file of your journeys and booking dates</span></span><button type="button" className={s.btn} onClick={exportCalendar}>Export</button></div>
             <div className={s.toggleRow}><span><strong>Install the app</strong><span className={s.muted}>Open RailWatch from your home screen or dock</span></span><PwaInstall /></div>
           </div>
-        </section>
+        </section>}
       </div>
     </div>
   </div>;

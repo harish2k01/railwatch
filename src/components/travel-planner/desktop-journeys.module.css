@@ -79,3 +79,16 @@
 .board .urgent{border-color:color-mix(in srgb,var(--rw-attention) 50%,transparent)}
 @media(max-width:1100px){.board.board{flex-wrap:wrap}.board .column{flex-basis:calc(50% - 10px)}}
 .board .cardOpen{width:auto;flex:1 1 auto;min-width:0}.board .cardFlag{max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.board .card{min-width:0;overflow:hidden}
+/* Two-line cards: summary line, then the detail you'd open the journey for. */
+.board .cardOpen{flex-direction:column;align-items:stretch;gap:3px;padding:9px 10px;min-height:52px}
+.cardLine{display:flex;align-items:center;gap:8px;min-width:0}
+.cardDetail{font-size:12px;color:var(--rw-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:84px}
+@media(max-width:1300px){.cardDetail{padding-left:0}}
+.headActions{display:flex;align-items:center;gap:10px;margin-left:auto}.toolbar .tabs{margin-left:auto}
+@media(prefers-reduced-motion:no-preference){
+  .board .card{transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+  .board .card:hover{transform:translateY(-1px);box-shadow:0 4px 12px #0002}
+  .board .cards>article{animation:cardIn .2s ease-out both}
+  .board .dropTarget{transition:background-color .15s ease}
+}
+@keyframes cardIn{from{opacity:0}to{opacity:1}}
