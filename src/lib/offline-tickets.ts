@@ -7,8 +7,9 @@
  */
 const DB = "railwatch-offline", STORE = "tickets", KEYS = "keys", FLAG = "railwatch:offline-tickets";
 
-type Entry = { id: string; journeyId: string; date: string; label: string; name: string; iv: Uint8Array; data: ArrayBuffer };
-type Source = { id: string; date: string; from: string; to: string; status: string; attachments?: { id: string; name: string; type: string }[] };
+type Details = { pnr?: string; train?: string; coach?: string; berth?: string; departure?: string };
+type Entry = { id: string; journeyId: string; date: string; label: string; name: string; iv: Uint8Array; data: ArrayBuffer } & Details;
+type Source = { id: string; date: string; from: string; to: string; status: string; pnr?: string; trainNumber?: string; train?: string; coach?: string; seat?: string; berth?: string; departure?: string; departureConfirmed?: boolean; attachments?: { id: string; name: string; type: string }[] };
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -39,7 +40,7 @@ export async function wipeOffline() { try { indexedDB.deleteDatabase(DB); } catc
 
 /** Booked journeys travelling between today and 72 hours from now (IST dates), with their PDFs. */
 export function offlineTargets(journeys: Source[], today: string, until: string) {
-  return journeys.filter(j => j.status === "booked" && j.date >= today && j.date <= until).flatMap(j => (j.attachments ?? []).filter(a => a.type === "application/pdf").map(a => ({ id: a.id, name: a.name, journeyId: j.id, date: j.date, label: `${j.from} → ${j.to}` })));
+  return journeys.filter(j => j.status === "booked" && j.date >= today && j.date <= until).flatMap(j => (j.attachments ?? []).filter(a => a.type === "application/pdf").map(a => ({ id: a.id, name: a.name, journeyId: j.id, date: j.date, label: `${j.from} → ${j.to}`, pnr: j.pnr || "", train: j.trainNumber || j.train || "", coach: j.coach || "", berth: [j.seat, j.berth].filter(Boolean).join(" "), departure: j.departureConfirmed && j.departure ? j.departure : "" })));
 }
 
 /** Stores missing target PDFs, removes entries that are no longer targets (travelled or unbooked). */

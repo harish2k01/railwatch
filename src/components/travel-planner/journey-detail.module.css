@@ -48,5 +48,26 @@
 .choose{margin-top:4px;display:inline-flex;align-items:center;min-height:44px;padding:0 18px}
 .grid{gap:12px}
 .grid div{padding:12px 14px;background:var(--rw-ground)}
+
+/* Phones (canvas JourneyMobile.dc.html): stage card with notes on the right, status pill, sticky Attach. */
+.pill{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--rw-open-bg);color:var(--rw-open-ink)}
+.pill[data-status=booked],.pill[data-status=completed]{background:var(--rw-booked-bg);color:var(--rw-booked-ink)}
+.pill[data-status=cancellation_needed]{background:var(--rw-attention-bg);color:var(--rw-attention-ink)}
+.pill[data-status=cancelled],.pill[data-status=skipped]{background:var(--rw-cancel-bg);color:var(--rw-cancel-ink)}
+@media(max-width:768px){
+  .detail{gap:22px}
+  .route{font-size:30px;margin:0}
+  .stages{padding:16px;border-radius:16px;background:var(--rw-surface);border:1px solid var(--rw-line);gap:14px}
+  .stages li{align-items:center;gap:12px;padding-bottom:0}
+  .dot{width:20px;height:20px}
+  .dot svg{display:none}
+  .stages li[data-state=done] .dot{background:var(--rw-booked-bg)}
+  .stages li[data-state=current] .dot{border:0;background:var(--rw-booked)}
+  .stageText{flex:1;display:flex;justify-content:space-between;gap:12px}
+  .grid div{background:var(--rw-surface)}
+  .section h3{font-size:16px}
+  .sticky{margin:0 -16px;padding:12px 16px 20px;background:var(--rw-sidebar);border-top:1px solid var(--rw-line)}
+  .sticky button{min-height:50px;font-size:15px}
+}
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
 .head{padding-right:64px;scroll-margin-top:88px}

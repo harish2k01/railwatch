@@ -26,3 +26,13 @@
 .rule{border:0;border-top:1px solid var(--rw-line);margin:6px 0}
 .didnt{font-size:14px}
 .retry{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Phones (canvas BookingDayMobile.dc.html): centred countdown, checklist card, IRCTC first. */
+@media(max-width:768px){
+  .hero{flex-direction:column-reverse;align-items:center;text-align:center;gap:8px;padding:22px}
+  .heroText,.timer{flex:none;justify-items:center}
+  .timer small{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .timer b{font-size:64px}
+  .hero h2{font-size:18px;font-weight:700;letter-spacing:0}
+  .irctc{width:100%;border-radius:12px}
+}

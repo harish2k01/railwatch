@@ -1,7 +1,7 @@
 "use client";
 import {useSyncExternalStore, type ReactNode} from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Files, House, LayoutList, MoreHorizontal, Plus } from "lucide-react";
+import { CalendarDays, Files, House, LayoutList, MoreHorizontal, Plus } from "lucide-react";
 import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment} from "@/lib/travel-planner";
 import {stationLabel} from "@/lib/journey-display";
 import type {DashboardView} from "@/lib/planning-views";
@@ -20,7 +20,12 @@ export function MobileNavigation({tab,more,openMore,navigate,disabled=false}:{ta
 /** Presents one compact journey with a date tile and accessible whole-row action. */
 export function MobileJourneyRow({journey:j,open,label,accessibleLabel,booking=false}:{journey:Journey;open:()=>void;label?:string;accessibleLabel?:string;booking?:boolean}){
   const date=booking?bookingDay(j):j.date;
-  return <button className={m.row} onClick={open} aria-label={`${accessibleLabel??`Open journey ${j.from} to ${j.to}`} on ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`}><span className={m.date}><b>{formatDay(date,{day:"2-digit"})}</b><small>{formatDay(date,{month:"short"})}</small></span><span className={m.rowText}><strong>{stationLabel(j.from)} <ArrowRight size={14}/> {stationLabel(j.to)}</strong><small>{label??(booking?`Booking opens · Travel ${formatDay(j.date)}`:`${formatDay(j.date,{weekday:"short"})} · ${formatDay(j.date,{year:"numeric"})}${j.departureConfirmed&&j.departure?` · ${j.departure} IST`:""}`)}</small></span><ArrowRight size={17}/></button>;
+  const steps=[true,["booked","completed","cancellation_needed"].includes(j.status),["booked","completed","cancellation_needed"].includes(j.status),Boolean(j.attachments?.length)];
+  const noTicket=j.status==="booked"&&!j.attachments?.length;
+  const state=noTicket?"No ticket":j.status==="needs_booking"?"Planned":STATUS[j.status];
+  const tone=noTicket||j.status==="cancellation_needed"?"warn":j.status==="needs_booking"?"info":j.status==="booked"?"ok":"muted";
+  const sub=label===state?"":label??(booking?`Booking opens · Travel ${formatDay(j.date)}`:j.departureConfirmed&&j.departure?`${formatDay(j.date,{weekday:"short"})} · ${j.departure} IST`:"");
+  return <button className={m.row} onClick={open} aria-label={`${accessibleLabel??`Open journey ${j.from} to ${j.to}`} on ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`}><span className={m.date}><b>{formatDay(date,{day:"2-digit"})}</b><small>{(booking?formatDay(date,{month:"short"}):formatDay(date,{weekday:"short"})).toUpperCase()}</small></span><span className={m.rowText}><strong>{j.from} → {j.to}</strong>{sub?<small>{sub}</small>:<span className={m.bars} aria-hidden="true">{steps.map((on,k)=><i key={k} data-on={on||undefined}/>)}</span>}</span><span className={m.rowState} data-tone={tone}>{state}</span></button>;
 }
 /** Today on phones (canvas TodayMobile.dc.html): header, next trip, Do next, this week. */
 export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data:DashboardView;open:(j:Journey)=>void;view:(file:TicketAttachment)=>void;plan:()=>void;go:(status:string)=>void;skip?:(j:Journey)=>void;keep?:(j:Journey)=>void;today?:string;attach?:(j:Journey)=>void}){
@@ -48,4 +53,19 @@ export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data
 }
 export function MobileScreen({title,children,action}:{title:string;children:ReactNode;action?:ReactNode}){return <div className={m.screen}><div className={m.heading}><h1>{title}</h1>{action}</div>{children}</div>;}
 /** Shows a seven-day selector around the chosen date, including exact event counts. */
-export function MobileWeek({date,choose,count}:{date:string;choose:(date:string)=>void;count:(date:string)=>number}){return <div className={m.week} aria-label="Calendar week">{Array.from({length:7},(_,i)=>addDays(date,i-3)).map(value=><button key={value} aria-label={`View ${value}, ${count(value)} events`} aria-pressed={value===date} onClick={()=>choose(value)}><small>{formatDay(value,{weekday:"short"})}</small><b>{Number(value.slice(-2))}</b><span aria-hidden="true">{count(value)>0?"•":" "}</span></button>)}</div>;}
+export function MobileWeek({date,choose,count}:{date:string;choose:(date:string)=>void;count:(date:string)=>number}){return <div className={m.week} aria-label="Calendar week">{Array.from({length:7},(_,i)=>addDays(date,i-3)).map(value=><button key={value} aria-label={`View ${value}, ${count(value)} events`} aria-pressed={value===date} onClick={()=>choose(value)}><small>{formatDay(value,{weekday:"short"}).toUpperCase()}</small><b>{Number(value.slice(-2))}</b><span aria-hidden="true" data-on={count(value)>0||undefined}/></button>)}</div>;}
+/** More on phones (canvas MoreMobile.dc.html): account header, Plan, Settings and Workspace groups, Sign out. */
+export function MobileMore({name,admin,missingTickets,openSettings,theme,signOut,close}:{name:string;admin:boolean;missingTickets:number;openSettings:()=>void;theme:{label:string;toggle:()=>void};signOut:()=>void;close:()=>void}){
+  const item=(href:string,label:string,value?:ReactNode,last?:boolean)=><Link className={m.moreItem} data-last={last||undefined} href={href} onClick={close}>{label}{value!==undefined&&<span className={m.moreValue}>{value}</span>}</Link>;
+  return <div className={m.more}>
+    <button type="button" className={m.moreHead} aria-label="User settings" onClick={openSettings}><span className={m.avatar} aria-hidden="true">{(name.trim()[0]??"?").toUpperCase()}</span><span><h1>{name}</h1><small>{admin?"Admin · ":""}Profile and security</small></span></button>
+    <nav aria-label="More destinations">
+      <h2 className={m.moreGroup}>Plan</h2>
+      <div className={m.moreCard}>{item("/time-off","Time off")}{item("/routines","Routines")}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined,true)}</div>
+      <h2 className={m.moreGroup}>Settings</h2>
+      <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders")}{item("/settings#settings-channels","Channels")}{item("/settings#settings-offline","Offline tickets")}{item("/settings#settings-data","Data and backup")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
+      {admin&&<><h2 className={m.moreGroup}>Workspace</h2><div className={m.moreCard}>{item("/settings/workspace","Members and booking rules")}{item("/settings/workspace/health","System health",undefined,true)}</div></>}
+    </nav>
+    <button type="button" className={m.signOut} onClick={signOut}>Sign out</button>
+  </div>;
+}
