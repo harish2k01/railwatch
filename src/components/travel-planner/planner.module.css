@@ -292,7 +292,7 @@
 .inlineSection p,.inlineSection small{color:var(--rw-muted)}
 .modal.dockedModal{width:440px;max-width:440px}.dockedModal .detail{min-width:0;overflow-wrap:anywhere}
 /* New journey: no inner scroll bar when the two-pane form fits; dropdowns can overflow the dialog. */
-@media(min-width:1001px) and (min-height:720px){.wideModal:has(form[class*=split]){overflow:visible;max-height:none}.wideModal:has(form[class*=split]) form{overflow:visible}}
+.wideModal:has(form[class*=split]){scrollbar-width:thin;scrollbar-color:var(--rw-line) transparent}
 /* Motion: subtle, purposeful, and off for reduced-motion users. */
 @media(prefers-reduced-motion:no-preference){
   .main>div>section,.main>section,.main [aria-label="Desktop journey workspace"],.main [class*=settingsWithPanel]{animation:pageFade .22s ease-out}
