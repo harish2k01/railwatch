@@ -8,6 +8,7 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
 
 const DIR = "scripts/stations-official";
+const NOT_ZONE = new Set(["possibly-retired.tsv", "removed.tsv", "long-distance.tsv"]);
 const KEEP_UPPER = new Set(["JN", "CANT", "RS", "HLT", "PH", "MG", "SG", "GT", "KSR"]);
 const title = (name) => name.trim().replace(/\.$/, "").replace(/\s+/g, " ").toLowerCase().split(" ")
   .map((w) => KEEP_UPPER.has(w.toUpperCase()) ? w.toUpperCase() : w.replace(/(^|[-(.])([a-z])/g, (_, p, c) => p + c.toUpperCase())).join(" ");
@@ -60,7 +61,7 @@ async function build(wikidataFile) {
   const stations = new Map(JSON.parse(await readFile("src/data/stations.json", "utf8")));
   const official = new Set();
   let renamed = 0;
-  for (const f of (await readdir(DIR)).filter((f) => f.endsWith(".tsv") && f !== "possibly-retired.tsv" && f !== "removed.tsv").sort()) {
+  for (const f of (await readdir(DIR)).filter((f) => f.endsWith(".tsv") && !NOT_ZONE.has(f)).sort()) {
     let matched = 0;
     for (const line of (await readFile(`${DIR}/${f}`, "utf8")).split("\n").filter(Boolean)) {
       const [code, name] = line.split("\t");
@@ -77,6 +78,9 @@ async function build(wikidataFile) {
   }
   // Confirmed retired/invalid codes (removed.tsv) never come back on a rebuild.
   for (const line of (await readFile(`${DIR}/removed.tsv`, "utf8").catch(() => "")).split("\n")) { const code = line.split("\t")[0]; if (code && !code.startsWith("#")) stations.delete(code); }
+  // Long-distance filter: keep only codes in long-distance.tsv. STATIONS_ALL=1 skips it.
+  const keep = process.env.STATIONS_ALL ? null : await readFile(`${DIR}/long-distance.tsv`, "utf8").then((t) => new Set(t.split("\n").map((l) => l.split("\t")[0]).filter((c) => c && !c.startsWith("#"))), () => null);
+  if (keep) for (const code of stations.keys()) if (!keep.has(code)) stations.delete(code);
   const rows = [...stations].sort(([a], [b]) => a.localeCompare(b));
   await writeFile("src/data/stations.json", JSON.stringify(rows) + "\n");
   const retired = rows.filter(([c]) => !official.has(c) && !wikidata.has(c));
@@ -84,7 +88,36 @@ async function build(wikidataFile) {
   console.log(`${rows.length} stations, ${renamed} official renames, ${retired.length} possibly retired`);
 }
 
+/**
+ * Writes long-distance.tsv (code, name, basis) from datameet/railways trains.json + schedules.json (CC0, ~2017).
+ * Kept: any station where a Mail/Express-class train stops (arrival differs from departure, or it starts/ends there) (SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt).
+ * Dropped: stations served only by Passenger (median run 117 km), EMU/MEMU/DEMU or suburban (Hyd/Klkt/Del) trains,
+ * toy trains, and stations with no 2017 schedule whose name says Metro. Stations with no 2017 schedule at all
+ * (newer than the data) are kept as "unverified" so new lines aren't lost. Hand edits: add/remove rows.
+ */
+async function longDistance(trainsFile, schedulesFile) {
+  const LONG = new Set(["SF", "Exp", "Mail", "Raj", "Shtb", "JShtb", "GR", "SKr", "Drnt"]);
+  const type = new Map(JSON.parse(await readFile(trainsFile, "utf8")).features.map((f) => [f.properties.number, f.properties.type]));
+  const served = new Set(), long = new Set();
+  for (const r of JSON.parse(await readFile(schedulesFile, "utf8"))) {
+    served.add(r.station_code);
+    // schedules.json also lists stations a train runs through: equal arrival/departure means no stop.
+    const stops = (r.arrival === "None") !== (r.departure === "None") || (r.arrival !== "None" && r.arrival !== r.departure);
+    if (stops && LONG.has(type.get(r.train_number))) long.add(r.station_code);
+  }
+  const stations = JSON.parse(await readFile("src/data/stations.json", "utf8"));
+  const out = [], counts = { schedule: 0, unverified: 0, local: 0, metro: 0 };
+  for (const [code, name] of stations) {
+    const basis = long.has(code) ? "schedule" : served.has(code) ? "local" : /metro/i.test(name) ? "metro" : "unverified";
+    counts[basis]++;
+    if (basis === "schedule" || basis === "unverified") out.push([code, name, basis]);
+  }
+  await writeFile(`${DIR}/long-distance.tsv`, "# code\tname\tbasis (schedule = Mail/Express stop in datameet 2017; unverified = no 2017 schedule)\n" + out.map((r) => r.join("\t")).join("\n") + "\n");
+  console.log(counts);
+}
+
 const [cmd, a, b] = process.argv.slice(2);
-if (cmd === "extract") await extract(a, b);
+if (cmd === "long-distance") await longDistance(a, b);
+else if (cmd === "extract") await extract(a, b);
 else if (cmd === "build") await build(a);
-else console.error("usage: extract <zone> <file.pdf> | build [wikidata.json]");
+else console.error("usage: extract <zone> <file.pdf> | long-distance <trains.json> <schedules.json> | build [wikidata.json]");

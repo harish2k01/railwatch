@@ -32,3 +32,17 @@ codes in neither an official list nor Wikidata (datameet-only, 2017), kept for r
 Kept current by `.github/workflows/stations-refresh.yaml` (monthly PR). Codes that are in none of the official
 lists, Wikidata or OpenStreetMap are removed and recorded in `scripts/stations-official/removed.tsv` (183 on
 2026-11-06); OpenStreetMap (ODbL) is used only to check codes, not as a data source.
+
+## Long-distance filter
+
+`stations.json` keeps only stations listed in `scripts/stations-official/long-distance.tsv`. That file is generated from
+[datameet/railways](https://github.com/datameet/railways) `trains.json` + `schedules.json` (CC0, ~2017) by
+`node scripts/build-stations-official.mjs long-distance <trains.json> <schedules.json>`:
+
+- **schedule**: a Mail/Express-class train (SF, Exp, Mail, Raj, Shtb, JShtb, GR, SKr, Drnt) actually stops there.
+  Passing points have equal or missing arrival/departure and don't count.
+- **unverified**: no 2017 schedule at all (newer stations, or lines datameet lacks). Kept until checked.
+- Dropped: stations served only by Passenger, EMU/MEMU/DEMU, MMTS/Kolkata/Delhi suburban or toy trains, and "Metro" stations.
+
+To override, edit rows in `long-distance.tsv` by hand, or run the build with `STATIONS_ALL=1` to skip the filter. New codes from the
+monthly Wikidata refresh stay out until they are added to `long-distance.tsv`.

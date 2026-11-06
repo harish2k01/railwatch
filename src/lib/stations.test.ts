@@ -20,7 +20,10 @@ describe("searchStations", () => {
   });
   it("ships a usable directory", () => {
     const codes = new Map((stations as unknown as Station[]).map((s) => [s[0], s[1]]));
-    expect(codes.size).toBeGreaterThan(8000);
+    // Long-distance stops only (scripts/stations-official/long-distance.tsv), so well under the ~9.7k full list.
+    expect(codes.size).toBeGreaterThan(4000);
+    for (const code of ["MS", "MAS", "SBC", "CBE", "TPJ", "NDLS"]) expect(codes.has(code)).toBe(true);
+    expect(codes.has("MKK")).toBe(false); // Kodambakkam: Chennai suburban only
     expect(codes.get("MDU")).toBe("Madurai JN");
   });
 });
