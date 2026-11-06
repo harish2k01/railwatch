@@ -1,5 +1,6 @@
 "use client";
 import { ADMIN_SECTIONS } from "./settings-nav";
+import { settingsNavigationAllowed } from "./settings-guard";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { offlineCount, offlineEnabled, offlineSupported, setOfflineEnabled } from "@/lib/offline-tickets";
@@ -36,7 +37,8 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
   // One section at a time; #settings-<id> deep links (e.g. from Today) open that section.
   const [section, setSection] = useState("profile");
   useEffect(() => { const sync = () => { const id = window.location.hash.replace("#settings-", ""); if (SECTIONS.includes(id)) setSection(id); }; sync(); window.addEventListener("hashchange", sync); return () => window.removeEventListener("hashchange", sync); }, []);
-  const nav = (id: string) => { const key = id.replace("settings-", ""); setSection(key); window.history.replaceState(null, "", "#" + id); };
+  // Switching sections unmounts the open form, so unsaved edits get the same in-app discard prompt.
+  const nav = (id: string) => { const go = () => { const key = id.replace("settings-", ""); setSection(key); window.history.replaceState(null, "", "#" + id); }; if (settingsNavigationAllowed(go)) go(); };
   const show = (key: string) => section === key;
   return <div className={s.page}>
     <div className={s.layout}>
