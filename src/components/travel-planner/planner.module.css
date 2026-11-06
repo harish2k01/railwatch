@@ -282,3 +282,11 @@
 .profileOnly [aria-label="Open profile menu"]{display:none}
 /* The docked header floats over the content; only its close button takes clicks. */
 .dockedModal .modalHead{pointer-events:none}.dockedModal .modalHead button{pointer-events:auto}
+/* The docked settings panel is a non-modal dialog mounted before the page; keep it above page controls. */
+.profileDocked,.dockedModal{z-index:40}
+/* Personal settings rendered in place on the Settings page (one home for settings). */
+.inlineSettings{display:grid;gap:28px}
+.inlineSection.inlineSection{display:grid;gap:14px;padding:0;scroll-margin-top:24px;overflow:visible;max-height:none}
+.inlineSection>h2{font-size:20px;font-weight:700;color:var(--rw-text)}
+.inlineSection form,.inlineSection>div:not(:first-child){padding:20px;border-radius:16px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+.inlineSection p,.inlineSection small{color:var(--rw-muted)}

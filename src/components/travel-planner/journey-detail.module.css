@@ -71,3 +71,4 @@
 }
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
 .head{padding-right:64px;scroll-margin-top:88px}
+.drop[data-dragging]{border-color:var(--rw-brand);background:var(--rw-brand-soft)}

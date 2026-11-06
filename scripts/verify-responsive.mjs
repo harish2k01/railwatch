@@ -152,7 +152,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   }
   await page.setViewportSize({width:1482,height:876});
   const state=(await(await api('/api/railwatch/workspace')).json()).data;state.planner.settings.theme='light';assert.equal((await api('/api/railwatch/workspace','put',state)).status(),200);
-  await page.goto(url+'/journeys');await page.getByRole('button',{name:'Board',exact:true}).click();await page.getByRole('region',{name:'Booked column',exact:true}).getByRole('button',{name:/Open journey/}).first().click();
+  await page.goto(url+'/journeys');await page.getByRole('region',{name:'Desktop journey workspace',exact:true}).waitFor();if(!(await page.getByRole('button',{name:/Open journey/}).first().isVisible().catch(()=>false)))await page.locator('details summary').first().click();await page.getByRole('button',{name:/Open journey/}).first().click();
   const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:'More journey actions',exact:true}).click();await dialog.getByRole('menuitem',{name:'Edit journey',exact:true}).click();await expect(dialog.getByLabel('From',{exact:true})).toBeVisible();
   assert.ok((await dialog.boundingBox()).width>1000,'Desktop journey opens directly in editor');
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).overflow),'hidden','Dialog owns scrolling');
