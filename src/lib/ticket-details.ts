@@ -50,6 +50,15 @@ export function parseTicketDetails(raw: string): TicketDetails {
   if(current){details.coach=current[1];details.seat=current[2];details.berth=current[3];}
   const passengerRow=text.match(/(?:Booking Status|Current Status)[^\n]*\n[^\n]*?\b([A-Z]{1,2}\d{1,2})\s+(\d{1,3})\s+(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS)\b/i);
   if(passengerRow){details.coach??=passengerRow[1];details.seat??=passengerRow[2];details.berth??=passengerRow[3];}
+  // Every passenger row ("1. NAME 25 M CNF/S7/27/UPPER CNF/S7/27/UPPER"): use each row's current (last) allocation.
+  const seatPattern = /(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/gi;
+  const seats = [...text.matchAll(/^\s*\d+\.\s[^\n]*$/gm)].map(row => [...row[0].matchAll(seatPattern)].pop()).filter((m): m is RegExpExecArray => Boolean(m));
+  if (seats.length > 1) {
+    const coaches = [...new Set(seats.map(m => m[1].toUpperCase()))];
+    details.coach = coaches.join(", ").slice(0, 20);
+    details.seat = seats.map(m => m[2]).join(", ").slice(0, 30);
+    details.berth = seats.map(m => m[3].toUpperCase().replace(/\s+/g, " ")).join(", ").slice(0, 30);
+  }
   details.departure??=text.match(/(?:Scheduled Departure|Departure(?: Time)?|Boarding Time)\s*\*?\s*[:\-]?\s*(?:\d{2}[-/]\w{2,9}[-/]\d{4}\s+)?((?:[01]?\d|2[0-3]):[0-5]\d)(?:\s*(AM|PM))?/i)?.slice(1).filter(Boolean).join(" ");
   if(details.departure){const time=details.departure.match(/^(\d{1,2}):([0-5]\d)(?:\s*(AM|PM))?$/i);if(time){let hour=Number(time[1]);if(time[3]&&hour>=1&&hour<=12)hour=hour%12+(time[3].toUpperCase()==="PM"?12:0);details.departure=String(hour).padStart(2,"0")+":"+time[2];}}
   details.date??=text.match(/\bStart Date\s*\*?\s*[:\-]?\s*(\d{2}-[A-Za-z]{3}-\d{4})/i)?.[1];
