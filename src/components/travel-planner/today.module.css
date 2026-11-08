@@ -24,6 +24,9 @@
 .when b{font-size:18px;font-weight:700}
 .nudge{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--rw-attention-bg);border:1px solid var(--rw-attention);color:var(--rw-attention-ink);font-size:14px}
 .nudge>span{flex:1 1 220px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px 20px;margin:0;padding:14px 16px;border-radius:12px;background:var(--rw-surface-2)}
+.facts dt{font-size:12px;color:var(--rw-muted)}
+.facts dd{margin:2px 0 0;font-size:14px;font-weight:600;color:var(--rw-text);overflow-wrap:anywhere}
 .actions{display:flex;flex-wrap:wrap;gap:10px}
 .actions button{display:inline-flex;align-items:center;gap:8px}
 .list{border:1px solid var(--rw-line);border-radius:16px;overflow:hidden;background:var(--rw-surface)}

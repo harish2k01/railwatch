@@ -67,3 +67,7 @@ describe("ERS QR payload", () => {
   it("reads line-separated fields", () => expect(parseTicketDetails(qr)).toMatchObject(want));
   it("reads comma-separated fields", () => expect(parseTicketDetails(qr.replace(/\n/g, ","))).toMatchObject(want));
 });
+
+it("reads the ERS arrival time and day", () => {
+  expect(parseTicketDetails("Start Date* 17-Nov-2026 Departure* 23:10 17-Nov-2026 Arrival* 07:10 18-Nov-2026")).toMatchObject({ departure: "23:10", arrival: "07:10", arrivalDate: "2026-11-18" });
+});

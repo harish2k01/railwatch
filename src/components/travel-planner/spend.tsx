@@ -4,6 +4,7 @@ import { formatDay, type Journey, type Planner } from "@/lib/travel-planner";
 import { apiRequest } from "@/lib/client-api";
 import { Spinner } from "./loader";
 import { extractTicketFile, getTicketFile } from "@/lib/ticket-files";
+import { fareAddsUp } from "@/lib/ticket-fare";
 
 type SpendJourney = Journey & { pdf?: { id: string; name: string }[] };
 import s from "./spend.module.css";
@@ -23,22 +24,22 @@ export function SpendView({ today, attachTickets }: { planner?: Planner; today: 
   const [error, setError] = useState("");
   useEffect(() => { let live = true; apiRequest<{ journeys: SpendJourney[] }>("/api/railwatch/spend", { cache: "no-store" }).then(async v => {
       if (!live) return; setAll(v.journeys);
-      // Trips attached before fares were saved: read the stored PDF on this device and save just the fare.
-      const todo = v.journeys.filter(j => !j.fare?.total && j.pdf?.length);
-      const fares: { id: string; fare: NonNullable<Journey["fare"]> }[] = [];
+      // Trips attached before fares (or arrival times) were saved, or whose saved fare doesn't add up (an older misread): read the stored PDF on this device and save just those.
+      const todo = v.journeys.filter(j => j.pdf?.length && (!j.fare?.total || (j.fare.ticket !== undefined && !fareAddsUp(j.fare)) || (!j.arrival && j.date >= today)));
+      const fares: { id: string; fare?: NonNullable<Journey["fare"]>; arrival?: string; arrivalDate?: string }[] = [];
       for (const [i, j] of todo.entries()) {
         if (!live) return; setReading(`Reading fares from attached tickets… ${i + 1} of ${todo.length}`);
-        for (const pdf of j.pdf!) { try { const blob = await getTicketFile(pdf.id); if (!blob) continue; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; if (d.fare?.total) { fares.push({ id: j.id, fare: d.fare }); break; } } catch { /* leave this trip without a fare */ } }
+        for (const pdf of j.pdf!) { try { const blob = await getTicketFile(pdf.id); if (!blob) continue; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; const fare = d.fare?.total && (!j.fare?.total || fareAddsUp(d.fare)) ? d.fare : undefined; if (fare || d.arrival) { fares.push({ id: j.id, fare, arrival: d.arrival, arrivalDate: d.arrivalDate }); break; } } catch { /* leave this trip without a fare */ } }
       }
       if (live) setReading("");
-      if (fares.length && live) { await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares }) }).catch(() => undefined); const byId = new Map(fares.map(f => [f.id, f.fare])); if (live) setAll(list => list?.map(j => byId.has(j.id) ? { ...j, fare: byId.get(j.id) } : j)); }
-    }).catch(e => { if (live) setError(e instanceof Error ? e.message : "Could not load spend."); }); return () => { live = false; }; }, []);
+      if (fares.length && live) { await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares }) }).catch(() => undefined); const byId = new Map(fares.filter(f => f.fare).map(f => [f.id, f.fare])); if (live) setAll(list => list?.map(j => byId.get(j.id) ? { ...j, fare: byId.get(j.id) } : j)); }
+    }).catch(e => { if (live) setError(e instanceof Error ? e.message : "Could not load spend."); }); return () => { live = false; }; }, [today]);
   const months = period === "month" ? 1 : period === "six" ? 6 : 12;
   const start = (() => { const d = new Date(today + "T00:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - (months - 1)); return d.toISOString().slice(0, 10); })();
   const paid = (all ?? []).filter(j => ["booked", "completed", "cancelled", "cancellation_needed"].includes(j.status) && j.date >= start);
   const ahead = Math.min(3, Math.max(0, ...paid.filter(j => j.fare?.total).map(j => (Number(j.date.slice(0, 4)) - Number(today.slice(0, 4))) * 12 + Number(j.date.slice(5, 7)) - Number(today.slice(5, 7)))));
   const withFare = paid.filter((j): j is Journey & { fare: NonNullable<Journey["fare"]> } => Boolean(j.fare?.total));
-  const missing = paid.length - withFare.length;
+  const missing = (all ?? []).filter(j => j.status === "booked" && j.date >= today && !j.pdf?.length).length;
   const total = withFare.reduce((a, j) => a + j.fare.total, 0), refunded = withFare.reduce((a, j) => a + (j.fare.refund ?? 0), 0);
   const keys = Array.from({ length: months + ahead }, (_, i) => { const d = new Date(start + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() + i); return d.toISOString().slice(0, 7); });
   const byMonth = keys.map(k => ({ key: k, label: formatDay(k + "-01", { month: "short" }), amount: withFare.filter(j => j.date.startsWith(k)).reduce((a, j) => a + j.fare.total, 0) }));
@@ -60,7 +61,7 @@ export function SpendView({ today, attachTickets }: { planner?: Planner; today: 
       <div className={s.stat}><span>Refunded</span><b>{inr(refunded)}</b><small>Cancelled tickets</small></div>
     </div>
     {reading && <p className={s.muted}><Spinner /> {reading}</p>}
-    {missing > 0 && !reading && <p className={s.note}>{missing} booked {missing === 1 ? "trip has" : "trips have"} no fare yet. Attach their IRCTC PDFs to include them.{attachTickets && <> <button type="button" onClick={attachTickets}>Attach tickets</button></>}</p>}
+    {missing > 0 && !reading && <p className={s.note}>{missing} booked {missing === 1 ? "trip has" : "trips have"} no ticket attached. Attach their IRCTC PDFs to include their fares.{attachTickets && <> <button type="button" onClick={attachTickets}>Attach tickets</button></>}</p>}
     <div className={s.grid}>
       <section className={s.card} aria-labelledby="spend-months"><h2 id="spend-months">By month</h2>
         <div className={s.bars} role="img" aria-label={byMonth.map(m => `${m.label} ${inr(m.amount)}`).join(", ")}>{byMonth.map(m => <div key={m.key} className={s.bar}><span>{m.amount ? inr(Math.round(m.amount)) : ""}</span><i style={{ height: `${Math.round((m.amount / max) * 180)}px` }} /><small>{m.label}</small></div>)}</div>

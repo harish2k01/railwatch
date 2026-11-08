@@ -2,10 +2,12 @@
 import { ask } from "./confirm";
 import { EmptyState } from "./empty-state";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/client-api";
+import { extractTicketFile, getTicketFile } from "@/lib/ticket-files";
 
 import { AlertTriangle, CheckCheck, Plus, Ticket } from "lucide-react";
-import { addDays, bookingDay, bookingTimeLabel, daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
+import { addDays, bookingDay, bookingTimeLabel, daysBetween, formatDay, tripTiming, type Journey, type Planner } from "@/lib/travel-planner";
 import type { DashboardView } from "@/lib/planning-views";
 import { stationLabel } from "@/lib/journey-display";
 import { useStationName } from "./journey-detail";
@@ -32,10 +34,33 @@ type Props = {
   openBookingDay?: (j: Journey) => void; importTickets?: () => void; attachTicket?: (j: Journey) => void; remind?: (j: Journey) => void; updateStatus?: (j: Journey, text: string) => boolean;
 };
 
+/** What the attached ticket says: train, timing, class, seat and PNR (shown once a ticket is read). */
+function TicketFacts({ j }: { j: Journey }) {
+  const seat = [j.coach, j.seat].filter(Boolean).join(" / ");
+  const facts: [string, string | undefined][] = [
+    ["Train", [j.trainNumber, j.trainName || j.train].filter(Boolean).join(" ") || undefined],
+    ["Timing", tripTiming(j)],
+    ["Class", j.travelClass || undefined],
+    ["Seat", seat ? seat + (j.berth ? ` · ${j.berth}` : "") : j.berth],
+    ["PNR", j.pnr || undefined],
+  ];
+  const shown = facts.filter((f): f is [string, string] => Boolean(f[1]));
+  return shown.length ? <dl className={t.facts}>{shown.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl> : null;
+}
+
 /** Today (plan 2.3, canvas Main.dc.html): next trip, Do next, this week, the routine and time off. */
 export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus, skipTimeOff, keepTimeOff, openBookingDay, importTickets, attachTicket, updateStatus }: Props) {
   const { upcoming, bookingSoon, totals, week } = data;
-  const next = upcoming.find(j => j.status === "booked") ?? upcoming[0];
+  const found = upcoming.find(j => j.status === "booked") ?? upcoming[0];
+  // Tickets attached before arrival times were read: read the stored PDF on this device once and save the arrival.
+  const [arrival, setArrival] = useState<{ id: string; arrival: string; arrivalDate?: string }>();
+  useEffect(() => {
+    const pdf = found?.status === "booked" && !found.arrival ? found.attachments?.find(a => a.type === "application/pdf") : undefined;
+    if (!found || !pdf) return; let live = true;
+    void (async () => { try { const blob = await getTicketFile(pdf.id); if (!blob) return; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; if (!d.arrival || !live) return; setArrival({ id: found.id, arrival: d.arrival, arrivalDate: d.arrivalDate }); await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares: [{ id: found.id, arrival: d.arrival, arrivalDate: d.arrivalDate }] }) }); } catch { /* the card still shows the other ticket details */ } })();
+    return () => { live = false; };
+  }, [found?.id, found?.arrival]); // eslint-disable-line react-hooks/exhaustive-deps -- read once per trip, not on every render
+  const next = found && arrival?.id === found.id ? { ...found, ...arrival } : found;
   const holidays = planner.holidays.filter(h => h.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
   const routine = planner.rules.find(r => !r.paused), linked = routine?.linkedRuleId ? planner.rules.find(r => r.id === routine.linkedRuleId) : undefined;
   const missing = totals.noTicket ?? 0;
@@ -76,6 +101,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
         {next ? <section className={t.card} aria-labelledby="today-next">
           <header className={t.cardHead}><h2 id="today-next" className={t.eyebrow}>Next trip · {daysBetween(today, next.date) === 0 ? "today" : `in ${daysBetween(today, next.date)} day${daysBetween(today, next.date) === 1 ? "" : "s"}`}</h2><span className={`${t.pill} ${next.status === "booked" ? t.pillBooked : t.pillPlanned}`}><i aria-hidden="true" />{STATUS[next.status]}{next.ticketStatus && next.ticketStatus !== "CNF" ? ` · ${next.ticketStatus}` : ""}</span></header>
           <div className={t.route}><Stop code={next.from} /><span aria-hidden="true" className={t.track} /><Stop code={next.to} /><span className={t.when}><b>{formatDay(next.date, { weekday: "short", day: "numeric", month: "short" })}</b><small>{(() => { const name = planner.rules.find(r => r.id === next.ruleId)?.name ?? "", leg = next.leg === "return" ? "Return" : next.ruleId ? "Onward" : ""; return [name, name.toLowerCase().includes(leg.toLowerCase()) ? "" : leg]; })().concat([ next.departureConfirmed && next.departure ? `${next.departure} IST` : ""]).filter(Boolean).join(" · ") || "One-off trip"}</small></span></div>
+          {next.status === "booked" && <TicketFacts j={next} />}
           {next.status === "booked" && !next.attachments?.length && <div className={t.nudge}><AlertTriangle size={20} aria-hidden="true" /><span>No ticket attached. Add it now so the train, coach and PNR are here on the day.</span>{attachTicket && <button type="button" className={s.primary} onClick={() => attachTicket(next)}>Attach ticket</button>}</div>}
           <div className={t.actions}><button type="button" className={s.secondary} onClick={() => openJourney(next)}>Open journey</button></div>
         </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} />{planner.rules.length ? <><h3>No trips coming up</h3><p>Your routines have nothing in the next few weeks. Plan a one-off trip or check your routines.</p></> : <><h3>Start with your regular trip</h3><p>Set up your weekly route once. RailWatch plans each journey and reminds you before booking opens.</p><Link className={s.secondary} href="/routines">Set up a routine</Link></>}<button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a one-off trip</button></div></section>}

@@ -27,7 +27,7 @@ export const journeySchema = z.object({
   bookingDateOverride: daySchema.optional(),
   bookingType: z.enum(["normal", "tatkal"]).optional(), tatkalClass: z.enum(["ac", "non_ac"]).optional(), trainOriginDate: daySchema.optional(),
   cancellationReminder: z.object({ enabled: z.boolean(), time: clock, schedule: reminderScheduleSchema.optional() }).optional(),
-  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), timeOffKept: z.boolean().optional(), ticketStatus: z.enum(["CNF", "RAC", "WL"]).optional(), currentStatus: z.string().max(20).optional(), statusLog: z.array(z.object({ at: z.string().max(40), status: z.string().max(20) })).max(40).optional(), fare: z.object({ total: z.number().nonnegative(), ticket: z.number().nonnegative().optional(), convenience: z.number().nonnegative().optional(), wallet: z.number().nonnegative().optional(), insurance: z.number().nonnegative().optional(), refund: z.number().nonnegative().optional() }).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(),
+  trainNumber: z.string().max(20).optional(), trainName: z.string().max(100).optional(), coach: z.string().max(20).optional(), timeOffKept: z.boolean().optional(), ticketStatus: z.enum(["CNF", "RAC", "WL"]).optional(), currentStatus: z.string().max(20).optional(), statusLog: z.array(z.object({ at: z.string().max(40), status: z.string().max(20) })).max(40).optional(), fare: z.object({ total: z.number().nonnegative(), ticket: z.number().nonnegative().optional(), convenience: z.number().nonnegative().optional(), wallet: z.number().nonnegative().optional(), insurance: z.number().nonnegative().optional(), refund: z.number().nonnegative().optional() }).optional(), seat: z.string().max(30).optional(), berth: z.string().max(30).optional(), arrival: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(), arrivalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   completedAt:daySchema.optional(), cancelledAt: daySchema.optional(), archivedAt: daySchema.optional(), attachments: z.array(attachmentSchema).max(20).optional(),
   status: statusSchema, pnr: z.string().regex(/^$|^\d{10}$/), notes: z.string().max(1000),
 }).refine(j=>j.bookingType!=="tatkal"||Boolean(j.tatkalClass&&j.trainOriginDate&&j.trainOriginDate<=j.date),"Choose the Tatkal class and a train starting date on or before travel.");
@@ -311,4 +311,15 @@ export function skipForTimeOff(planner: Planner, journey: Journey): Planner {
   const skipped = transitionJourney(journey, "skipped");
   const rules = journey.ruleId ? planner.rules.map(r => r.id === journey.ruleId && !r.excludedDates.includes(journey.date) ? { ...r, excludedDates: [...r.excludedDates, journey.date].sort() } : r) : planner.rules;
   return { ...planner, rules, journeys: [...planner.journeys.filter(j => j.id !== journey.id), skipped] };
+}
+
+/** "23:10 → 07:10 +1 · 8h" from a ticket's departure and arrival; undefined until both are known. */
+export function tripTiming(j: Pick<Journey, "date" | "departure" | "departureConfirmed" | "arrival" | "arrivalDate">): string | undefined {
+  if (!j.departureConfirmed || !j.departure || !j.arrival) return undefined;
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const days = j.arrivalDate ? Math.round((Date.parse(j.arrivalDate) - Date.parse(j.date)) / 86_400_000) : toMin(j.arrival) < toMin(j.departure) ? 1 : 0;
+  const minutes = days * 1440 + toMin(j.arrival) - toMin(j.departure);
+  if (days < 0 || days > 3 || minutes <= 0) return `${j.departure} → ${j.arrival}`;
+  const span = `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ""}`;
+  return `${j.departure} → ${j.arrival}${days ? ` +${days}` : ""} · ${span}`;
 }
