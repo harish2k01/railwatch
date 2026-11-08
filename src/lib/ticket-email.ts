@@ -16,8 +16,15 @@ const CLASSES: [RegExp, string][] = [
 /** Converts email HTML to text with table cells separated by tabs and rows by newlines. */
 export function emailText(html: string): string {
   // Plain text for parsing only (never rendered): cells → tabs, rows → newlines, every tag and angle bracket removed.
-  let text = html.replace(/<\/(td|th)\s*>/gi, "\t").replace(/<(br|\/tr|\/p|\/div|\/h\d|\/li)\b[^>]*>/gi, "\n");
-  for (let previous = ""; previous !== text;) { previous = text; text = text.replace(/<(script|style|head)\b[\s\S]*?<\/\1\s*>/gi, "").replace(/<[^<>]*>/g, ""); }
+  let text = html;
+  // Drop <head>/<style>/<script> contents by position (no regex over tags), so CSS or script text is not parsed.
+  for (const name of ["head", "style", "script"]) {
+    for (let lower = text.toLowerCase(), start = lower.indexOf(`<${name}`); start >= 0; lower = text.toLowerCase(), start = lower.indexOf(`<${name}`)) {
+      const close = lower.indexOf(`</${name}`, start); const end = close < 0 ? text.length : (lower.indexOf(">", close) + 1 || text.length);
+      text = text.slice(0, start) + text.slice(end);
+    }
+  }
+  text = text.replace(/<\/(td|th)\s*>/gi, "\t").replace(/<(br|\/tr|\/p|\/div|\/h\d|\/li)\b[^>]*>/gi, "\n").replace(/<[^<>]*>/g, "");
   return text.replace(/[<>]/g, " ")
     .replace(/&nbsp;/g, " ").replace(/&#(\d+);/g, (_, n) => { const c = Number(n); return c === 60 || c === 62 || c === 38 ? " " : String.fromCharCode(c); }).replace(/&(lt|gt);/g, " ").replace(/&amp;/g, "&")
     .replace(/[  ]+/g, " ").replace(/ ?\t ?/g, "\t").replace(/\n\s*\n+/g, "\n").trim();
