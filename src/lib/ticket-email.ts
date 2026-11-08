@@ -15,9 +15,11 @@ const CLASSES: [RegExp, string][] = [
 
 /** Converts email HTML to text with table cells separated by tabs and rows by newlines. */
 export function emailText(html: string): string {
-  return html.replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, "")
-    .replace(/<\/(td|th)>/gi, "\t").replace(/<(br|\/tr|\/p|\/div|\/h\d|\/li)[^>]*>/gi, "\n").replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+  // Plain text for parsing only (never rendered): cells → tabs, rows → newlines, every tag and angle bracket removed.
+  let text = html.replace(/<\/(td|th)\s*>/gi, "\t").replace(/<(br|\/tr|\/p|\/div|\/h\d|\/li)\b[^>]*>/gi, "\n");
+  for (let previous = ""; previous !== text;) { previous = text; text = text.replace(/<(script|style|head)\b[\s\S]*?<\/\1\s*>/gi, "").replace(/<[^<>]*>/g, ""); }
+  return text.replace(/[<>]/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&#(\d+);/g, (_, n) => { const c = Number(n); return c === 60 || c === 62 || c === 38 ? " " : String.fromCharCode(c); }).replace(/&(lt|gt);/g, " ").replace(/&amp;/g, "&")
     .replace(/[  ]+/g, " ").replace(/ ?\t ?/g, "\t").replace(/\n\s*\n+/g, "\n").trim();
 }
 
