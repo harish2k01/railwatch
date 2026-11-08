@@ -8,7 +8,7 @@
 import { readFile, writeFile, readdir } from "node:fs/promises";
 
 const DIR = "scripts/stations-official";
-const NOT_ZONE = new Set(["possibly-retired.tsv", "removed.tsv", "long-distance.tsv", "dropped.tsv", "timetable.tsv"]);
+const NOT_ZONE = new Set(["possibly-retired.tsv", "removed.tsv", "long-distance.tsv", "dropped.tsv"]);
 const KEEP_UPPER = new Set(["JN", "CANT", "RS", "HLT", "PH", "MG", "SG", "GT", "KSR"]);
 const title = (name) => name.trim().replace(/\.$/, "").replace(/\s+/g, " ").toLowerCase().split(" ")
   .map((w) => KEEP_UPPER.has(w.toUpperCase()) ? w.toUpperCase() : w.replace(/(^|[-(.])([a-z])/g, (_, p, c) => p + c.toUpperCase())).join(" ");
@@ -76,8 +76,6 @@ async function build(wikidataFile) {
     }
     console.log(`${f}: ${matched} matched existing codes`);
   }
-  // Long-distance stops from the current NTES timetable (scripts/stations-railpull.mjs) that the list is missing.
-  for (const line of (await readFile(`${DIR}/timetable.tsv`, "utf8").catch(() => "")).split("\n")) { const [code, name] = line.split("\t"); if (code && name && !code.startsWith("#") && !stations.has(code)) stations.set(code, title(name)); }
   // Confirmed retired/invalid codes (removed.tsv) never come back on a rebuild.
   for (const line of (await readFile(`${DIR}/removed.tsv`, "utf8").catch(() => "")).split("\n")) { const code = line.split("\t")[0]; if (code && !code.startsWith("#")) stations.delete(code); }
   // Long-distance filter (STATIONS_ALL=1 skips it): codes in dropped.tsv (local-only/metro) are removed; codes in
@@ -106,7 +104,6 @@ async function build(wikidataFile) {
       `| | Count |`, `| --- | --- |`, `| Stations | ${rows.length} |`, `| Unverified (no 2017 schedule, kept for review) | ${unverified} |`,
       `| New since last refresh (added as unverified-new) | ${added.length} |`, `| Possibly retired (no official list or Wikidata) | ${retired.length} |`,
       `| Held out: local-only/metro (dropped.tsv) | ${dropped.size} |`, ``,
-      (await readFile(process.env.STATIONS_SUMMARY + ".timetable", "utf8").catch(() => "")),
       `**New unverified codes:** ${list(added)}`, ``, `**Possibly retired:** ${list(retired)}`,
     ].join("\n") + "\n");
   }

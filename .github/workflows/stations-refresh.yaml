@@ -1,8 +1,8 @@
 name: Refresh station list
 
-# Monthly: pull current codes and names from Wikidata (P5696), re-apply the official zonal names and the
-# confirmed removals (scripts/stations-official/removed.tsv), then apply the current NTES timetable crawled by
-# railpull (github.com/shwetankg07/railpull, MIT) to the long-distance filter, and open a PR with the counts.
+# Monthly: rebuild the station list from the current NTES timetable crawled by railpull
+# (github.com/shwetankg07/railpull, MIT), the only source. Stations with a long-distance or Passenger stop are
+# kept; everything else is dropped (scripts/stations-railpull.mjs). Opens a PR with what was added and dropped.
 #
 # A full polite crawl (~1.2 s per request, railpull's default; never lower it) takes about 8 hours, longer than
 # one Actions job, so it runs daily on the 1st-6th and resumes from the month's cache. The station list is
@@ -81,9 +81,7 @@ jobs:
         run: |
           npm ci --ignore-scripts
           (cd railpull && python transform/export.py)
-          node scripts/update-stations-wikidata.mjs
           node scripts/stations-railpull.mjs railpull/data/out
-          node scripts/build-stations-official.mjs build
           npx vitest run src/lib/stations.test.ts
       - name: Open a PR if the list changed
         if: steps.crawl.outputs.done == 'true'
@@ -91,20 +89,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ runner.temp }}/stations-summary.md
         run: |
-          if git diff --quiet -- src/data scripts/stations-official && [ -z "$(git status --porcelain scripts/stations-official)" ]; then echo "No station changes."; else
+          if git diff --quiet -- src/data; then echo "No station changes."; else
           branch="stations/refresh-$(date -u +%Y-%m)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add src/data scripts/stations-official
+          git add src/data
           git commit -m "Monthly station list refresh"
           git push -f origin "$branch"
           {
-            echo "Automatic refresh from Wikidata (P5696) with official zonal names, confirmed removals (\`removed.tsv\`) and the long-distance filter from the current NTES timetable (railpull). Local-only and metro stations in \`dropped.tsv\` stay out; stations in no timetable are kept."
+            echo "Automatic refresh from the current NTES timetable (railpull). Kept: stations with a long-distance or Passenger stop. Dropped: everything else, including stations in no timetable. Codes in \`removed.tsv\` never come back."
             echo
             cat "$SUMMARY"
-            echo
-            echo "Review new codes in \`scripts/stations-official/timetable.tsv\` and \`long-distance.tsv\`: move retired ones to \`removed.tsv\`."
           } > "$RUNNER_TEMP/body.md"
           gh pr create --base main --head "$branch" --label minor --title "Monthly station list refresh ($(date -u +%B\ %Y))" --body-file "$RUNNER_TEMP/body.md" || echo "PR already open."
           fi
