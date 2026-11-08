@@ -28,3 +28,13 @@
 .option b{font-size:15px}
 .option small{font-size:13px;color:var(--rw-muted)}
 .install{display:flex}
+
+/* Reminders step: channels inline (this device, email, Telegram) instead of a link to Settings. */
+.channel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-radius:12px;border:1px solid var(--rw-line);background:var(--rw-surface-2)}
+.channel>span:first-child{display:grid;gap:4px;min-width:0}
+.channel b{font-size:15px}
+.channel small{font-size:13px;color:var(--rw-muted)}
+.channel+.channel{margin-top:10px}
+.on{font-size:13px;font-weight:600;color:var(--rw-booked-ink)}
+.note{font-size:13px;color:var(--rw-muted)}
+@media(max-width:600px){.channel{flex-direction:column;align-items:stretch}}

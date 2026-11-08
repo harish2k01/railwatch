@@ -42,6 +42,7 @@ model User {
   railNotifications RailNotification[]
   railReminderPauses RailReminderPause[]
   railGoogle        RailGoogle?
+  railMailbox       RailMailbox?
   railTelegram RailTelegram?
 }
 
@@ -279,4 +280,26 @@ model RailJourney {
   @@index([userId,archived,status,date,id])
   @@index([userId,bookingAt,id])
   @@index([searchTokens],type:Gin)
+}
+
+// Ticket email sources (Gmail, IMAP, forwarding). IRCTC booking emails are read and applied to journeys.
+model RailMailbox {
+  userId       String    @id
+  // sha256 of the per-account forwarding token in the inbound URL.
+  inboundHash  String?   @unique
+  // The same token, encrypted, so Settings can show the forwarding address again.
+  inboundToken String?
+  // Encrypted Gmail OAuth tokens (gmail.readonly) and IMAP {host,port,user,pass}.
+  gmail        String?
+  imap         String?
+  seen         String[]  @default([])
+  checkedAt    DateTime?
+  lastResult   String?
+  lastError    String?
+  // Latest non-ticket message worth showing, such as a Gmail forwarding confirmation.
+  notice       String?
+  lease        String?
+  leaseUntil   DateTime?
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -7,6 +7,7 @@ import { offlineCount, offlineEnabled, offlineSupported, setOfflineEnabled } fro
 import { DEFAULT_TATKAL_SCHEDULE, type Planner, type ReminderSchedule } from "@/lib/travel-planner";
 import { legacySchedule } from "./forms";
 import { PwaInstall } from "../pwa-install";
+import { EmailTickets } from "./email-tickets";
 import s from "./settings-hub.module.css";
 
 const SECTIONS = ["profile", "preferences", "reminders", "connections", "offline", "data", "security"];
@@ -56,6 +57,7 @@ export function SettingsHub({ personal, admin, planner, saving, saveSettings, ba
       </nav>
       <div className={s.content}>
         {["profile", "preferences", "connections", "security"].includes(section) && personal(section)}
+        {show("connections") && <EmailTickets />}
         {show("reminders") && <section id="settings-reminders" aria-labelledby="settings-reminders-h" className={s.section}>
           <h2 id="settings-reminders-h">Reminders</h2>
           <span className={s.muted}>Normal booking opens {st.bookingWindowDays} days before travel (set by your admin). Times are IST.</span>

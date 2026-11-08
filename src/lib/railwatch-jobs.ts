@@ -19,6 +19,7 @@ import { getFeaturePolicy } from "./settings";
 import { applyAccountSettings } from "./railwatch-store";
 import { scheduledReminders,bookingTimeLabel,todayIST,formatDay,bookingDay,type Planner } from "./travel-planner";
 import { syncGoogleCalendars } from "./railwatch-google";
+import { pollMailboxes } from "./ticket-mail";
 /** Builds durable reminder identities and due times from active journey preferences. */
 /** When to send the chart-check reminder: 4 hours before a confirmed departure, for booked RAC or waitlisted tickets only. */
 export function chartCheckAt(j:{status:string;ticketStatus?:string;departureConfirmed?:boolean;departure:string;date:string}){if(j.status!=="booked"||!j.ticketStatus||j.ticketStatus==="CNF"||!j.departureConfirmed)return undefined;return new Date(new Date(`${j.date}T${j.departure}:00+05:30`).getTime()-4*3600000);}
@@ -73,7 +74,7 @@ export async function processRailWatch(now=new Date()){
     }catch(error){failedRun++;logger.error("reminder.delivery_failed",{jobId:job.id,kind:job.kind,attempt:job.attempts,errorType:error instanceof Error?error.name:"UnknownError"});await prisma.railJob.updateMany({where:{id:job.id,lease},data:{state:"FAILED",dueAt:new Date(now.getTime()+Math.min(60,2**(job.attempts+1))*60000),lastError:"Delivery failed. Check the provider configuration.",lease:null,leaseUntil:null}});}
   }
   if(failedRun)await alertAdmins(failedRun,now).catch(error=>logger.error("ops.alert_failed",{errorType:error instanceof Error?error.name:"UnknownError"}));
-  const calendars=await syncGoogleCalendars();return {accounts:batch.accounts.length,sent,calendars,...(planningFailures?{planningFailures}:{})};
+  const calendars=await syncGoogleCalendars();const mailboxes=await pollMailboxes(now).catch(error=>{logger.error("mail.poll_failed",{errorType:error instanceof Error?error.name:"UnknownError"});return 0;});return {accounts:batch.accounts.length,sent,calendars,...(mailboxes?{mailboxes}:{}),...(planningFailures?{planningFailures}:{})};
 }
 
 /** Tells administrators in their bell when reminders fail to send (at most once an hour). */
