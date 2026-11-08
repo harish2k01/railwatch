@@ -5,7 +5,8 @@ name: Refresh station list
 # kept; everything else is dropped (scripts/stations-railpull.mjs). Opens a PR with what was added and dropped.
 #
 # A full polite crawl (~1.2 s per request, railpull's default; never lower it) takes about 8 hours, longer than
-# one Actions job, so it runs daily on the 1st-6th and resumes from the month's cache. The station list is
+# GitHub-hosted runners get no answer from NTES, so it runs on the homelab runner (an Indian network); one
+# run usually finishes. It still runs daily on the 1st-6th and resumes from the month's cache if cut short. The station list is
 # rebuilt once the crawl reports DONE. Only derived station codes are committed, never the crawled timetable.
 on:
   schedule:
@@ -25,8 +26,8 @@ env:
 
 jobs:
   refresh:
-    runs-on: ubuntu-latest
-    timeout-minutes: 350
+    runs-on: railwatch-runner
+    timeout-minutes: 720
     steps:
       - uses: actions/checkout@v6
       - name: Month
@@ -58,7 +59,7 @@ jobs:
         run: |
           pip install -q -r requirements.txt
           set +e
-          timeout 5h python ntes/crawl.py
+          timeout 11h python ntes/crawl.py
           code=$?
           set -e
           phase=$(python -c "import json;print(json.load(open('data/raw/crawl-status.json')).get('phase',''))" 2>/dev/null || true)
