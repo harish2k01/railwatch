@@ -38,6 +38,12 @@ export function parseTicketDetails(raw: string): TicketDetails {
       const train = idRow.match(/\b(\d{5})\s*\/\s*(.+?)(?=\s+(?:SLEEPER|AC\b|FIRST|SECOND|THIRD|EXECUTIVE|CHAIR|GENERAL)\b|\s*\(|$)/i);
       if (train) { details.trainNumber ??= train[1]; details.trainName ??= train[2].trim(); }
     }
+    // OCR can misread a PNR digit. Every place the PNR is printed votes: the label, the table row under "PNR",
+    // and the GST invoice number (two letters, two digits, the PNR, then a serial).
+    const votes = [...text.matchAll(/\bPNR(?:\s*(?:No\.?|Number))?\s*[:#\-]?\s*(\d{10})\b/gi)].map(m => m[1])
+      .concat([...text.matchAll(/\bPNR\b[^\n]*\n[^\n]*?\b(\d{10})\b/gi)].map(m => m[1]))
+      .concat([...text.matchAll(/\bInvoice\s*(?:Number|No\.?)\s*[:\-]?\s*[A-Z]{2}\d{2}(\d{10})\d{1,4}\b/gi)].map(m => m[1]));
+    if (votes.length) { const tally = new Map<string, number>(); for (const v of votes) tally.set(v, (tally.get(v) ?? 0) + 1); details.pnr = [...tally].sort((a, b) => b[1] - a[1])[0][0]; }
     // Many tickets print passenger rows rather than labelled coach/seat fields.
     const allocation = text.match(/\b(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/i);
     if (allocation) { details.coach ??= allocation[1]; details.seat ??= allocation[2]; details.berth ??= allocation[3]; }
@@ -53,7 +59,10 @@ export function parseTicketDetails(raw: string): TicketDetails {
   if(passengerRow){details.coach??=passengerRow[1];details.seat??=passengerRow[2];details.berth??=passengerRow[3];}
   // Every passenger row ("1. NAME 25 M CNF/S7/27/UPPER CNF/S7/27/UPPER"): use each row's current (last) allocation.
   const seatPattern = /(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/gi;
-  const seats = [...text.matchAll(/^\s*\d+\.\s[^\n]*$/gm)].map(row => [...row[0].matchAll(seatPattern)].pop()).filter((m): m is RegExpExecArray => Boolean(m));
+  // OCR text can hold the same passenger row twice (layout pass + raw pass): keep one per passenger number.
+  const byPassenger = new Map<string, RegExpExecArray>();
+  for (const row of text.matchAll(/^\s*(\d+)\.\s[^\n]*$/gm)) { const m = [...row[0].matchAll(seatPattern)].pop(); if (m && !byPassenger.has(row[1])) byPassenger.set(row[1], m); }
+  const seats = [...byPassenger.values()];
   if (seats.length > 1) {
     const coaches = [...new Set(seats.map(m => m[1].toUpperCase()))];
     details.coach = coaches.join(", ").slice(0, 20);

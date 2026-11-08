@@ -1,5 +1,5 @@
 /* Spend (canvas Spend.dc.html / SpendMobile.dc.html). */
-.page{display:flex;flex-direction:column;gap:20px;max-width:1120px}
+.page{display:flex;flex-direction:column;gap:20px;width:100%}
 .periods{display:flex;gap:4px;padding:4px;width:fit-content;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
 .periods button{min-height:36px;padding:0 14px;border:0;border-radius:8px;background:none;color:var(--rw-muted);font:600 14px inherit;cursor:pointer}
 .periods button[aria-pressed=true]{background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink)}
