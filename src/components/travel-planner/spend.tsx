@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { formatDay, type Journey, type Planner } from "@/lib/travel-planner";
 import { apiRequest } from "@/lib/client-api";
 import { Spinner } from "./loader";
+import { extractTicketFile, getTicketFile } from "@/lib/ticket-files";
+
+type SpendJourney = Journey & { pdf?: { id: string; name: string }[] };
 import s from "./spend.module.css";
 
 type Period = "month" | "six" | "year";
@@ -15,9 +18,21 @@ const code = (station: string) => station.match(/\(([A-Z]{2,5})\)/)?.[1] ?? stat
  */
 export function SpendView({ today, attachTickets }: { planner?: Planner; today: string; attachTickets?: () => void }) {
   const [period, setPeriod] = useState<Period>("six");
-  const [all, setAll] = useState<Journey[] | undefined>();
+  const [all, setAll] = useState<SpendJourney[] | undefined>();
+  const [reading, setReading] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => { let live = true; apiRequest<{ journeys: Journey[] }>("/api/railwatch/spend", { cache: "no-store" }).then(v => { if (live) setAll(v.journeys); }).catch(e => { if (live) setError(e instanceof Error ? e.message : "Could not load spend."); }); return () => { live = false; }; }, []);
+  useEffect(() => { let live = true; apiRequest<{ journeys: SpendJourney[] }>("/api/railwatch/spend", { cache: "no-store" }).then(async v => {
+      if (!live) return; setAll(v.journeys);
+      // Trips attached before fares were saved: read the stored PDF on this device and save just the fare.
+      const todo = v.journeys.filter(j => !j.fare?.total && j.pdf?.length);
+      const fares: { id: string; fare: NonNullable<Journey["fare"]> }[] = [];
+      for (const [i, j] of todo.entries()) {
+        if (!live) return; setReading(`Reading fares from attached tickets… ${i + 1} of ${todo.length}`);
+        for (const pdf of j.pdf!) { try { const blob = await getTicketFile(pdf.id); if (!blob) continue; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; if (d.fare?.total) { fares.push({ id: j.id, fare: d.fare }); break; } } catch { /* leave this trip without a fare */ } }
+      }
+      if (live) setReading("");
+      if (fares.length && live) { await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares }) }).catch(() => undefined); const byId = new Map(fares.map(f => [f.id, f.fare])); if (live) setAll(list => list?.map(j => byId.has(j.id) ? { ...j, fare: byId.get(j.id) } : j)); }
+    }).catch(e => { if (live) setError(e instanceof Error ? e.message : "Could not load spend."); }); return () => { live = false; }; }, []);
   const months = period === "month" ? 1 : period === "six" ? 6 : 12;
   const start = (() => { const d = new Date(today + "T00:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - (months - 1)); return d.toISOString().slice(0, 10); })();
   const paid = (all ?? []).filter(j => ["booked", "completed", "cancelled", "cancellation_needed"].includes(j.status) && j.date >= start);
@@ -44,7 +59,8 @@ export function SpendView({ today, attachTickets }: { planner?: Planner; today: 
       <div className={s.stat}><span>Average per trip</span><b>{withFare.length ? inr(Math.round(total / withFare.length)) : "—"}</b><small>From attached tickets</small></div>
       <div className={s.stat}><span>Refunded</span><b>{inr(refunded)}</b><small>Cancelled tickets</small></div>
     </div>
-    {missing > 0 && <p className={s.note}>{missing} booked {missing === 1 ? "trip has" : "trips have"} no fare yet. Attach their IRCTC PDFs to include them.{attachTickets && <> <button type="button" onClick={attachTickets}>Attach tickets</button></>}</p>}
+    {reading && <p className={s.muted}><Spinner /> {reading}</p>}
+    {missing > 0 && !reading && <p className={s.note}>{missing} booked {missing === 1 ? "trip has" : "trips have"} no fare yet. Attach their IRCTC PDFs to include them.{attachTickets && <> <button type="button" onClick={attachTickets}>Attach tickets</button></>}</p>}
     <div className={s.grid}>
       <section className={s.card} aria-labelledby="spend-months"><h2 id="spend-months">By month</h2>
         <div className={s.bars} role="img" aria-label={byMonth.map(m => `${m.label} ${inr(m.amount)}`).join(", ")}>{byMonth.map(m => <div key={m.key} className={s.bar}><span>{m.amount ? inr(Math.round(m.amount)) : ""}</span><i style={{ height: `${Math.round((m.amount / max) * 180)}px` }} /><small>{m.label}</small></div>)}</div>

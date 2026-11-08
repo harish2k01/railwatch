@@ -11,3 +11,9 @@ describe("parseFare", () => {
   });
   it("returns nothing without a total", () => { expect(parseFare("PNR 1234567890")).toBeUndefined(); });
 });
+
+describe("rupee sign read as a leading digit on the total", () => {
+  it("drops it when the parts add up", () => {
+    expect(parseFare("Ticket Fare 340.00\nIRCTC Convenience Fee (Incl. of GST) 11.80\nTravel Insurance Premium (Incl. of GST) 0.45\nTotal Fare (all inclusive) 3352.25")).toMatchObject({ total: 352.25, ticket: 340, convenience: 11.8, insurance: 0.45 });
+  });
+});

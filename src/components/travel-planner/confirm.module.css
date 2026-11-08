@@ -1,5 +1,5 @@
 /* App-styled confirm dialog (replaces the browser's confirm box). */
-.dialog{width:min(420px,calc(100vw - 32px));padding:0;border:1px solid var(--rw-line);border-radius:16px;background:var(--rw-surface);color:var(--rw-text);box-shadow:0 24px 60px #0006}
+.dialog{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100dvh - 32px);width:min(420px,calc(100vw - 32px));padding:0;border:1px solid var(--rw-line);border-radius:16px;background:var(--rw-surface);color:var(--rw-text);box-shadow:0 24px 60px #0006}
 .dialog::backdrop{background:#0008;backdrop-filter:blur(2px)}
 .body{display:grid;gap:20px;padding:22px}
 .message{margin:0;font-size:15px;line-height:1.5;font-weight:600}
