@@ -60,3 +60,10 @@ describe("garbled train label", () => {
     expect(d).toMatchObject({ trainNumber: "12345", trainName: "SAMPLE SF EXP" });
   });
 });
+
+describe("ERS QR payload", () => {
+  const qr = "PNR No.:9876543210\nTXN ID:100000000001\nPassenger Name:TEST USER\nGender:Male\nAge:30\nStatus:CNF/S4/6/UPPER\nQuota:GENERAL (GN)\nTrain No.:12345\nTrain Name:SAMPLE SF EXP\nDate Of Journey:07-Jan-2027\nBoarding Station:CHENNAI EGMORE - MS\nClass:SLEEPER CLASS (SL)\nFrom:CHENNAI EGMORE - MS\nTo:MADURAI JN. - MDU\nTicket Fare: Rs340.0";
+  const want = { pnr: "9876543210", trainNumber: "12345", trainName: "SAMPLE SF EXP", travelClass: "SL", date: "2027-01-07", from: "MS", to: "MDU", coach: "S4", seat: "6", berth: "UPPER", ticketStatus: "CNF" };
+  it("reads line-separated fields", () => expect(parseTicketDetails(qr)).toMatchObject(want));
+  it("reads comma-separated fields", () => expect(parseTicketDetails(qr.replace(/\n/g, ","))).toMatchObject(want));
+});

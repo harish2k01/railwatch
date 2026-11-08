@@ -4,7 +4,7 @@ import { isDay, type Journey } from "./travel-planner";
 export type TicketDetails = Partial<Pick<Journey, "from" | "to" | "date" | "trainNumber" | "trainName" | "travelClass" | "pnr" | "coach" | "seat" | "berth" | "departure" | "ticketStatus" | "bookingType" | "fare">>;
 /** Extracts validated ticket-field suggestions from QR JSON, printed text, or OCR. */
 export function parseTicketDetails(raw: string): TicketDetails {
-  const text = raw.replace(/\r/g, "").replace(/[,;]\s*(?=(?:PNR|Train\s*(?:No|Number|Name)|From|To|Class|Journey\s*Date|Departure|Coach|Seat|Berth)\s*[:=])/gi,"\n").replace(/\b(TrainNo|TrainName|JourneyDate|DepartureTime|CoachNo|SeatNo|BerthType)\b/g, label=>label.replace(/([a-z])([A-Z])/g,"$1 $2")).replace(/\b(From|To|Class|Coach|Seat No|Berth Type|Train No|Train Name|Journey Date|Departure Time)\s*=/gi,"$1:"); const details: TicketDetails = {};
+  const text = raw.replace(/\r/g, "").replace(/[,;]\s*(?=(?:PNR|TXN\s*ID|Passenger\s*Name|Gender|Age|Status|Quota|Train\s*(?:No|Number|Name)|Date\s*Of\s*Journey|Boarding\s*Station|From|To|Class|Journey\s*Date|Ticket\s*Fare|Departure|Coach|Seat|Berth)[^:=\n,]{0,4}[:=])/gi,"\n").replace(/\b(TrainNo|TrainName|JourneyDate|DepartureTime|CoachNo|SeatNo|BerthType)\b/g, label=>label.replace(/([a-z])([A-Z])/g,"$1 $2")).replace(/\b(From|To|Class|Coach|Seat No|Berth Type|Train No|Train Name|Journey Date|Departure Time)\s*=/gi,"$1:"); const details: TicketDetails = {};
   let json: Record<string, unknown> | undefined;
   try { const value = JSON.parse(raw); if (value && typeof value === "object" && !Array.isArray(value)) json = value; } catch { /* A QR may contain plain ticket text. */ }
   if (json) {
@@ -76,10 +76,13 @@ export function parseTicketDetails(raw: string): TicketDetails {
   }
   details.departure??=text.match(/(?:Scheduled Departure|Departure(?: Time)?|Boarding Time)\s*\*?\s*[:\-]?\s*(?:\d{2}[-/]\w{2,9}[-/]\d{4}\s+)?((?:[01]?\d|2[0-3]):[0-5]\d)(?:\s*(AM|PM))?/i)?.slice(1).filter(Boolean).join(" ");
   if(details.departure){const time=details.departure.match(/^(\d{1,2}):([0-5]\d)(?:\s*(AM|PM))?$/i);if(time){let hour=Number(time[1]);if(time[3]&&hour>=1&&hour<=12)hour=hour%12+(time[3].toUpperCase()==="PM"?12:0);details.departure=String(hour).padStart(2,"0")+":"+time[2];}}
+  details.date??=text.match(/\bDate\s*Of\s*Journey\s*[:\-]?\s*(\d{2}-[A-Za-z]{3}-\d{4})/i)?.[1];
   details.date??=text.match(/\bStart Date\s*\*?\s*[:\-]?\s*(\d{2}-[A-Za-z]{3}-\d{4})/i)?.[1];
   if(details.date&&/^\d{2}-[A-Za-z]{3}-\d{4}$/.test(details.date)){const [day,month,year]=details.date.split("-");const number=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(month.toLowerCase())+1;details.date=`${year}-${String(number).padStart(2,"0")}-${day}`;}
   if (details.date && /^\d{2}[-\/]\d{2}[-\/]\d{4}$/.test(details.date)) { const [day, month, year] = details.date.split(/[-\/]/); details.date = `${year}-${month}-${day}`; }
   for(const key of ["from","to","trainName"] as const)if(details[key])details[key]=details[key]!.replace(/[,;]\s*$/,"").trim();
+  // QR stations read "CHENNAI EGMORE - MS": keep the code, like the PDF table.
+  for(const key of ["from","to"] as const){const code=details[key]?.match(/\s[-–]\s*([A-Z]{1,5})$/)?.[1];if(code)details[key]=code;}
   // IRCTC prints stations as "MADURAI JN (MDU)"; journeys use the code.
   for(const key of ["from","to"] as const){const code=details[key]?.match(/\(([A-Z]{2,5})\)/)?.[1];if(code)details[key]=code;}
   if(/\bQuota\s*[:\-]?\s*\n?\s*(?:PREMIUM\s+)?TATKAL\b|\((?:TQ|PT)\)/i.test(json?JSON.stringify(json):text))details.bookingType="tatkal";

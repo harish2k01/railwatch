@@ -41,7 +41,9 @@ export async function extractTicketFile(file: File,progress?:(message:string)=>v
         if (number <= 3 && (!qr||needsOcr)) {
           const base = page.getViewport({ scale: 1 }); const scale = Math.min(2.5, 1800 / base.width, 2500 / base.height);
           const viewport = page.getViewport({ scale }); const canvas = window.document.createElement("canvas"); canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
-          try { await page.render({ canvas, viewport }).promise; qr ||= await decodeCanvas(canvas);if(needsOcr){progress?.("Reading the scanned ticket locally…");ocr+="\n"+await recognizeTicket(canvas);} } catch { /* QR/text suggestions remain usable if local recognition fails. */ }
+          try { await page.render({ canvas, viewport }).promise; qr ||= await decodeCanvas(canvas);
+            // The ERS QR (PNR, train, date, stations, class, status) is too small to decode at OCR size; retry sharper.
+            if (!qr) { const sharp = page.getViewport({ scale: Math.min(4, 3400 / base.height) }); const big = window.document.createElement("canvas"); big.width = Math.ceil(sharp.width); big.height = Math.ceil(sharp.height); await page.render({ canvas: big, viewport: sharp }).promise; qr = await decodeCanvas(big); big.width = big.height = 0; }if(needsOcr){progress?.("Reading the scanned ticket locally…");ocr+="\n"+await recognizeTicket(canvas);} } catch { /* QR/text suggestions remain usable if local recognition fails. */ }
         }
         page.cleanup();
       }
