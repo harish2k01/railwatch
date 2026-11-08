@@ -53,3 +53,10 @@ describe("OCR duplicates and PNR misreads", () => {
     expect(d.pnr).toBe("9876543210");
   });
 });
+
+describe("garbled train label", () => {
+  it("finds the train from its number / name value", () => {
+    const d = parseTicketDetails("Tra1n N0./Narne        Class\n9876543210      12345 / SAMPLE SF EXP        SLEEPER CLASS (SL)\n");
+    expect(d).toMatchObject({ trainNumber: "12345", trainName: "SAMPLE SF EXP" });
+  });
+});

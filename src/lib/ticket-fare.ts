@@ -28,6 +28,11 @@ export function parseFare(raw: string): Fare | undefined {
   // Undo an OCR'd ₹ read as a leading 2 when that makes the parts add up to the total.
   const keys = ["convenience", "wallet", "insurance"] as const;
   const sum = () => (fare.ticket ?? 0) + keys.reduce((a, k) => a + (fare[k] ?? 0), 0);
+  // The ₹ before the total can be read as any leading digit (₹352.25 → "3352.25"): drop it when that makes the parts add up.
+  if (fare.ticket !== undefined && !near(sum(), fare.total)) {
+    const fixed = Number(fare.total.toFixed(2).slice(1));
+    if (fixed > 0 && near(sum(), fixed)) fare.total = fixed;
+  }
   if (fare.ticket !== undefined && !near(sum(), fare.total)) {
     for (const k of keys) {
       const v = fare[k]; if (v === undefined) continue;

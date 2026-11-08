@@ -72,3 +72,11 @@
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
 .head{padding-right:64px;scroll-margin-top:88px}
 .drop[data-dragging]{border-color:var(--rw-brand);background:var(--rw-brand-soft)}
+/* Inside a dialog or the docked panel: inner padding so nothing touches the edges; the docked panel leaves room
+   for its floating close button. The sticky action bar spans the full width with the same inset. */
+@media(min-width:601px){
+  dialog .detail{padding:20px 28px 0}
+  dialog .sticky{margin:0 -28px;padding:12px 28px 20px}
+  dialog[data-docked] .detail{padding:64px 24px 0}
+  dialog[data-docked] .sticky{margin:0 -24px;padding:12px 24px 20px;max-width:none}
+}

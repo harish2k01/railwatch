@@ -44,6 +44,11 @@ export function parseTicketDetails(raw: string): TicketDetails {
       .concat([...text.matchAll(/\bPNR\b[^\n]*\n[^\n]*?\b(\d{10})\b/gi)].map(m => m[1]))
       .concat([...text.matchAll(/\bInvoice\s*(?:Number|No\.?)\s*[:\-]?\s*[A-Z]{2}\d{2}(\d{10})\d{1,4}\b/gi)].map(m => m[1]));
     if (votes.length) { const tally = new Map<string, number>(); for (const v of votes) tally.set(v, (tally.get(v) ?? 0) + 1); details.pnr = [...tally].sort((a, b) => b[1] - a[1])[0][0]; }
+    // OCR can garble the "Train No./Name" label; the value itself ("12637 / PANDIAN SF EXP") is distinctive enough.
+    if (!details.trainNumber || !details.trainName) {
+      const loose = text.match(/(?:^|[\s:])(\d{5})\s*\/\s*([A-Z][A-Z0-9 .()'-]{2,60}?)(?=\s{2,}|\s+(?:SLEEPER|AC\b|FIRST|SECOND|THIRD|EXECUTIVE|CHAIR|GENERAL)\b|\s*\n|\s*$)/m);
+      if (loose) { details.trainNumber ??= loose[1]; details.trainName ??= loose[2].trim(); }
+    }
     // Many tickets print passenger rows rather than labelled coach/seat fields.
     const allocation = text.match(/\b(?:CNF|CONFIRMED)\s*[,/ ]+\s*([A-Z]{1,2}\d{1,2})\s*[,/ ]+\s*(\d{1,3})\s*[,/ ]+\s*(SIDE\s+LOWER|SIDE\s+UPPER|LOWER|MIDDLE|UPPER|WINDOW\s+SIDE|AISLE|LB|MB|UB|SL|SU|WS|CHAIR)\b/i);
     if (allocation) { details.coach ??= allocation[1]; details.seat ??= allocation[2]; details.berth ??= allocation[3]; }
