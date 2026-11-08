@@ -36,9 +36,9 @@ export function SettingsHub({ personal, admin, planner, backup, restore, exportC
     <div className={s.layout}>
       <nav aria-label="Settings sections" className={s.nav}>
         <span className={s.navGroup}>You</span>
-        {SECTIONS.map(x => <button key={x.id} type="button" className={s.navItem} aria-current={section === x.id ? "page" : undefined} onClick={() => nav(x.id)}><span>{x.label}</span><small>{x.hint}</small></button>)}
+        {SECTIONS.map(x => <button key={x.id} type="button" className={s.navItem} aria-current={section === x.id ? "page" : undefined} onClick={() => nav(x.id)}><span>{x.label}</span><small aria-hidden="true">{x.hint}</small></button>)}
         {admin && <><span className={s.navGroup}>Workspace · Admin</span>
-          {ADMIN_SECTIONS.map(x => <Link key={x.id} className={s.navItem} href={x.href}><span>{x.label}</span><small>{x.hint}</small></Link>)}</>}
+          {ADMIN_SECTIONS.map(x => <Link key={x.id} className={s.navItem} href={x.href}><span>{x.label}</span><small aria-hidden="true">{x.hint}</small></Link>)}</>}
       </nav>
       <div className={s.content}>
         <button type="button" className={s.back} onClick={back}>← Settings</button>
