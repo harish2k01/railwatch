@@ -22,7 +22,7 @@ export function EmailTickets() {
   const connectGmail = () => run("gmail", async () => { const r = await fetch("/api/railwatch/google/connect?purpose=gmail", { method: "POST", credentials: "same-origin" }); const j = await r.json(); if (!r.ok) throw new Error(j.error?.message ?? "Google sign-in is not set up."); location.href = (j.data ?? j).url; });
   const connected = st && (st.gmail || st.imap || st.forwarding);
   return <section id="settings-email-tickets" aria-labelledby="settings-email-tickets-h" className={s.section}>
-    <h2 id="settings-email-tickets-h">Email tickets <span className={s.pill}>New</span></h2>
+    <h3 id="settings-email-tickets-h">Email Tickets <span className={s.pill}>New</span></h3>
     <span className={s.muted}>IRCTC’s booking email has the ticket details in it. RailWatch reads it, finds the journey by date and route, and fills in the train, PNR, coach, seat, fare and status. A trip that isn’t planned yet is added as booked.</span>
     <div className={s.card}>
       <div className={s.toggleRow}><span><strong>Gmail</strong><span className={s.muted}>{st?.gmail ? "Connected. Checked every 5 minutes for mail from IRCTC." : "Sign in with Google. Read-only, and RailWatch only looks at mail from IRCTC."}</span></span>

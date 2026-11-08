@@ -43,3 +43,22 @@
 .imapForm>.feed{grid-column:1/-1;justify-content:flex-end}
 .warnText{display:block;font-size:13px;color:var(--rw-attention-ink)}
 @media(max-width:600px){.imapForm{grid-template-columns:1fr}}
+/* Revamped Settings: one topic per section. Nav items carry a one-line hint (shown on phones, where the list is a
+   screen of its own); desktop shows the label only. Sections open with a title + hint; "Where"/"When" subheads. */
+.nav{max-width:240px}
+.navItem{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:8px 12px}
+.navItem>span{font-weight:600}
+.navItem>small{display:none;font-size:12px;font-weight:400;color:var(--rw-muted)}
+.sectionHead{display:grid;gap:4px;margin-bottom:4px}
+.sectionHead h2{font-size:22px;font-weight:750}
+.subhead{margin-top:10px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--rw-muted)}
+.back{display:none}
+.section>h3{font-size:16px;font-weight:700}
+@media(max-width:860px){
+  .navItem{min-height:60px;padding:10px 14px;border-radius:12px;background:var(--rw-surface);border:1px solid var(--rw-line)}
+  .navItem>small{display:block}
+  .nav{gap:8px}
+  .page:not([data-picked]) .content{display:none}
+  .page[data-picked] .nav{display:none}
+  .back{display:inline-flex;align-self:flex-start;border:0;background:none;padding:6px 0;color:var(--rw-brand);font:600 14px inherit;cursor:pointer}
+}
