@@ -24,8 +24,15 @@ export function emailText(html: string): string {
       text = text.slice(0, start) + text.slice(end);
     }
   }
-  text = text.replace(/<\/(td|th)\s*>/gi, "\t").replace(/<(br|\/tr|\/p|\/div|\/h\d|\/li)\b[^>]*>/gi, "\n").replace(/<[^<>]*>/g, "");
-  return text.replace(/[<>]/g, " ")
+  // Scan characters: nothing between "<" and ">" is kept; cell ends become tabs and row/block ends newlines.
+  let out = "", tag: string | undefined;
+  for (const ch of text) {
+    if (tag === undefined) { if (ch === "<") tag = ""; else out += ch === ">" ? " " : ch; continue; }
+    if (ch !== ">") { tag += ch; continue; }
+    const t = tag.trim().toLowerCase(); tag = undefined;
+    out += /^\/(td|th)\b/.test(t) ? "\t" : /^(br|\/tr|\/p|\/div|\/h\d|\/li)\b/.test(t) ? "\n" : "";
+  }
+  return out
     .replace(/&nbsp;/g, " ").replace(/&#(\d+);/g, (_, n) => { const c = Number(n); return c === 60 || c === 62 || c === 38 ? " " : String.fromCharCode(c); }).replace(/&(lt|gt);/g, " ").replace(/&amp;/g, "&")
     .replace(/[  ]+/g, " ").replace(/ ?\t ?/g, "\t").replace(/\n\s*\n+/g, "\n").trim();
 }
