@@ -66,7 +66,7 @@
   .stageText{flex:1;display:flex;justify-content:space-between;gap:12px}
   .grid div{background:var(--rw-surface)}
   .section h3{font-size:16px}
-  .sticky{margin:0 -16px;padding:12px 16px 20px;background:var(--rw-sidebar);border-top:1px solid var(--rw-line)}
+  .sticky{margin:0 -16px;padding:12px 16px 20px;background:var(--rw-surface);border-top:1px solid var(--rw-line)}
   .sticky button{min-height:50px;font-size:15px}
 }
 /* Leave room for the dialog close button pinned top-right, so the actions menu is never underneath it. */
@@ -88,3 +88,9 @@ dialog .head{padding-right:0}
   dialog[data-docked] .head{padding-right:100px}
   dialog[data-docked] .sticky{margin:0 -20px;padding:12px 20px 20px}
 }
+@media(prefers-reduced-motion:no-preference){
+  .detail>*{animation:jdIn .22s ease-out both}.detail>*:nth-child(2){animation-delay:.03s}.detail>*:nth-child(3){animation-delay:.06s}.detail>*:nth-child(4){animation-delay:.09s}
+  .stages li[data-state=done] .dot{animation:jdPop .3s ease-out both}
+}
+@keyframes jdIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes jdPop{from{transform:scale(.6)}to{transform:none}}

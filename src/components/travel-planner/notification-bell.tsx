@@ -1,5 +1,6 @@
 "use client";
 import { useCallback,useEffect,useId,useRef,useState } from "react";
+import { EmptyState } from "./empty-state";
 import { Bell,RefreshCw,X } from "lucide-react";
 import { apiRequest } from "@/lib/client-api";
 import type { CurrentNotifications } from "@/lib/current-notifications";
@@ -23,7 +24,7 @@ export function NotificationBell({openJourney}:{openJourney:(id:string)=>void}){
       {error&&<div role="alert" className={s.error}><p>{error}</p><button className={shared.reloadButton} aria-label="Reload notifications" onClick={()=>void load()}><RefreshCw size={18}/></button></div>}
       {data.count>0&&<div className={s.actions}><span>{data.count} current</span><button disabled={busy} onClick={()=>void clear()}>Clear all</button></div>}
       <div className={s.items}>{data.items.map(item=><article key={item.id}><button className={s.message} onClick={()=>{panel.current?.hidePopover();openJourney(item.journeyId);}}>{item.message}</button><button className={shared.iconButton} disabled={busy} aria-label={`Clear notification: ${item.message}`} onClick={()=>void clear(item.id)}><X size={16}/></button></article>)}</div>
-      {!error&&!data.count&&<p className={s.empty} role="status">{loading?"Checking notifications…":"You’re all caught up."}</p>}
+      {!error&&!data.count&&(loading?<p className={s.empty} role="status">Checking notifications…</p>:<EmptyState compact art="bell" title="You’re All Caught Up">Booking and cancellation reminders show up here when they’re due.</EmptyState>)}
       {data.count>data.items.length&&<p className={s.empty}>Showing the latest {data.items.length}. Clear these or clear all.</p>}
     </div>
   </div>;

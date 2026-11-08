@@ -1,5 +1,6 @@
 "use client";
 import {useSyncExternalStore, type ReactNode} from "react";
+import { useStationName } from "./journey-detail";
 import Link from "next/link";
 import { CalendarDays, Files, House, LayoutList, MoreHorizontal, Plus } from "lucide-react";
 import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment} from "@/lib/travel-planner";
@@ -25,8 +26,10 @@ export function MobileJourneyRow({journey:j,open,label,accessibleLabel,booking=f
   const state=noTicket?"No ticket":j.status==="needs_booking"?"Planned":STATUS[j.status];
   const tone=noTicket||j.status==="cancellation_needed"?"warn":j.status==="needs_booking"?"info":j.status==="booked"?"ok":"muted";
   const sub=label===state?"":label??(booking?`Booking opens · Travel ${formatDay(j.date)}`:j.departureConfirmed&&j.departure?`${formatDay(j.date,{weekday:"short"})} · ${j.departure} IST`:"");
-  return <button className={m.row} onClick={open} aria-label={`${accessibleLabel??`Open journey ${j.from} to ${j.to}`} on ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`}><span className={m.date}><b>{formatDay(date,{day:"2-digit"})}</b><small>{(booking?formatDay(date,{month:"short"}):formatDay(date,{weekday:"short"})).toUpperCase()}</small></span><span className={m.rowText}><strong>{j.from} → {j.to}</strong>{sub?<small>{sub}</small>:<span className={m.bars} aria-hidden="true">{steps.map((on,k)=><i key={k} data-on={on||undefined}/>)}</span>}</span><span className={m.rowState} data-tone={tone}>{state}</span></button>;
+  return <button className={m.row} onClick={open} aria-label={`${accessibleLabel??`Open journey ${j.from} to ${j.to}`} on ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`}><span className={m.date}><b>{formatDay(date,{day:"2-digit"})}</b><small>{(booking?formatDay(date,{month:"short"}):formatDay(date,{weekday:"short"})).toUpperCase()}</small></span><span className={m.rowText}><strong>{stationLabel(j.from)} → {stationLabel(j.to)}</strong>{sub?<small>{sub}</small>:<span className={m.bars} aria-hidden="true">{steps.map((on,k)=><i key={k} data-on={on||undefined}/>)}</span>}</span><span className={m.rowState} data-tone={tone}>{state}</span></button>;
 }
+/** Station code with its directory name underneath (the name, not the code twice). */
+function MobileStop({code,end=false}:{code:string;end?:boolean}){const name=useStationName(stationLabel(code));return <span className={m.stop} data-end={end||undefined}><b>{stationLabel(code)}</b>{name&&<small>{name}</small>}</span>;}
 /** Today on phones (canvas TodayMobile.dc.html): header, next trip, Do next, this week. */
 export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data:DashboardView;open:(j:Journey)=>void;view:(file:TicketAttachment)=>void;plan:()=>void;go:(status:string)=>void;skip?:(j:Journey)=>void;keep?:(j:Journey)=>void;today?:string;attach?:(j:Journey)=>void}){
   const next=data.upcoming.find(j=>j.status==="booked")??data.upcoming[0];
@@ -38,10 +41,10 @@ export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data
   const doNext=[...data.attention.map(j=>({j,booking:false})),...data.bookingSoon.filter(j=>!data.attention.some(a=>a.id===j.id)).map(j=>({j,booking:true}))].slice(0,4);
   return <div className={m.screen}>
     <header className={m.todayHead}><div><span className={m.dateLine}>{start&&formatDay(start,{weekday:"long",day:"numeric",month:"long"})}</span><h1>Today</h1></div><button type="button" className={m.iconPrimary} aria-label="New journey" onClick={plan}><Plus size={20}/></button></header>
-    {decisions.length>0&&<section className={m.decision} aria-labelledby="mobile-decision"><h2 id="mobile-decision">Needs a decision</h2>{decisions.map(j=><div key={j.id} className={m.decisionRow}><button className={m.decisionTrip} onClick={()=>open(j)}><b>{formatDay(j.date,{weekday:"short",day:"numeric",month:"short"})} · {j.from} → {j.to}</b><small>On your time off</small></button><div className={m.decisionActions}>{skip&&<button onClick={()=>skip(j)}>Skip</button>}{keep&&<button onClick={()=>keep(j)}>Keep</button>}</div></div>)}</section>}
+    {decisions.length>0&&<section className={m.decision} aria-labelledby="mobile-decision"><h2 id="mobile-decision">Needs a decision</h2>{decisions.map(j=><div key={j.id} className={m.decisionRow}><button className={m.decisionTrip} onClick={()=>open(j)}><b>{formatDay(j.date,{weekday:"short",day:"numeric",month:"short"})} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>On your time off</small></button><div className={m.decisionActions}>{skip&&<button onClick={()=>skip(j)}>Skip</button>}{keep&&<button onClick={()=>keep(j)}>Keep</button>}</div></div>)}</section>}
     {next?<section aria-label="Next journey" className={m.trip}><button className={m.tripOpen} onClick={()=>open(next)} aria-label={`Open journey ${next.from} to ${next.to} on ${formatDay(next.date,{day:"numeric",month:"long",year:"numeric"})}`}>
       <span className={m.tripTop}><span className={m.eyebrow}>Next trip</span><span className={m.tripStatus} data-status={next.status}>{next.status==="needs_booking"?"Planned":STATUS[next.status]}</span></span>
-      <span className={m.route}><span className={m.stop}><b>{next.from}</b><small>{stationLabel(next.from)}</small></span><span className={m.track} aria-hidden="true"/><span className={m.stop} data-end><b>{next.to}</b><small>{stationLabel(next.to)}</small></span></span>
+      <span className={m.route}><MobileStop code={next.from}/><span className={m.track} aria-hidden="true"/><MobileStop code={next.to} end/></span>
       <span className={m.when}>{formatDay(next.date,{weekday:"short",day:"numeric",month:"short"})} · Onward{next.departureConfirmed&&next.departure?` · ${next.departure} IST`:""}</span>
       {details&&<span className={m.tripDetails}>{details}</span>}</button>
       {pdf?<button className={m.primary} onClick={()=>view(pdf)}><Files size={17}/>View ticket</button>:next.status==="booked"&&<div className={m.nudge}><span>No ticket attached yet</span><button type="button" onClick={()=>attach?attach(next):open(next)}>Attach</button></div>}
@@ -63,7 +66,7 @@ export function MobileMore({name,admin,missingTickets,openSettings,theme,signOut
       <h2 className={m.moreGroup}>Plan</h2>
       <div className={m.moreCard}>{item("/time-off","Time off")}{item("/routines","Routines")}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined)}{item("/spend","Spend",undefined,true)}</div>
       <h2 className={m.moreGroup}>Settings</h2>
-      <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders")}{item("/settings#settings-channels","Channels")}{item("/settings#settings-offline","Offline tickets")}{item("/settings#settings-data","Data and backup")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
+      <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders")}{item("/settings#settings-connections","Connections")}{item("/settings#settings-account","Account")}{item("/settings#settings-devices","Devices & data")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
       {admin&&<><h2 className={m.moreGroup}>Workspace</h2><div className={m.moreCard}>{item("/settings/workspace","Members and booking rules")}{item("/settings/workspace/health","System health",undefined,true)}</div></>}
     </nav>
     <button type="button" className={m.signOut} onClick={signOut}>Sign out</button>

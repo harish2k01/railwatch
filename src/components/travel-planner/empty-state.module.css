@@ -1,0 +1,20 @@
+/* Empty states: line illustration + title + hint, used wherever a list or search has nothing to show. */
+.empty{display:grid;justify-items:center;gap:8px;padding:32px 20px;border-radius:16px;border:1px dashed var(--rw-line);text-align:center;animation:emptyIn .3s ease-out}
+.empty[data-compact]{padding:20px 16px;border:0}
+.empty strong{font-size:16px;font-weight:700;color:var(--rw-text)}
+.empty p{max-width:420px;font-size:14px;color:var(--rw-muted)}
+.empty>a,.empty>button{margin-top:6px}
+.art{width:200px;height:auto;color:var(--rw-line)}
+.empty[data-compact] .art{width:150px}
+.glow{fill:var(--rw-brand-soft);opacity:.6}
+.rail,.sleepers{stroke:var(--rw-muted);opacity:.5}
+.train{fill:var(--rw-surface-2);stroke:var(--rw-line);animation:trainIn .7s cubic-bezier(.2,.8,.2,1) both}
+.train rect:first-child{stroke:var(--rw-line);stroke-width:2}
+.window{fill:var(--rw-brand-soft)}
+.wheel{fill:var(--rw-muted)}
+.accent{fill:var(--rw-brand);stroke:var(--rw-brand);animation:accentIn .4s .25s ease-out both}
+.accent [fill=none]{fill:none}
+@keyframes emptyIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes trainIn{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes accentIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.empty,.train,.accent{animation:none}}

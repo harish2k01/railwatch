@@ -7,7 +7,7 @@
 .pillOk{background:var(--rw-booked-bg);color:var(--rw-booked-ink)}
 .pillCheck{background:var(--rw-attention-bg);color:var(--rw-attention-ink)}
 .pillNew{background:var(--rw-open-bg);color:var(--rw-open-ink)}
-.drop{position:relative;display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:16px;border:1.5px dashed var(--rw-line);background:var(--rw-sidebar);font-size:14px;cursor:pointer}
+.drop{position:relative;display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:16px;border:1.5px dashed var(--rw-line);background:var(--rw-surface-2);font-size:14px;cursor:pointer}
 .drop>span:first-of-type{flex:1}
 .drop .muted{font-size:14px}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}

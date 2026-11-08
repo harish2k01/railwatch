@@ -35,3 +35,13 @@
 .more{align-self:flex-start;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--rw-line);background:var(--rw-surface-2);color:var(--rw-text);font:600 14px inherit;cursor:pointer}
 @media(max-width:1000px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:no-preference){.trip{transition:border-color .14s ease,transform .14s ease}.trip:hover{transform:translateY(-1px)}.month{animation:fade .2s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
+/* Motion: rows and tiles ease in (first rows staggered), hover lifts, selection glides. */
+@media(prefers-reduced-motion:no-preference){
+  .trip{animation:jnIn .22s ease-out both}
+  .month:nth-of-type(1) .trip:nth-child(2){animation-delay:.03s}.month:nth-of-type(1) .trip:nth-child(3){animation-delay:.06s}.month:nth-of-type(1) .trip:nth-child(4){animation-delay:.09s}.month:nth-of-type(1) .trip:nth-child(5){animation-delay:.12s}
+  .tile{transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
+  .tile:hover{transform:translateY(-1px)}
+  .trip:hover{transform:translateY(-1px)}
+  .needRow{animation:jnIn .24s ease-out both}
+}
+@keyframes jnIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { EmptyState } from "./empty-state";
 import { daysBetween, formatDay, type Journey, type Planner } from "@/lib/travel-planner";
 import { stationLabel, timeOffGroups } from "@/lib/journey-display";
 import { ActionMenu } from "./action-menu";
@@ -25,7 +25,7 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
   const upcomingBreaks = breaks.filter(b => b.end >= today);
   /** "2 – 6 Nov · 5 days · ends tomorrow" or "Mon, 9 Nov · company holiday", as on the board. */
   const detail = (g: (typeof groups)[number]) => {
-    if (g.start === g.end) return `${formatDay(g.start, { weekday: "short", day: "numeric", month: "short" })} · ${g.type === "company" ? "company holiday" : "leave"}`;
+    if (g.start === g.end) return `${formatDay(g.start, { weekday: "short", day: "numeric", month: "short" })} · ${g.type === "company" ? "Company Holiday" : "Leave"}`;
     const left = daysBetween(today, g.end), ends = g.start <= today && g.end >= today ? (left === 0 ? " · ends today" : left === 1 ? " · ends tomorrow" : ` · ends in ${left} days`) : "";
     return `${Number(g.start.slice(-2))} – ${short(g.end)} · ${g.days.length} days${ends}`;
   };
@@ -41,7 +41,7 @@ export function TimeOffOverview({ holidays, today, breaks, remove, plan, journey
           {!past && <span className={n ? s.pillWarn : s.pillOk}>{n ? `${n} ${n === 1 ? "trip" : "trips"} affected` : "No trips affected"}</span>}
           <ActionMenu label={`Actions for ${g.name}`} actions={g.days.map(d => ({ label: g.days.length > 1 ? `Remove ${short(d.date)}` : "Remove time off", danger: true, onClick: () => remove(d.id) }))} />
         </div>;
-      })}</div> : <div className={s.empty}><CalendarDays size={24} aria-hidden="true" /><strong>{past ? "No past time off" : "No upcoming time off"}</strong><p>{past ? "Past holidays and leave will appear here." : "Add time off or import company holidays to plan your next break."}</p></div>}
+      })}</div> : <EmptyState art="calendar" title={past ? "No Past Time Off" : "No Upcoming Time Off"}>{past ? "Past holidays and leave will appear here." : "Add time off or import company holidays to plan your next break."}</EmptyState>}
       <button type="button" className={s.link} onClick={() => setPast(!past)}>{past ? "Show upcoming time off" : "Show past time off"}</button>
     </section>
     <aside className={s.side} aria-label="Trips and long weekends">

@@ -1,5 +1,6 @@
 "use client";
 import { ask } from "./confirm";
+import { EmptyState } from "./empty-state";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -66,7 +67,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
     </div> })),
   ];
   return <div className={t.today}>
-    {data.remindersOn === false && <section className={t.decision} aria-labelledby="today-reminders-off"><h2 id="today-reminders-off">Reminders are off</h2><div className={t.decisionLine}><span className={t.decisionTrip}><b>You won’t be told when booking opens</b><small>Turn on this device, Telegram or email so RailWatch can remind you.</small></span><Link className={s.secondary} href="/settings#settings-connections">Turn on reminders</Link></div></section>}
+    {data.remindersOn === false && <section className={t.decision} aria-labelledby="today-reminders-off"><h2 id="today-reminders-off">Reminders are off</h2><div className={t.decisionLine}><span className={t.decisionTrip}><b>You won’t be told when booking opens</b><small>Turn on this device, Telegram or email so RailWatch can remind you.</small></span><Link className={s.secondary} href="/settings#settings-reminders">Turn on reminders</Link></div></section>}
     {(data.conflicts?.length ?? 0) > 0 && <section className={t.decision} aria-labelledby="today-decision"><h2 id="today-decision">Needs a decision</h2>
       {data.conflicts.map(j => <div key={j.id} className={t.decisionLine}><button type="button" className={t.decisionTrip} onClick={() => openJourney(j)}><b>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short" })} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>{STATUS[j.status]} on your time off{j.ruleId ? " · from a routine" : ""}</small></button>{skipTimeOff && <button type="button" className={s.primary} onClick={() => skipTimeOff(j)}>Skip this trip</button>}{keepTimeOff && <button type="button" className={s.secondary} onClick={() => keepTimeOff(j)}>Keep</button>}</div>)}
     </section>}
@@ -81,7 +82,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
 
         <section className={t.section} aria-labelledby="today-do-next">
           <header className={t.sectionHead}><h2 id="today-do-next">Do next</h2><span className={t.muted}>{items.length} {items.length === 1 ? "item" : "items"}</span></header>
-          {items.length ? <div className={t.list}>{items.map(i => <div key={i.key}>{i.node}</div>)}</div> : <p className={t.muted}>You’re all caught up. Nothing needs booking or cancelling right now.</p>}
+          {items.length ? <div className={t.list}>{items.map(i => <div key={i.key}>{i.node}</div>)}</div> : <EmptyState compact art="done" title="You’re All Caught Up">Nothing needs booking or cancelling right now.</EmptyState>}
         </section>
       </div>
 
@@ -90,10 +91,10 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
           <header className={t.cardHead}><h2 id="today-week">This week</h2><button type="button" className={t.link} onClick={() => go("calendar")}>Calendar</button></header>
           <ul className={t.week}>{Array.from({ length: 7 }, (_, i) => {
             const date = addDays(today, i), day = week[date], off = planner.holidays.filter(h => h.date === date);
-            const parts = [...off.map(h => h.type === "company" ? `${h.name} · company holiday` : h.name), day?.journeys ? (day.journeys === 1 ? "1 journey" : `${day.journeys} journeys`) : "", day?.bookings ? "booking opens" : "", day?.cancellations ? `${day.cancellations} to cancel` : ""].filter(Boolean);
+            const parts = [...off.map(h => h.type === "company" ? `${h.name} · Company Holiday` : h.name), day?.journeys ? (day.journeys === 1 ? "1 Journey" : `${day.journeys} Journeys`) : "", day?.bookings ? "Booking Opens" : "", day?.cancellations ? `${day.cancellations} To Cancel` : ""].filter(Boolean);
             const dot = day?.journeys ? t.dotBooked : day?.bookings ? t.dotOpen : off.length ? t.dotOff : undefined;
             const text = parts.join(" · ");
-            return <li key={date} data-today={i === 0 || undefined}><button type="button" onClick={() => chooseDate(date)} aria-label={`View ${formatDay(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}><span className={t.weekDay}>{i === 0 ? "Today" : formatDay(date, { weekday: "short", day: "numeric" })}</span><span className={text ? undefined : t.muted}>{text ? text[0].toUpperCase() + text.slice(1) : "Nothing planned"}</span>{dot && <i className={dot} aria-hidden="true" />}</button></li>;
+            return <li key={date} data-today={i === 0 || undefined}><button type="button" onClick={() => chooseDate(date)} aria-label={`View ${formatDay(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}><span className={t.weekDay}>{i === 0 ? "Today" : formatDay(date, { weekday: "short", day: "numeric" })}</span><span className={text ? undefined : t.muted}>{text ? text[0].toUpperCase() + text.slice(1) : "Nothing Planned"}</span>{dot && <i className={dot} aria-hidden="true" />}</button></li>;
           })}</ul>
         </section>
 

@@ -6,7 +6,7 @@ import {encryptSecret,decryptSecret} from "./crypto";
 import {loadWorkspaceMetadata,applyAccountSettings} from "./railwatch-store";
 import {storedPlanner} from "./workspace-storage";
 import {todayIST,type Journey} from "./travel-planner";
-import {planCurrentNotifications} from "./current-notifications";
+import {clearResolvedNotifications,planCurrentNotifications} from "./current-notifications";
 
 export const ACCOUNT_BATCH_SIZE=20;
 /** Resumes a persistent account sweep without materializing every workspace in memory. */
@@ -35,9 +35,11 @@ export async function planAccountReminders(userId:string,policy:FeaturePolicy,te
     const metadata=applyAccountSettings(await storedPlanner(tx,userId,row,[]),policy,owner.phoneNumber??"",await tx.railTelegram.findUnique({where:{userId}}),telegramProviderId);
     const devices=(await tx.railPush.findMany({where:{userId},select:{id:true}})).map(d=>d.id);
     const generation=row.planGeneration+1;
-    const plan=async(journeys:Journey[])=>{const actual=policy.remindersEnabled?jobsFor({...metadata,journeys},now,owner.emailVerifiedAt?owner.email:undefined,devices).filter(j=>(j.kind!=="WHATSAPP"||policy.whatsappEnabled)&&(j.kind!=="TELEGRAM"||policy.telegramEnabled)):[];await persistJobs(tx,userId,generation,actual,now);if(policy.remindersEnabled)await planCurrentNotifications(tx,userId,{...metadata,journeys},now);};
+    const active=new Set<string>();
+    const plan=async(journeys:Journey[])=>{for(const j of journeys)if(!j.archivedAt&&j.date>=todayIST(now)&&(j.status==="needs_booking"||j.status==="cancellation_needed"))active.add(j.id);const actual=policy.remindersEnabled?jobsFor({...metadata,journeys},now,owner.emailVerifiedAt?owner.email:undefined,devices).filter(j=>(j.kind!=="WHATSAPP"||policy.whatsappEnabled)&&(j.kind!=="TELEGRAM"||policy.telegramEnabled)):[];await persistJobs(tx,userId,generation,actual,now);if(policy.remindersEnabled)await planCurrentNotifications(tx,userId,{...metadata,journeys},now);};
     if(row.storageVersion===2){let after:string|undefined;for(;;){const rows=await tx.railJourney.findMany({where:{userId,archived:false,status:{in:["needs_booking","cancellation_needed","booked"]},date:{gte:todayIST(now)},...(after?{id:{gt:after}}:{})},orderBy:{id:"asc"},take:200,select:{id:true,payload:true}});if(!rows.length)break;await plan(rows.map(j=>JSON.parse(decryptSecret(j.payload)!) as Journey));after=rows.at(-1)!.id;if(rows.length<200)break;}}
     else {const full=await storedPlanner(tx,userId,row);for(let i=0;i<full.journeys.length;i+=200)await plan(full.journeys.slice(i,i+200));}
+    await clearResolvedNotifications(tx,userId,active,now);
     await tx.railReminderPause.deleteMany({where:{userId,until:{lte:now}}});
     await tx.railJob.updateMany({where:{userId,state:{in:["PENDING","FAILED","MISSED"]},OR:[{planGeneration:null},{planGeneration:{not:generation}}]},data:{state:"CANCELLED",lease:null,leaseUntil:null}});
     await tx.railWorkspace.update({where:{userId},data:{planGeneration:generation}});
