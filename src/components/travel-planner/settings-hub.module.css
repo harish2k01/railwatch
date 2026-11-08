@@ -1,5 +1,5 @@
 /* Settings (plan 2.8), matching canvas Settings.dc.html. */
-.page{display:grid;gap:24px;max-width:1120px}
+.page{display:grid;gap:24px;max-width:none}
 .top{display:flex;justify-content:flex-end;margin-top:-58px;min-height:34px}
 .saved{font-size:13px;color:var(--rw-muted)}
 .layout{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
