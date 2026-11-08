@@ -82,3 +82,9 @@
 }
 /* In a dialog the ⋯ menu sits in the dialog header beside the close button, so the heading needs no reserved gap. */
 dialog .head{padding-right:0}
+/* Docked card (canvas): content starts at the top beside the ⋯/× pair instead of below a blank band. */
+@media(min-width:601px){
+  dialog[data-docked] .detail{padding:20px 20px 0}
+  dialog[data-docked] .head{padding-right:100px}
+  dialog[data-docked] .sticky{margin:0 -20px;padding:12px 20px 20px}
+}

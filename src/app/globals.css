@@ -170,7 +170,8 @@ main article,
 }
 
 /* A dialog owns the only scroll surface while open; preserve the page position. */
-html:has(dialog[open]), body:has(dialog[open]) { overflow: hidden; }
+/* Lock page scroll only behind modal dialogs; the docked journey panel is non-modal and the page keeps scrolling. */
+html:has(dialog:modal), body:has(dialog:modal) { overflow: hidden; }
 /* html and body sit outside the themed workspace, so they repeat the Signal ground colours. */
 html:has([data-theme="dark"]), body:has([data-theme="dark"]) { background: #0b0f17; color-scheme: dark; }
 html:has([data-theme="light"]), body:has([data-theme="light"]) { background: #f6f5f2; color-scheme: light; }

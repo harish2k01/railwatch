@@ -311,3 +311,8 @@
 /* Keep the collapse button clear of the wordmark: pushed to the row end with a real gap. */
 .app[data-sidebar=expanded] .brandRow{gap:16px}
 .app[data-sidebar=expanded] .brandRow .sidebarToggle{margin-left:auto}
+/* Docked journey panel as the canvas card: inset from the window edges, rounded, full border; ⋯ and × side by side
+   at its top-right. It is fixed, so the list and sidebar scroll independently and another row can be picked. */
+.modal.dockedModal{top:16px;right:16px;bottom:16px;height:auto;max-height:calc(100dvh - 32px);width:420px;max-width:420px;border-radius:16px;border-width:1px;box-shadow:0 16px 48px #0006}
+.dockedModal .modalHead{top:16px;right:16px}
+.dockedModal .modalHead .iconButton{width:40px;height:40px;min-width:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
