@@ -51,7 +51,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
     <header className={d.head}>
       <div>
         <p className={d.kicker}>{formatDay(j.date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}{mobile ? " · Onward" : routine ? ` · ${routine}` : ""}</p>
-        {mobile ? <h2 className={d.route}>{j.from} → {j.to}</h2> : <p className={d.route}><b title={j.from}>{stationLabel(j.from)}</b> → <b title={j.to}>{stationLabel(j.to)}</b></p>}
+        {mobile ? <h2 className={d.route}>{stationLabel(j.from)} → {stationLabel(j.to)}</h2> : <p className={d.route}><b title={j.from}>{stationLabel(j.from)}</b> → <b title={j.to}>{stationLabel(j.to)}</b></p>}
         {(from || to) && <p className={d.names}>{from || j.from} to {to || j.to}</p>}
         {mobile && <span className={d.pill} data-status={j.status}>{PILL[j.status]}</span>}
       </div>

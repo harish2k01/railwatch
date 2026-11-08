@@ -316,3 +316,19 @@
 .modal.dockedModal{top:16px;right:16px;bottom:16px;height:auto;max-height:calc(100dvh - 32px);width:420px;max-width:420px;border-radius:16px;border-width:1px;box-shadow:0 16px 48px #0006}
 .dockedModal .modalHead{top:16px;right:16px}
 .dockedModal .modalHead .iconButton{width:40px;height:40px;min-width:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.vaultEmpty{grid-column:1/-1}
+/* Typography: Title Case for headings, labels, tags and action buttons across the app; sentences (hints, subtitles,
+   messages) keep sentence case. Hashed module names keep the "_name" suffix, so tags/buttons from every module match. */
+.app :is(h1,h2,h3,h4,th,dt,legend),
+.app :is([class*="_pill"],[class*="_badge"],[class*="_tag"],[class*="_chip"]),
+.app :is(.primary,.secondary,.textButton,[class*="_btn"],[role=tab],[role=menuitem]),
+.app :is([class*="_field"]>label,[class*="_eyebrow"]){text-transform:capitalize}
+.app :is(h1,h2,h3,h4,button) :is(small,p){text-transform:none}
+/* Motion: pressed buttons give, ticket cards ease in, nav selection glides. */
+@media(prefers-reduced-motion:no-preference){
+  .app :is(.primary,.secondary,.iconButton):active:not(:disabled){transform:scale(.97)}
+  .app :is(.primary,.secondary,.iconButton){transition:transform .1s ease,background-color .15s ease,border-color .15s ease,color .15s ease}
+  .vaultCard{animation:vaultIn .22s ease-out both;transition:transform .16s ease,border-color .16s ease}.vaultCard:hover{transform:translateY(-2px)}
+  .navItem,.navActive{transition:background-color .16s ease,color .16s ease}
+}
+@keyframes vaultIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

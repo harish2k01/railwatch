@@ -91,3 +91,5 @@
 .ev[data-kind=off]{background:var(--rw-timeoff-bg);color:var(--rw-timeoff-ink)}
 .heading{flex-wrap:wrap;min-width:0}.datePick input{width:142px;max-width:100%}.week{min-width:0}.week button{min-width:0}
 .segCount{font-weight:700;opacity:.8}
+/* Status chips scroll sideways without a visible scrollbar; the row fades at the edge to show there is more. */
+.segments{scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);scroll-snap-type:x proximity}.segments::-webkit-scrollbar{display:none}.segments>*{scroll-snap-align:start;flex:none}

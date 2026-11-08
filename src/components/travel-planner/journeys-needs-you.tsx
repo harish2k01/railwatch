@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { EmptyState } from "./empty-state";
 import { addDays, bookingDay, bookingInstant, bookingTimeLabel, formatDay, type Journey } from "@/lib/travel-planner";
 import type { JourneyPages } from "@/lib/journey-pages";
 import { ActionMenu, type Action } from "./action-menu";
@@ -61,7 +62,7 @@ export function JourneysNeedsYou({ rows, data, today, now, selectedId, busy, ope
         <ActionMenu label={`Actions For Journey ${j.from} to ${j.to}, ${formatDay(j.date)}`} actions={actions(j)} />
       </div>; })}
     </section>)}
-    {!months.length && data && <p className={s.empty}>{tile === "all" ? "No upcoming journeys. Plan one with New journey." : "No journeys with this status."}</p>}
+    {!months.length && data && <EmptyState art="journeys" title={tile === "all" ? "No Upcoming Journeys" : "Nothing Here"}>{tile === "all" ? "Plan one with New journey, or set up a routine." : "No journeys with this status right now."}</EmptyState>}
     {nextKeys.length > 0 && <button type="button" className={s.more} disabled={busy} onClick={() => void Promise.all(nextKeys.map(key => more(key)))}>{busy ? "Loading…" : "Load more journeys"}</button>}
   </div>;
 }

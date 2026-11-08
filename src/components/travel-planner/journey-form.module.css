@@ -37,7 +37,7 @@
 /* New journey as on the canvas board: two panes, segmented type, inline return, dotted preview. */
 .split{display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,2fr);column-gap:0;align-items:start}
 .split>*{grid-column:1;padding-right:28px}
-.split>.next{grid-column:2;grid-row:1 / span 40;align-self:stretch;margin:-24px -24px -24px 0;padding:28px;background:var(--rw-sidebar);border-left:1px solid var(--rw-line);border-radius:0}
+.split>.next{grid-column:2;grid-row:1 / span 40;align-self:stretch;margin:-24px -24px -24px 0;padding:28px;background:var(--rw-surface-2);border-left:1px solid var(--rw-line);border-radius:0}
 .intent{padding:4px;gap:4px;border-radius:12px;background:var(--rw-ground);border:1px solid var(--rw-line)}
 .returnTrip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:44px;font-size:14px;font-weight:600}
 .returnRoute{color:var(--rw-muted);font-weight:500}
@@ -62,7 +62,7 @@
   .intent button{min-height:44px;border:0;font-size:13px}
   .form input:not([type=checkbox]),.form select{min-height:48px;border-radius:10px}
   .next{padding:14px;border-radius:12px;background:var(--rw-open-bg);color:var(--rw-open-ink);font-size:13px}
-  .form>footer{position:sticky;bottom:0;margin:0 -16px;padding:12px 16px calc(20px + env(safe-area-inset-bottom));background:var(--rw-sidebar);border-top:1px solid var(--rw-line)}
+  .form>footer{position:sticky;bottom:0;margin:0 -16px;padding:12px 16px calc(20px + env(safe-area-inset-bottom));background:var(--rw-surface-2);border-top:1px solid var(--rw-line)}
   .form>footer button[type=submit]{flex:1;width:100%;min-height:50px;border-radius:12px;font-size:15px;font-weight:700}
 }
 .next,.next ol{align-content:start}

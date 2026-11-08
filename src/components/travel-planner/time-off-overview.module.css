@@ -34,3 +34,16 @@
 .tileHead strong{font-size:14px}
 .tileHead span{font-size:13px;font-weight:600;color:var(--rw-brand)}
 .tile .link{margin-top:6px}
+/* Fixes: the ⋯ menu was clipped by the card (overflow hidden); both columns start at the same height; long-weekend
+   tiles use a surface colour so they read in light mode too. */
+.card{overflow:visible}
+.row:first-child{border-top-left-radius:16px;border-top-right-radius:16px}
+.row:last-child{border-bottom-left-radius:16px;border-bottom-right-radius:16px}
+.listSection h2{line-height:28px}
+@media(min-width:840px){.side{margin-top:40px}}
+.tile{background:var(--rw-surface-2);border:1px solid var(--rw-line)}
+@media(prefers-reduced-motion:no-preference){
+  .row{animation:toIn .22s ease-out both}.row:nth-child(2){animation-delay:.03s}.row:nth-child(3){animation-delay:.06s}
+  .tile{animation:toIn .24s ease-out both;transition:border-color .16s ease,transform .16s ease}.tile:hover{transform:translateY(-1px);border-color:var(--rw-brand)}
+}
+@keyframes toIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}

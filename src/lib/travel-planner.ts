@@ -141,7 +141,10 @@ export const CANCELLED_RETENTION_DAYS = 7;
 /** Completes past booked journeys and archives cancelled plans after their retention period. */
 export function reconcileJourneyLifecycle(planner:Planner,today:string):Planner{
  let changed=false;
- const journeys=planner.journeys.map(j=>{
+ const journeys=planner.journeys.map(raw=>{
+  // Repair stations saved as "MADURAI JN. - MDU" by older ticket imports: keep the code.
+  const code=(v:string)=>v.match(/s[-–]s*([A-Z]{2,5})s*$/)?.[1]??v;
+  let j=raw;if(code(j.from)!==j.from||code(j.to)!==j.to){changed=true;j={...j,from:code(j.from),to:code(j.to)};}
   if(j.archivedAt)return j;
   if(j.status==="booked"&&j.date<today){changed=true;return {...j,status:"completed" as const,completedAt:addDays(j.date,1)};}
   if(j.status==="cancelled"||j.status==="skipped"){
