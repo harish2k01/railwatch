@@ -1,41 +1,97 @@
 name: Refresh station list
 
 # Monthly: pull current codes and names from Wikidata (P5696), re-apply the official zonal names and the
-# confirmed removals (scripts/stations-official/removed.tsv) and the long-distance filter (long-distance.tsv /
-# dropped.tsv), and open a PR with the counts if anything changed. New codes are kept as "unverified-new" for review.
+# confirmed removals (scripts/stations-official/removed.tsv), then apply the current NTES timetable crawled by
+# railpull (github.com/shwetankg07/railpull, MIT) to the long-distance filter, and open a PR with the counts.
+#
+# A full polite crawl (~1.2 s per request, railpull's default; never lower it) takes about 8 hours, longer than
+# one Actions job, so it runs daily on the 1st-6th and resumes from the month's cache. The station list is
+# rebuilt once the crawl reports DONE. Only derived station codes are committed, never the crawled timetable.
 on:
   schedule:
-    - cron: "30 3 1 * *"
+    - cron: "30 3 1-6 * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: stations-refresh
+  cancel-in-progress: false
+
+env:
+  RAILPULL_REF: 1034beffa2183ed77e948267b0b4b207aa02785f
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v6
+      - name: Month
+        id: month
+        run: echo "key=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: shwetankg07/railpull
+          ref: ${{ env.RAILPULL_REF }}
+          path: railpull
+      - name: Restore this month's crawl
+        uses: actions/cache/restore@v4
+        with:
+          path: railpull/data/raw
+          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}
+          restore-keys: railpull-${{ steps.month.outputs.key }}-
+      - name: Skip if this month is already applied
+        id: state
+        run: |
+          if [ -f railpull/data/raw/.applied ]; then echo "Already applied this month."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/setup-python@v6
+        if: steps.state.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+      - name: Crawl NTES timetable (resumes; stops before the job limit)
+        id: crawl
+        if: steps.state.outputs.skip != 'true'
+        working-directory: railpull
+        run: |
+          pip install -q -r requirements.txt
+          set +e
+          timeout 5h python ntes/crawl.py
+          code=$?
+          set -e
+          phase=$(python -c "import json;print(json.load(open('data/raw/crawl-status.json')).get('phase',''))" 2>/dev/null || true)
+          echo "Crawler exit $code, phase '$phase'"
+          if [ "$phase" = "DONE" ]; then echo "done=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Save crawl progress
+        if: always() && steps.state.outputs.skip != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: railpull/data/raw
+          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}
       - uses: actions/setup-node@v6
+        if: steps.crawl.outputs.done == 'true'
         with:
           node-version: 24
-      - run: npm ci --ignore-scripts
-      - name: Refresh from Wikidata
-        run: node scripts/update-stations-wikidata.mjs
-      - name: Apply official names, removals and the long-distance filter
+      - name: Build station list
+        if: steps.crawl.outputs.done == 'true'
         env:
           STATIONS_SUMMARY: ${{ runner.temp }}/stations-summary.md
-        run: node scripts/build-stations-official.mjs build
-      - name: Station tests
-        run: npx vitest run src/lib/stations.test.ts
+        run: |
+          npm ci --ignore-scripts
+          (cd railpull && python transform/export.py)
+          node scripts/update-stations-wikidata.mjs
+          node scripts/stations-railpull.mjs railpull/data/out
+          node scripts/build-stations-official.mjs build
+          npx vitest run src/lib/stations.test.ts
       - name: Open a PR if the list changed
+        if: steps.crawl.outputs.done == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ runner.temp }}/stations-summary.md
         run: |
-          if git diff --quiet -- src/data scripts/stations-official; then echo "No station changes."; exit 0; fi
+          if git diff --quiet -- src/data scripts/stations-official && [ -z "$(git status --porcelain scripts/stations-official)" ]; then echo "No station changes."; else
           branch="stations/refresh-$(date -u +%Y-%m)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -44,10 +100,18 @@ jobs:
           git commit -m "Monthly station list refresh"
           git push -f origin "$branch"
           {
-            echo "Automatic refresh from Wikidata (P5696) with official zonal names, confirmed removals (\`removed.tsv\`) and the long-distance filter applied. Local-only and metro stations in \`dropped.tsv\` stay out."
+            echo "Automatic refresh from Wikidata (P5696) with official zonal names, confirmed removals (\`removed.tsv\`) and the long-distance filter from the current NTES timetable (railpull). Local-only and metro stations in \`dropped.tsv\` stay out; stations in no timetable are kept."
             echo
             cat "$SUMMARY"
             echo
-            echo "Review new unverified codes in \`scripts/stations-official/long-distance.tsv\`: move local-only ones to \`dropped.tsv\` and retired ones to \`removed.tsv\`."
+            echo "Review new codes in \`scripts/stations-official/timetable.tsv\` and \`long-distance.tsv\`: move retired ones to \`removed.tsv\`."
           } > "$RUNNER_TEMP/body.md"
           gh pr create --base main --head "$branch" --label minor --title "Monthly station list refresh ($(date -u +%B\ %Y))" --body-file "$RUNNER_TEMP/body.md" || echo "PR already open."
+          fi
+          touch railpull/data/raw/.applied
+      - name: Mark this month applied
+        if: steps.crawl.outputs.done == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: railpull/data/raw
+          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}-applied

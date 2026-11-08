@@ -54,3 +54,11 @@ monthly Wikidata refresh are kept and appended to `long-distance.tsv` as `unveri
 TAG lists principal Mail/Express stops by name only, with no codes. Where exactly one of our stations has that name,
 an unverified row is marked `tag2026` (10 stations) and a wrongly dropped row is restored (3: Patliputra, Katni South, Dankuni).
 TAG does not list minor halts, so it can't settle most of the unverified stations.
+
+## NTES timetable (via railpull)
+
+The monthly refresh crawls the current Indian Railways timetable from NTES with
+[railpull](https://github.com/shwetankg07/railpull) (MIT), at its default polite rate, and uses it only to decide
+which stations are long-distance stops. The crawled timetable is not stored or redistributed; only the derived
+station codes are committed. railpull uses an unofficial NTES client and has no connection to Indian Railways,
+IRCTC, CRIS or NTES.
