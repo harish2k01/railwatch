@@ -15,7 +15,7 @@ type Row = { file: File; meta: TicketAttachment; details: TicketDetails; match: 
 /** Fills journey ticket fields from the ticket. What the ticket says wins over earlier values; unread fields keep theirs. */
 function withTicket(j: Journey, d: TicketDetails, meta: TicketAttachment): Journey {
   const pick = <K extends keyof Journey>(k: K, v: Journey[K] | undefined) => (v ? v : j[k]);
-  return { ...(j.status === "needs_booking" ? transitionJourney(j, "booked") : j), attachments: [...(j.attachments ?? []), meta], pnr: pick("pnr", d.pnr) ?? "", trainNumber: pick("trainNumber", d.trainNumber), trainName: pick("trainName", d.trainName), coach: pick("coach", d.coach), seat: pick("seat", d.seat), berth: pick("berth", d.berth), travelClass: pick("travelClass", d.travelClass) ?? "", ticketStatus: d.ticketStatus ?? j.ticketStatus, ...(d.fare ? { fare: d.fare } : {}), ...(d.departure ? { departure: d.departure, departureConfirmed: true } : {}) };
+  return { ...(j.status === "needs_booking" ? transitionJourney(j, "booked") : j), attachments: [...(j.attachments ?? []), meta], pnr: pick("pnr", d.pnr) ?? "", trainNumber: pick("trainNumber", d.trainNumber), trainName: pick("trainName", d.trainName), coach: pick("coach", d.coach), seat: pick("seat", d.seat), berth: pick("berth", d.berth), ...(d.arrival ? { arrival: d.arrival, arrivalDate: d.arrivalDate } : {}), travelClass: pick("travelClass", d.travelClass) ?? "", ticketStatus: d.ticketStatus ?? j.ticketStatus, ...(d.fare ? { fare: d.fare } : {}), ...(d.departure ? { departure: d.departure, departureConfirmed: true } : {}) };
 }
 
 /** Bulk ticket import (plan 3.3): read PDFs on this device, match them to journeys, then save in one commit. */
@@ -53,7 +53,7 @@ export function TicketImport({ planner, commit, fail, done }: { planner: Planner
       for (const r of chosen) {
         await saveTicketFile(r.meta.id, r.file); stored.push(r.meta.id);
         if (r.choice === "create") {
-          const d = r.details, created = journeySchema.safeParse({ id: crypto.randomUUID(), from: d.from ?? "", to: d.to ?? "", date: d.date, departure: d.departure ?? "20:00", departureConfirmed: Boolean(d.departure), train: d.trainName ?? "", travelClass: d.travelClass ?? "", windowDays: planner.settings.bookingWindowDays, originOffset: 0, pnr: d.pnr ?? "", notes: "", status: "booked", attachments: [r.meta], trainNumber: d.trainNumber, trainName: d.trainName, coach: d.coach, seat: d.seat, berth: d.berth, ticketStatus: d.ticketStatus, fare: d.fare });
+          const d = r.details, created = journeySchema.safeParse({ id: crypto.randomUUID(), from: d.from ?? "", to: d.to ?? "", date: d.date, departure: d.departure ?? "20:00", departureConfirmed: Boolean(d.departure), train: d.trainName ?? "", travelClass: d.travelClass ?? "", windowDays: planner.settings.bookingWindowDays, originOffset: 0, pnr: d.pnr ?? "", notes: "", status: "booked", attachments: [r.meta], trainNumber: d.trainNumber, trainName: d.trainName, coach: d.coach, seat: d.seat, berth: d.berth, arrival: d.arrival, arrivalDate: d.arrivalDate, ticketStatus: d.ticketStatus, fare: d.fare });
           if (!created.success) throw new Error(`${r.file.name}: the route or date couldn’t be read. Attach it from the journey instead.`);
           journeys.push(created.data);
         } else {

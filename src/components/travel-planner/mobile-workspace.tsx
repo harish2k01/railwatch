@@ -3,7 +3,7 @@ import {useSyncExternalStore, type ReactNode} from "react";
 import { useStationName } from "./journey-detail";
 import Link from "next/link";
 import { CalendarDays, Files, House, LayoutList, MoreHorizontal, Plus } from "lucide-react";
-import {addDays,bookingDay,formatDay,type Journey,type TicketAttachment} from "@/lib/travel-planner";
+import {addDays,bookingDay,formatDay,tripTiming,type Journey,type TicketAttachment} from "@/lib/travel-planner";
 import {stationLabel} from "@/lib/journey-display";
 import type {DashboardView} from "@/lib/planning-views";
 import {STATUS} from "./forms";
@@ -34,7 +34,7 @@ function MobileStop({code,end=false}:{code:string;end?:boolean}){const name=useS
 export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data:DashboardView;open:(j:Journey)=>void;view:(file:TicketAttachment)=>void;plan:()=>void;go:(status:string)=>void;skip?:(j:Journey)=>void;keep?:(j:Journey)=>void;today?:string;attach?:(j:Journey)=>void}){
   const next=data.upcoming.find(j=>j.status==="booked")??data.upcoming[0];
   const pdf=next?.attachments?.find(file=>file.type==="application/pdf");
-  const details=next?[next.trainNumber,next.trainName||next.train,next.coach&&`Coach ${next.coach}`,next.seat&&`Seat ${next.seat}`].filter(Boolean).join(" · "):"";
+  const details=next?[[next.trainNumber,next.trainName||next.train].filter(Boolean).join(" "),tripTiming(next),next.travelClass,next.coach&&`Coach ${next.coach}`,next.seat&&`Seat ${next.seat}`,next.berth,next.pnr&&`PNR ${next.pnr}`].filter(Boolean).join(" · "):"";
   const decisions=data.conflicts??[];
   const start=today||next?.date||"";
   const all=[...data.upcoming,...data.attention,...data.bookingSoon];

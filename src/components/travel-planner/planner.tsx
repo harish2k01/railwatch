@@ -196,7 +196,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       await saveTicketFile(meta.id, file, meta.name);
       const base = j.status === "needs_booking" ? transitionJourney(j, "booked") : j;
       const fill = (key: keyof TicketDetails) => (details[key] ? { [key]: details[key] } : {});
-      const next: Journey = { ...base, ...fill("trainNumber"), ...fill("trainName"), ...fill("travelClass"), ...fill("pnr"), ...fill("coach"), ...fill("seat"), ...fill("berth"), ...fill("ticketStatus"), ...(details.fare ? { fare: details.fare } : {}), ...(details.departure ? { departure: details.departure, departureConfirmed: true } : {}), attachments: [...(base.attachments ?? []), meta] };
+      const next: Journey = { ...base, ...fill("trainNumber"), ...fill("trainName"), ...fill("travelClass"), ...fill("pnr"), ...fill("coach"), ...fill("seat"), ...fill("berth"), ...fill("ticketStatus"), ...fill("arrival"), ...fill("arrivalDate"), ...(details.fare ? { fare: details.fare } : {}), ...(details.departure ? { departure: details.departure, departureConfirmed: true } : {}), attachments: [...(base.attachments ?? []), meta] };
       if (await update(next)) setEditor({ type: "journey", journey: next });
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t attach this ticket."); }
     finally { setBusyLabel(""); }

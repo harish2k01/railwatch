@@ -17,7 +17,7 @@ export function applyTicketMail(planner: Planner, d: TicketDetails, newId: () =>
   const tatkal = d.bookingType === "tatkal" ? { bookingType: "tatkal" as const, tatkalClass: AC.has(d.travelClass ?? "") ? "ac" as const : "non_ac" as const } : {};
   const fields: Partial<Journey> = {
     pnr: d.pnr, ...(d.trainNumber ? { trainNumber: d.trainNumber, train: d.trainNumber } : {}), ...(d.trainName ? { trainName: d.trainName } : {}),
-    ...(d.travelClass ? { travelClass: d.travelClass } : {}), ...(d.coach ? { coach: d.coach } : {}), ...(d.seat ? { seat: d.seat } : {}), ...(d.berth ? { berth: d.berth } : {}),
+    ...(d.travelClass ? { travelClass: d.travelClass } : {}), ...(d.coach ? { coach: d.coach } : {}), ...(d.seat ? { seat: d.seat } : {}), ...(d.berth ? { berth: d.berth } : {}), ...(d.arrival ? { arrival: d.arrival, arrivalDate: d.arrivalDate } : {}),
     ...(d.departure ? { departure: d.departure, departureConfirmed: true } : {}), ...(d.ticketStatus ? { ticketStatus: d.ticketStatus } : {}), ...(d.fare ? { fare: d.fare } : {}), ...tatkal,
   };
   if (match) {
