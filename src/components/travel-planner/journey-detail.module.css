@@ -80,3 +80,5 @@
   dialog[data-docked] .detail{padding:64px 24px 0}
   dialog[data-docked] .sticky{margin:0 -24px;padding:12px 24px 20px;max-width:none}
 }
+/* In a dialog the ⋯ menu sits in the dialog header beside the close button, so the heading needs no reserved gap. */
+dialog .head{padding-right:0}

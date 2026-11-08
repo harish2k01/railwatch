@@ -9,6 +9,7 @@ const daysUntilOpen = (j: Journey, today: string) => daysBetween(today, bookingD
 import { stationLabel } from "@/lib/journey-display";
 import { loadStations } from "@/lib/stations";
 import { ActionMenu } from "./action-menu";
+import { ModalActions } from "./form-ui";
 import { useMobileWorkspace } from "./mobile-workspace";
 import s from "./planner.module.css";
 import d from "./journey-detail.module.css";
@@ -54,7 +55,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
         {(from || to) && <p className={d.names}>{from || j.from} to {to || j.to}</p>}
         {mobile && <span className={d.pill} data-status={j.status}>{PILL[j.status]}</span>}
       </div>
-      <ActionMenu label="More journey actions" actions={actions} />
+      <ModalActions><ActionMenu label="More journey actions" actions={actions} /></ModalActions>
     </header>
     <ol className={d.stages} aria-label="Journey stages">{stages.map((st) => <li key={st.label} data-state={st.state}><span className={d.dot} aria-hidden="true">{st.state === "done" && <Check size={12} strokeWidth={3} />}</span><span className={d.stageText}><span className={d.stageLabel}>{st.label}</span><span className={st.warn ? d.warn : d.note}>{st.note}</span></span></li>)}</ol>
     <section aria-labelledby="journey-ticket" className={d.section}>

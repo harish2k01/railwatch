@@ -61,7 +61,7 @@ export function JourneysNeedsYou({ rows, data, today, now, selectedId, busy, ope
         <ActionMenu label={`Actions For Journey ${j.from} to ${j.to}, ${formatDay(j.date)}`} actions={actions(j)} />
       </div>; })}
     </section>)}
-    {!months.length && <p className={s.empty}>{tile === "all" ? "No upcoming journeys. Plan one with New journey." : "No journeys with this status."}</p>}
+    {!months.length && data && <p className={s.empty}>{tile === "all" ? "No upcoming journeys. Plan one with New journey." : "No journeys with this status."}</p>}
     {nextKeys.length > 0 && <button type="button" className={s.more} disabled={busy} onClick={() => void Promise.all(nextKeys.map(key => more(key)))}>{busy ? "Loading…" : "Load more journeys"}</button>}
   </div>;
 }

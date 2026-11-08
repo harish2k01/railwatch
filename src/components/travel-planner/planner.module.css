@@ -303,3 +303,11 @@
 @keyframes pageFade{from{opacity:0}to{opacity:1}}
 @keyframes panelIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
 @media(min-width:601px){.app[data-sidebar=collapsed] .accountText{display:none}.app[data-sidebar=collapsed] .sidebarAccount{justify-content:center;padding-left:0;padding-right:0}}
+/* Dialog header tools: optional actions (⋯) then close, side by side. */
+.modalTools{display:flex;align-items:center;gap:8px;flex:none}
+.modalSlot{display:contents}
+.dockedModal .modalTools{pointer-events:auto}
+.dockedModal .actionMenuItems{max-width:none;min-width:210px}
+/* Keep the collapse button clear of the wordmark: pushed to the row end with a real gap. */
+.app[data-sidebar=expanded] .brandRow{gap:16px}
+.app[data-sidebar=expanded] .brandRow .sidebarToggle{margin-left:auto}
