@@ -2,6 +2,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { addDays, bookingDay, bookingTimeLabel, formatDay, ruleSchema, todayIST, weekday, type Planner, type Rule } from "@/lib/travel-planner";
 import { PwaInstall } from "../pwa-install";
+import { BrowserPush } from "../browser-push";
 import { StationInput } from "./station-input";
 import s from "./first-run.module.css";
 
@@ -26,13 +27,13 @@ function weekly(planner: Planner, from: string, to: string, days: number[], name
  * Opens on its own for a new, empty workspace unless dismissed in this browser; automated browsers skip the
  * automatic opening so scripted checks start on Today.
  */
-export function FirstRun({ planner, empty, onClose, saveRoutine, importHolidays, addTimeOff, reminders }: {
-  planner: Planner; empty: boolean; onClose?: () => void;
-  saveRoutine: (rule: Rule) => Promise<boolean>; importHolidays: () => void; addTimeOff: () => void; reminders: () => void;
+export function FirstRun({ planner, empty, onClose, saveRoutine, importHolidays, addTimeOff, reminders, enableEmail, email }: {
+  planner: Planner; empty: boolean; onClose?: () => void; email?: string;
+  saveRoutine: (rule: Rule) => Promise<boolean>; importHolidays: () => void; addTimeOff: () => void; reminders: () => void; enableEmail?: () => Promise<boolean>;
 }) {
   const dismissed = useSyncExternalStore(noop, readDismissed, () => true);
   const automated = useSyncExternalStore(noop, () => Boolean((navigator as Navigator & { webdriver?: boolean }).webdriver), () => true);
-  const [closed, setClosed] = useState(false), [step, setStep] = useState(0), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [note, setNote] = useState(""), [closed, setClosed] = useState(false), [step, setStep] = useState(0), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [from, setFrom] = useState(""), [to, setTo] = useState(""), [going, setGoing] = useState<number[]>([]), [back, setBack] = useState<number[]>([]);
   const open = !closed && empty && !dismissed && !automated;
   if (!open) return null;
@@ -68,7 +69,12 @@ export function FirstRun({ planner, empty, onClose, saveRoutine, importHolidays,
         <div className={s.card}><button type="button" className={s.option} onClick={importHolidays}><b>Import company holidays</b><small>A CSV or calendar (.ics) file from Google or Outlook</small></button><button type="button" className={s.option} onClick={addTimeOff}><b>Add time off</b><small>A holiday or a few days of leave</small></button></div>
         <div className={s.footer}><button type="button" className={s.ghost} onClick={() => setStep(0)}>Back</button><button type="button" className={s.primary} onClick={() => setStep(2)}>Continue</button></div></>}
       {step === 2 && <><div className={s.head}><h1 id="first-run-title">How should we remind you?</h1><p>Reminders arrive the evening before and on the morning booking opens. Choose email, Telegram or this device.</p></div>
-        <div className={s.card}><button type="button" className={s.option} onClick={reminders}><b>Choose reminder channels and times</b><small>Opens your reminder settings</small></button></div>
+        <div className={s.card}>
+          <div className={s.channel}><span><b>This device</b><small>A notification on this phone or computer. Works when RailWatch is installed or open in the browser.</small></span><BrowserPush notice={setNote} fail={setError} /></div>
+          {enableEmail && <div className={s.channel}><span><b>Email</b><small>{planner.settings.emailEnabled ? `On${email ? ` · ${email}` : ""}.` : `To ${email || "your account email"}. Verify the address in Settings if you haven’t yet.`}</small></span>{planner.settings.emailEnabled ? <span className={s.on}>On</span> : <button type="button" className={s.ghost} disabled={busy} onClick={async () => { setBusy(true); setError(""); try { if (await enableEmail()) setNote("Email reminders are on."); } finally { setBusy(false); } }}>Turn on</button>}</div>}
+          <div className={s.channel}><span><b>Telegram</b><small>{planner.settings.telegramEnabled ? "Connected." : "A message from the RailWatch bot. Connect it from Settings."}</small></span><button type="button" className={s.ghost} onClick={reminders}>{planner.settings.telegramEnabled ? "Settings" : "Connect"}</button></div>
+        </div>
+        {note && <p role="status" className={s.note}>{note}</p>}{error && step === 2 && <p role="alert" className={s.error}>{error}</p>}
         <div className={s.footer}><button type="button" className={s.ghost} onClick={() => setStep(1)}>Back</button><button type="button" className={s.primary} onClick={() => setStep(3)}>Continue</button></div></>}
       {step === 3 && <><div className={s.head}><h1 id="first-run-title">Install RailWatch</h1><p>Open it from your home screen or dock, like any other app.</p></div>
         <div className={s.card}><div className={s.install}><PwaInstall /></div></div>
