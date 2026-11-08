@@ -1,6 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDay, type Journey, type Planner } from "@/lib/travel-planner";
+import { apiRequest } from "@/lib/client-api";
+import { Spinner } from "./loader";
 import s from "./spend.module.css";
 
 type Period = "month" | "six" | "year";
@@ -11,27 +13,33 @@ const code = (station: string) => station.match(/\(([A-Z]{2,5})\)/)?.[1] ?? stat
  * Spend (canvas Spend.dc.html): totals, spend by month and where it goes, from the fares read off attached
  * tickets (ERS PDF or IRCTC email). Trips without a fare are counted separately so the totals stay honest.
  */
-export function SpendView({ planner, today, attachTickets }: { planner: Planner; today: string; attachTickets?: () => void }) {
+export function SpendView({ today, attachTickets }: { planner?: Planner; today: string; attachTickets?: () => void }) {
   const [period, setPeriod] = useState<Period>("six");
+  const [all, setAll] = useState<Journey[] | undefined>();
+  const [error, setError] = useState("");
+  useEffect(() => { let live = true; apiRequest<{ journeys: Journey[] }>("/api/railwatch/spend", { cache: "no-store" }).then(v => { if (live) setAll(v.journeys); }).catch(e => { if (live) setError(e instanceof Error ? e.message : "Could not load spend."); }); return () => { live = false; }; }, []);
   const months = period === "month" ? 1 : period === "six" ? 6 : 12;
   const start = (() => { const d = new Date(today + "T00:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - (months - 1)); return d.toISOString().slice(0, 10); })();
-  const paid = planner.journeys.filter(j => ["booked", "completed", "cancelled", "cancellation_needed"].includes(j.status) && j.date >= start && j.date.slice(0, 7) <= today.slice(0, 7));
+  const paid = (all ?? []).filter(j => ["booked", "completed", "cancelled", "cancellation_needed"].includes(j.status) && j.date >= start);
+  const ahead = Math.min(3, Math.max(0, ...paid.filter(j => j.fare?.total).map(j => (Number(j.date.slice(0, 4)) - Number(today.slice(0, 4))) * 12 + Number(j.date.slice(5, 7)) - Number(today.slice(5, 7)))));
   const withFare = paid.filter((j): j is Journey & { fare: NonNullable<Journey["fare"]> } => Boolean(j.fare?.total));
   const missing = paid.length - withFare.length;
   const total = withFare.reduce((a, j) => a + j.fare.total, 0), refunded = withFare.reduce((a, j) => a + (j.fare.refund ?? 0), 0);
-  const keys = Array.from({ length: months }, (_, i) => { const d = new Date(start + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() + i); return d.toISOString().slice(0, 7); });
+  const keys = Array.from({ length: months + ahead }, (_, i) => { const d = new Date(start + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() + i); return d.toISOString().slice(0, 7); });
   const byMonth = keys.map(k => ({ key: k, label: formatDay(k + "-01", { month: "short" }), amount: withFare.filter(j => j.date.startsWith(k)).reduce((a, j) => a + j.fare.total, 0) }));
   const max = Math.max(1, ...byMonth.map(m => m.amount));
-  const thisMonth = byMonth[byMonth.length - 1]?.amount ?? 0, lastMonth = byMonth[byMonth.length - 2]?.amount;
+  const thisMonth = byMonth[months - 1]?.amount ?? 0, lastMonth = byMonth[months - 2]?.amount;
   const part = (k: "ticket" | "convenience" | "wallet" | "insurance") => withFare.reduce((a, j) => a + (j.fare[k] ?? 0), 0);
   const parts = [{ label: "Ticket fare", amount: part("ticket"), tone: "brand" }, { label: "IRCTC convenience fee", amount: part("convenience"), tone: "open" }, { label: "eWallet / gateway charges", amount: part("wallet"), tone: "warn" }, { label: "Travel insurance", amount: part("insurance"), tone: "ok" }];
   const recent = [...withFare].filter(j => j.date.startsWith(today.slice(0, 7))).sort((a, b) => a.date.localeCompare(b.date));
   const wallet = part("wallet"), walletTickets = withFare.filter(j => j.fare.wallet).length;
 
+  if (error) return <p className={s.note}>{error}</p>;
+  if (!all) return <div className={s.page}><p className={s.muted}><Spinner /> Loading spend…</p></div>;
   return <div className={s.page}>
     <div className={s.periods} role="group" aria-label="Period">{([["month", "Month"], ["six", "6 months"], ["year", "Year"]] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={period === id} onClick={() => setPeriod(id)}>{label}</button>)}</div>
     <div className={s.stats}>
-      <div className={s.stat}><span>Spent {period === "month" ? "this month" : `in ${months} months`}</span><b>{inr(total)}</b><small>{withFare.length} {withFare.length === 1 ? "ticket" : "tickets"}</small></div>
+      <div className={s.stat}><span>Spent {period === "month" ? "this month" : `in ${months} months`}{ahead ? " + booked ahead" : ""}</span><b>{inr(total)}</b><small>{withFare.length} {withFare.length === 1 ? "ticket" : "tickets"}</small></div>
       <div className={s.stat}><span>This month</span><b>{inr(thisMonth)}</b><small>{lastMonth === undefined ? "" : lastMonth ? `${thisMonth <= lastMonth ? "↓" : "↑"} ${Math.abs(Math.round(((thisMonth - lastMonth) / lastMonth) * 100))}% vs last month` : "Nothing last month"}</small></div>
       <div className={s.stat}><span>Average per trip</span><b>{withFare.length ? inr(Math.round(total / withFare.length)) : "—"}</b><small>From attached tickets</small></div>
       <div className={s.stat}><span>Refunded</span><b>{inr(refunded)}</b><small>Cancelled tickets</small></div>

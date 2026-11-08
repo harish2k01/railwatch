@@ -40,3 +40,16 @@ it("reads every passenger's current allocation", () => {
   const text = ["# Name Age Gender Booking Status Current Status", "1. PASSENGER ONE 30 M CNF/S7/27/UPPER CNF/S7/27/UPPER", "2. PASSENGER TWO 28 F CNF/S7/28/LOWER CNF/S7/28/LOWER", "3. PASSENGER THREE 5 M CNF/S8/5/MIDDLE CNF/S8/5/MIDDLE"].join("\n");
   expect(parseTicketDetails(text)).toMatchObject({ coach: "S7, S8", seat: "27, 28, 5", berth: "UPPER, LOWER, MIDDLE" });
 });
+
+describe("OCR duplicates and PNR misreads", () => {
+  const row = "PNR Train No./Name Class\n9876543210 12345 / SAMPLE EXP SLEEPER CLASS (SL)\nPassenger Details\n1. TEST USER 30 M CNF/S3/41/LOWER CNF /S3/41/LOWER\n";
+  it("keeps one allocation when OCR repeats the passenger row", () => {
+    const d = parseTicketDetails("Current Status: CNF /S3/41/LOWER\n" + row + "\n" + row);
+    expect(d).toMatchObject({ coach: "S3", seat: "41", berth: "LOWER" });
+  });
+  it("lets the invoice number outvote a misread PNR digit", () => {
+    const misread = row.replace("9876543210", "9876543270");
+    const d = parseTicketDetails(misread + "\nInvoice Number: PS269876543210 11\nInvoice Number: PS2698765432101\nPNR: 9876543210");
+    expect(d.pnr).toBe("9876543210");
+  });
+});
