@@ -63,6 +63,15 @@ jobs:
           set -e
           phase=$(python -c "import json;print(json.load(open('data/raw/crawl-status.json')).get('phase',''))" 2>/dev/null || true)
           echo "Crawler exit $code, phase '$phase'"
+          count=$(ls data/raw/schedules 2>/dev/null | wc -l)
+          echo "Schedules on disk: $count"
+          if [ "$phase" = "DONE" ] && [ "$count" -eq 0 ]; then
+            # NTES gave nothing (usually it isn't answering requests from GitHub's servers). Don't record an
+            # empty crawl as finished: reset it so the next run starts over, and fail so it shows up.
+            rm -rf data/raw/*
+            echo "::error::Crawl found 0 trains; NTES likely isn't responding to GitHub runners. Run it from another network (self-hosted runner)."
+            exit 1
+          fi
           if [ "$phase" = "DONE" ]; then echo "done=true" >> "$GITHUB_OUTPUT"; fi
       - name: Save crawl progress
         if: always() && steps.state.outputs.skip != 'true'
