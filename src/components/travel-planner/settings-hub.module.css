@@ -36,3 +36,10 @@
 .navItem[aria-current=page]{background:var(--rw-brand-soft);color:var(--rw-brand-soft-ink);font-weight:600}
 @media(prefers-reduced-motion:no-preference){.content>*{animation:sectionIn .18s ease-out}}@keyframes sectionIn{from{opacity:0}to{opacity:1}}
 .feed{display:flex;gap:8px;margin-top:6px}.feed input{flex:1;min-width:0;min-height:38px;padding:0 10px;border-radius:9px;border:1px solid var(--rw-line);background:var(--rw-surface-2);color:var(--rw-text);font:500 12px ui-monospace,monospace}
+/* Email tickets: IMAP form and inline warnings. */
+.imapForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.imapForm label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--rw-muted)}
+.imapForm input{min-height:38px;padding:0 10px;border-radius:9px;border:1px solid var(--rw-line);background:var(--rw-surface-2);color:var(--rw-text);font:inherit;font-size:14px}
+.imapForm>.feed{grid-column:1/-1;justify-content:flex-end}
+.warnText{display:block;font-size:13px;color:var(--rw-attention-ink)}
+@media(max-width:600px){.imapForm{grid-template-columns:1fr}}
