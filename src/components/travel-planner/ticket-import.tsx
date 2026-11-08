@@ -19,7 +19,7 @@ function withTicket(j: Journey, d: TicketDetails, meta: TicketAttachment): Journ
 }
 
 /** Bulk ticket import (plan 3.3): read PDFs on this device, match them to journeys, then save in one commit. */
-export function TicketImport({ planner, commit, fail, done }: { planner: Planner; commit: (next: Planner, message: string) => Promise<boolean>; fail: (message: string) => void; done: () => void }) {
+export function TicketImport({ planner, commit, fail, done }: { planner: Planner; commit: (next: Planner, message: string, restore?: boolean, known?: Journey[]) => Promise<boolean>; fail: (message: string) => void; done: () => void }) {
   const [rows, setRows] = useState<Row[]>([]), [busy, setBusy] = useState(false), [status, setStatus] = useState("");
   async function choose(files: FileList | null) {
     if (!files?.length) return;
@@ -49,7 +49,7 @@ export function TicketImport({ planner, commit, fail, done }: { planner: Planner
     if (!chosen.length) return;
     setBusy(true); const stored: string[] = [];
     try {
-      let journeys = [...planner.journeys];
+      let journeys = [...planner.journeys]; const known: Journey[] = [];
       for (const r of chosen) {
         await saveTicketFile(r.meta.id, r.file); stored.push(r.meta.id);
         if (r.choice === "create") {
@@ -59,11 +59,12 @@ export function TicketImport({ planner, commit, fail, done }: { planner: Planner
         } else {
           const base = journeys.find(j => j.id === r.choice) ?? (r.match.kind === "matched" ? r.match.journey : r.match.kind === "check" ? r.match.candidates.find(c => c.id === r.choice) : undefined);
           if (!base) continue;
+          known.push(base);
           journeys = [...journeys.filter(j => j.id !== base.id), withTicket(base, r.details, r.meta)];
         }
       }
       // One workspace commit for every ticket, so the import is all-or-nothing.
-      if (await commit({ ...planner, journeys }, `${chosen.length} ${chosen.length === 1 ? "ticket" : "tickets"} imported.`)) done();
+      if (await commit({ ...planner, journeys }, `${chosen.length} ${chosen.length === 1 ? "ticket" : "tickets"} imported.`, false, known)) done();
       else await Promise.all(stored.map(id => deleteTicketFile(id).catch(() => undefined)));
     } catch (e) { await Promise.all(stored.map(id => deleteTicketFile(id).catch(() => undefined))); fail(e instanceof Error ? e.message : "Couldn’t import these tickets."); }
     finally { setBusy(false); }
