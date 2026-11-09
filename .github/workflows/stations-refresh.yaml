@@ -1,7 +1,7 @@
 name: Refresh station list
 
 # Monthly: rebuild the station list from the current NTES timetable crawled by railpull
-# (github.com/shwetankg07/railpull, MIT), the only source. Stations with a long-distance or Passenger stop are
+# (github.com/harish2k01/railpull, a fork of shwetankg07/railpull, MIT), the only source. Stations with a long-distance or Passenger stop are
 # kept; everything else is dropped (scripts/stations-railpull.mjs). Opens a PR with what was added and dropped.
 #
 # A full polite crawl (~1.2 s per request, railpull's default; never lower it) takes about 8 hours, longer than
@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RAILPULL_REF: 1034beffa2183ed77e948267b0b4b207aa02785f
+  RAILPULL_REF: c79dd38e452e46e434627ea09df5e5ed2c77e64b
 
 jobs:
   refresh:
@@ -35,7 +35,7 @@ jobs:
         run: echo "key=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
         with:
-          repository: shwetankg07/railpull
+          repository: harish2k01/railpull
           ref: ${{ env.RAILPULL_REF }}
           path: railpull
       - name: Restore this month's crawl
