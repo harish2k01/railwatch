@@ -7,6 +7,8 @@ export type StoredTicket = { name: string; type: string; size: number; bytes: Bu
 
 /** Decrypts a stored row's raw encrypted bytes. */
 export const ticketBytes = (row: { payloadBytes: Uint8Array }) => decryptBytes(row.payloadBytes);
+/** Encrypts an original ahead of storing it (CPU work that shouldn't run while the account row is locked). */
+export const sealTicket = (bytes: Buffer) => encryptBytes(bytes);
 
 /** Storage for ticket originals; the database is the only backend today. */
 export const ticketStorage = {
@@ -15,9 +17,9 @@ export const ticketStorage = {
     const row = await db.railFile.findUnique({ where: { userId_id: { userId, id } }, select: { name: true, type: true, size: true, payloadBytes: true } });
     return row ? { name: row.name, type: row.type, size: row.size, bytes: ticketBytes(row) } : null;
   },
-  /** Stores a new original as encrypted raw bytes. */
-  async put(db: Db, userId: string, id: string, file: { name: string; type: string; bytes: Buffer }) {
-    await db.railFile.create({ data: { id, userId, name: file.name, type: file.type, size: file.bytes.length, payloadBytes: encryptBytes(file.bytes) } });
+  /** Stores a new original as encrypted raw bytes. Pass `encrypted` (from sealTicket) to keep the encryption outside a transaction. */
+  async put(db: Db, userId: string, id: string, file: { name: string; type: string; bytes: Buffer; encrypted?: ReturnType<typeof encryptBytes> }) {
+    await db.railFile.create({ data: { id, userId, name: file.name, type: file.type, size: file.bytes.length, payloadBytes: file.encrypted ?? encryptBytes(file.bytes) } });
   },
   /** Removes an original. */
   async delete(db: Db, userId: string, id: string) {
