@@ -24,7 +24,10 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_APP_VERSION=$APP_VERSION \
     HOSTNAME=0.0.0.0 \
     PORT=3000
-RUN apk add --no-cache libc6-compat openssl && chown node:node /app
+RUN apk add --no-cache libc6-compat openssl python3 py3-pip py3-pillow && chown node:node /app
+COPY scripts/ntes/requirements.txt /tmp/ntes-requirements.txt
+RUN python3 -m venv --system-site-packages /opt/ntes && /opt/ntes/bin/pip install --no-cache-dir -r /tmp/ntes-requirements.txt
+ENV PNR_PYTHON=/opt/ntes/bin/python3
 COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
@@ -34,6 +37,7 @@ COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/build/backend ./build/backend
 COPY --from=builder --chown=node:node /app/scripts/start-service.mjs ./scripts/start-service.mjs
+COPY --from=builder --chown=node:node /app/scripts/ntes/pnr.py ./scripts/ntes/pnr.py
 USER node
 EXPOSE 3000 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD node -e "const port=process.env.RAILWATCH_SERVICE==='backend'?(process.env.BACKEND_PORT||3001):(process.env.PORT||3000);fetch('http://127.0.0.1:'+port+'/api/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"

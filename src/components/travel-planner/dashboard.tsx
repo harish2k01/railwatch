@@ -1,4 +1,5 @@
 "use client";
+import { effectiveTicketStatus } from "@/lib/pnr-status";
 import { ask } from "./confirm";
 import { EmptyState } from "./empty-state";
 import Link from "next/link";
@@ -68,7 +69,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
   const tatkal = (j: Journey) => { const tk = { ...j, bookingType: "tatkal" as const, tatkalClass: j.tatkalClass ?? "ac" as const }; return `${formatDay(bookingDay(tk), { weekday: "short", day: "numeric", month: "short" })} · ${bookingTimeLabel(tk).replace(" IST", "")}`; };
   const istHour = Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date()));
   const missed = (j: Journey) => j.status === "needs_booking" && j.bookingType !== "tatkal" && (bookingDay(j) < today || (bookingDay(j) === today && istHour >= 18));
-  const waitlisted = planner.journeys.filter(j => !j.archivedAt && j.status === "booked" && j.date >= today && (j.ticketStatus === "WL" || j.ticketStatus === "RAC")).sort((a, b) => a.date.localeCompare(b.date));
+  const waitlisted = planner.journeys.filter(j => !j.archivedAt && j.status === "booked" && j.date >= today && (effectiveTicketStatus(j) === "WL" || effectiveTicketStatus(j) === "RAC")).sort((a, b) => a.date.localeCompare(b.date));
   const [statusFor, setStatusFor] = useState<string>();
   // Do next: what needs doing now, then missing tickets and the next booking openings (canvas order).
   const items: { key: string; node: React.ReactNode }[] = [

@@ -1,7 +1,9 @@
 import {expect,it} from "vitest";
-import {EMPTY_PLANNER,journeySchema} from "./travel-planner";
+import {EMPTY_PLANNER,journeySchema,plannerSchema} from "./travel-planner";
 import {expiredTicketFiles} from "./ticket-retention";
 const attachment={id:"file",name:"ticket.pdf",type:"application/pdf" as const,size:4,createdAt:"2026-10-01T00:00:00Z"};
 const base=journeySchema.parse({id:"j",from:"A",to:"B",date:"2026-10-01",departure:"20:00",train:"",travelClass:"SL",windowDays:60,originOffset:0,pnr:"1234567890",notes:"Keep details",status:"completed",completedAt:"2026-10-02",attachments:[attachment]});
 it("deletes original references exactly seven days after completion while retaining history and entered details",()=>{const planner={...EMPTY_PLANNER,journeys:[base]};expect(expiredTicketFiles(planner,"2026-10-08").planner).toBe(planner);const result=expiredTicketFiles(planner,"2026-10-09");expect(result.ids).toEqual(["file"]);expect(result.planner.journeys[0]).toEqual({...base,attachments:[]});expect(expiredTicketFiles(result.planner,"2026-10-10").ids).toEqual([]);});
 it("uses cancellation time even when travel is in the future and keeps live or pending cancellation tickets",()=>{const cancelled={...base,status:"cancelled" as const,date:"2027-01-01",cancelledAt:"2026-10-02",archivedAt:"2026-10-09"};expect(expiredTicketFiles({...EMPTY_PLANNER,journeys:[cancelled]},"2026-10-09").ids).toEqual(["file"]);for(const status of ["booked","cancellation_needed","needs_booking"] as const)expect(expiredTicketFiles({...EMPTY_PLANNER,journeys:[{...base,status}]},"2027-01-01").ids).toEqual([]);});
+
+it("honours account retention and rejects invalid periods",()=>{const planner={...EMPTY_PLANNER,settings:{...EMPTY_PLANNER.settings,ticketRetentionDays:30},journeys:[base]};expect(expiredTicketFiles(planner,"2026-10-09").ids).toEqual([]);expect(expiredTicketFiles(planner,"2026-11-01").ids).toEqual(["file"]);for(const days of [0,-1,1.5,3651])expect(plannerSchema.safeParse({...planner,settings:{...planner.settings,ticketRetentionDays:days}}).success).toBe(false);});

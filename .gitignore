@@ -46,3 +46,8 @@ next-env.d.ts
 /public/railwatch/cmaps/
 /public/railwatch/standard_fonts/
 /public/railwatch/wasm/
+
+/scripts/data/
+/.venv-pnr/
+
+/scripts/ntes/__pycache__/

@@ -30,4 +30,4 @@ UI text is sentence case. Product names and acronyms keep their capitals (RailWa
 
 ## Station directory
 
-`src/data/stations.json` holds about 8,950 `[code, name]` pairs derived from [datameet/railways](https://github.com/datameet/railways) (CC0, see `src/data/STATIONS-LICENSE.md`). It is lazy-loaded the first time a station field is used. `StationInput` suggests recent stations first, then matches by code and name; free text is still accepted. The list dates from about 2017, so some newer codes and renamed stations are missing. Regenerate with `node scripts/generate-stations.mjs <stations.json>`.
+`src/data/stations.json` contains the NTES-derived long-distance station directory. It is lazy-loaded by station inputs; suggestions rank recent stations, code and name matches. Free text remains accepted. See [station refresh](stations.md).

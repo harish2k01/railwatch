@@ -10,7 +10,7 @@ This document describes implemented capabilities separately from deployment and 
 - Configurable booking window, Sunday-first calendar, rolling routine horizon, holidays/leave, CSV import and iCalendar export.
 - Current notifications and opt-in device, email and Telegram reminders, deduplication, durable leases, bounded retries, delivery-failure diagnostics and outbound Telegram polling.
 - Normal and Tatkal plans with separate reminder schedules, configurable cancellation follow-ups and per-journey overrides.
-- Local PDF text/QR/OCR extraction, account-owned PDF storage/viewing, seven-day original-file retention, and image extraction without storage.
+- Local PDF text/QR/OCR extraction, account-owned PDF storage/viewing, configurable original-file retention (seven days by default), and image extraction without storage.
 - Email ownership verification and opt-in SMTP booking reminders, SMTP invitations/reset/test delivery, branded HTML, structured API/provider/scheduler logs, and release/version endpoints.
 - PR unit/database/browser tests, CodeQL, build checks and immutable release images.
 

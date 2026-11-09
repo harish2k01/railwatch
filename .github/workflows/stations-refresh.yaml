@@ -1,13 +1,7 @@
 name: Refresh station list
 
-# Monthly: rebuild the station list from the current NTES timetable crawled by railpull
-# (github.com/harish2k01/railpull, a fork of shwetankg07/railpull, MIT), the only source. Stations with a long-distance or Passenger stop are
-# kept; everything else is dropped (scripts/stations-railpull.mjs). Opens a PR with what was added and dropped.
-#
-# A full polite crawl (~1.2 s per request, railpull's default; never lower it) takes about 8 hours, longer than
-# GitHub-hosted runners get no answer from NTES, so it runs on the homelab runner (an Indian network); one
-# run usually finishes. It still runs daily on the 1st-6th and resumes from the month's cache if cut short. The station list is
-# rebuilt once the crawl reports DONE. Only derived station codes are committed, never the crawled timetable.
+# Monthly native NTES crawl. Only derived long-distance station pairs are committed.
+# Runs on the Indian homelab network, with resumable progress and polite request spacing.
 on:
   schedule:
     - cron: "30 3 1-6 * *"
@@ -21,9 +15,6 @@ concurrency:
   group: stations-refresh
   cancel-in-progress: false
 
-env:
-  RAILPULL_REF: c79dd38e452e46e434627ea09df5e5ed2c77e64b
-
 jobs:
   refresh:
     runs-on: railwatch-runner
@@ -33,21 +24,16 @@ jobs:
       - name: Month
         id: month
         run: echo "key=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v6
-        with:
-          repository: harish2k01/railpull
-          ref: ${{ env.RAILPULL_REF }}
-          path: railpull
       - name: Restore this month's crawl
         uses: actions/cache/restore@v4
         with:
-          path: railpull/data/raw
-          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}
-          restore-keys: railpull-${{ steps.month.outputs.key }}-
+          path: scripts/data/raw
+          key: ntes-native-v1-${{ steps.month.outputs.key }}-${{ github.run_id }}
+          restore-keys: ntes-native-v1-${{ steps.month.outputs.key }}-
       - name: Skip if this month is already applied
         id: state
         run: |
-          if [ -f railpull/data/raw/.applied ]; then echo "Already applied this month."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          if [ -f scripts/data/raw/.applied ]; then echo "Already applied this month."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-python@v6
         if: steps.state.outputs.skip != 'true'
         with:
@@ -55,21 +41,21 @@ jobs:
       - name: Crawl NTES timetable (resumes; stops before the job limit)
         id: crawl
         if: steps.state.outputs.skip != 'true'
-        working-directory: railpull
+        working-directory: .
         run: |
-          pip install -q -r requirements.txt
+          pip install -q -r scripts/ntes/requirements.txt
           set +e
-          timeout 11h python ntes/crawl.py
+          timeout 11h python scripts/ntes/crawl.py
           code=$?
           set -e
-          phase=$(python -c "import json;print(json.load(open('data/raw/crawl-status.json')).get('phase',''))" 2>/dev/null || true)
+          phase=$(python -c "import json;print(json.load(open('scripts/data/raw/crawl-status.json')).get('phase',''))" 2>/dev/null || true)
           echo "Crawler exit $code, phase '$phase'"
-          count=$(ls data/raw/schedules 2>/dev/null | wc -l)
+          count=$(ls scripts/data/raw/schedules 2>/dev/null | wc -l)
           echo "Schedules on disk: $count"
           if [ "$phase" = "DONE" ] && [ "$count" -eq 0 ]; then
             # NTES gave nothing (usually it isn't answering requests from GitHub's servers). Don't record an
             # empty crawl as finished: reset it so the next run starts over, and fail so it shows up.
-            rm -rf data/raw/*
+            rm -f scripts/data/raw/crawl-status.json
             echo "::error::Crawl found 0 trains; NTES likely isn't responding to GitHub runners. Run it from another network (self-hosted runner)."
             exit 1
           fi
@@ -78,8 +64,8 @@ jobs:
         if: always() && steps.state.outputs.skip != 'true'
         uses: actions/cache/save@v4
         with:
-          path: railpull/data/raw
-          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}
+          path: scripts/data/raw
+          key: ntes-native-v1-${{ steps.month.outputs.key }}-${{ github.run_id }}
       - uses: actions/setup-node@v6
         if: steps.crawl.outputs.done == 'true'
         with:
@@ -90,8 +76,7 @@ jobs:
           STATIONS_SUMMARY: ${{ runner.temp }}/stations-summary.md
         run: |
           npm ci --ignore-scripts
-          (cd railpull && python transform/export.py)
-          node scripts/stations-railpull.mjs railpull/data/out
+          node scripts/ntes/build-stations.mjs scripts/data/raw
           npx vitest run src/lib/stations.test.ts
       - name: Open a PR if the list changed
         if: steps.crawl.outputs.done == 'true'
@@ -108,16 +93,16 @@ jobs:
           git commit -m "Monthly station list refresh"
           git push -f origin "$branch"
           {
-            echo "Automatic refresh from the current NTES timetable (railpull). Kept: stations with a long-distance or Passenger stop. Dropped: everything else, including stations in no timetable. Codes in \`removed.tsv\` never come back."
+            echo "Automatic refresh from the current NTES timetable using the native crawler. Kept: stations with a long-distance stop. Dropped: everything else, including stations in no timetable."
             echo
             cat "$SUMMARY"
           } > "$RUNNER_TEMP/body.md"
           gh pr create --base main --head "$branch" --label minor --title "Monthly station list refresh ($(date -u +%B\ %Y))" --body-file "$RUNNER_TEMP/body.md" || echo "PR already open."
           fi
-          touch railpull/data/raw/.applied
+          touch scripts/data/raw/.applied
       - name: Mark this month applied
         if: steps.crawl.outputs.done == 'true'
         uses: actions/cache/save@v4
         with:
-          path: railpull/data/raw
-          key: railpull-${{ steps.month.outputs.key }}-${{ github.run_id }}-applied
+          path: scripts/data/raw
+          key: ntes-native-v1-${{ steps.month.outputs.key }}-${{ github.run_id }}-applied

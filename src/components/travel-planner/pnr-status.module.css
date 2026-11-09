@@ -1,0 +1,8 @@
+.panel{background:var(--rw-surface);border:1px solid var(--rw-line);border-radius:16px;padding:20px;display:grid;gap:14px}
+.summary{font-size:22px;font-weight:700;margin:0}
+.summary[data-status="CNF"]{color:var(--rw-booked-ink)}
+.scroll{overflow-x:auto;max-width:100%}
+.scroll table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
+.scroll th,.scroll td{padding:12px 8px;border-bottom:1px solid var(--rw-line);overflow-wrap:anywhere}
+.caption{text-align:left;color:var(--rw-muted);padding-bottom:8px}
+@media(max-width:768px){.panel{padding:16px}.scroll th,.scroll td{padding:10px 5px;font-size:12px}}

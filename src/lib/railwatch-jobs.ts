@@ -19,10 +19,11 @@ import { getFeaturePolicy } from "./settings";
 import { applyAccountSettings } from "./railwatch-store";
 import { scheduledReminders,bookingTimeLabel,todayIST,formatDay,bookingDay,type Planner } from "./travel-planner";
 import { syncGoogleCalendars } from "./railwatch-google";
+import { effectiveTicketStatus } from "./pnr-status";
 import { pollMailboxes } from "./ticket-mail";
 /** Builds durable reminder identities and due times from active journey preferences. */
 /** When to send the chart-check reminder: 4 hours before a confirmed departure, for booked RAC or waitlisted tickets only. */
-export function chartCheckAt(j:{status:string;ticketStatus?:string;departureConfirmed?:boolean;departure:string;date:string}){if(j.status!=="booked"||!j.ticketStatus||j.ticketStatus==="CNF"||!j.departureConfirmed)return undefined;return new Date(new Date(`${j.date}T${j.departure}:00+05:30`).getTime()-4*3600000);}
+export function chartCheckAt(j:{status:string;ticketStatus?:"CNF"|"RAC"|"WL";pnr?:string;pnrStatus?:import("./pnr-status").PnrSnapshot;currentStatus?:string;departureConfirmed?:boolean;departure:string;date:string}){if(j.status!=="booked"||!effectiveTicketStatus({...j,pnr:j.pnr??""})||effectiveTicketStatus({...j,pnr:j.pnr??""})==="CNF"||!j.departureConfirmed)return undefined;return new Date(new Date(`${j.date}T${j.departure}:00+05:30`).getTime()-4*3600000);}
 export function reminderJobs(planner:Planner,now:Date,emailRecipient?:string,deviceIds:string[]=[]){
   const result:{key:string;kind:string;dueAt:Date;journeyId:string;message:string;deviceId?:string}[]=[];
   const channels=[...deviceIds.map(id=>"PUSH:"+id),...(planner.settings.emailEnabled&&emailRecipient?["EMAIL"]:[]),...(planner.settings.telegramEnabled?["TELEGRAM"]:[])];
