@@ -1,4 +1,5 @@
 "use client";
+import { effectiveTicketStatus } from "@/lib/pnr-status";
 import {useState,type DragEvent} from "react";
 import {ArrowRight,ChevronLeft,ChevronRight,Plus,Search} from "lucide-react";
 import {journeyTimeline} from "@/lib/journey-timeline";
@@ -36,7 +37,7 @@ export function DesktopJourneys(p:Props){
   /** Renders a whole-card details target without repeated ticket or status-action links. */
   function card(j:Journey){const urgent=j.status==="needs_booking"&&bookingInstant(j)<=p.now;
     const flag=j.status==="needs_booking"?{text:urgent?"Book now":"",tone:"warn"}
-      :j.status==="booked"?(j.ticketStatus&&j.ticketStatus!=="CNF"?{text:j.ticketStatus,tone:"warn"}:!j.attachments?.length&&!j.pnr?{text:"no PDF",tone:"warn"}:{text:[j.coach,j.seat].filter(Boolean).join(" ")||"ticket",tone:"ok"})
+      :j.status==="booked"?(effectiveTicketStatus(j)&&effectiveTicketStatus(j)!=="CNF"?{text:effectiveTicketStatus(j)!,tone:"warn"}:!j.attachments?.length&&!j.pnr?{text:"no PDF",tone:"warn"}:{text:[j.coach,j.seat].filter(Boolean).join(" ")||"ticket",tone:"ok"})
       :j.status==="cancellation_needed"?{text:"confirm",tone:"warn"}:{text:j.status==="skipped"?"skipped":"",tone:"muted"};
     // Second line: the detail you would otherwise open the journey for.
     const train=[j.trainNumber,j.trainName||j.train].filter(Boolean).join(" "),seat=[j.coach,j.seat,j.berth].filter(Boolean).join(" ");

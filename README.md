@@ -19,7 +19,7 @@ Or use `docker compose up --build` for a local app, dedicated frontend, persiste
 
 RailWatch runs as three separate services: a Next.js frontend, a Fastify backend, and PostgreSQL. The frontend renders pages and proxies same-origin `/api/*` requests; it has no database or provider credentials. The backend owns authentication, authorization, accounts, plans, ticket storage, SMTP, and integrations. Both application services use the same versioned image with `RAILWATCH_SERVICE=frontend` or `backend` and can be scaled separately.
 
-Scheduled work runs inside the persistent backend. Once a minute it completes booked journeys after their travel date in IST, archives cancelled or skipped journeys seven days after cancellation, replenishes routines, reads Telegram messages with outgoing requests, reconciles reminders, delivers due jobs, and synchronizes calendars. PostgreSQL advisory locking prevents overlapping scheduler runs across replicas. Reminder jobs retain their durable leases, retries, and delivery records. Regular API requests never spawn Kubernetes jobs. One-time database migrations and database backups remain operational jobs.
+Scheduled work runs inside the persistent backend. Once a minute it completes booked journeys after their travel date in IST, archives cancelled or skipped journeys after the account’s configured period (seven days by default), replenishes routines, reads Telegram messages with outgoing requests, reconciles reminders, delivers due jobs, and synchronizes calendars. PostgreSQL advisory locking prevents overlapping scheduler runs across replicas. Reminder jobs retain their durable leases, retries, and delivery records. Regular API requests never spawn Kubernetes jobs. One-time database migrations and database backups remain operational jobs.
 
 Linked routines appear together, with a separate recurrence, next scheduled date and controls for each direction. Routine changes are reviewed against the complete account plan before saving: the review counts added, changed, removed and retained journeys without saving the proposed change. Confirmation uses the reviewed workspace revision; concurrent changes require a fresh review. Booked tickets, history and individual exceptions remain protected. A scheduled date describes the recurrence, not a confirmed train departure.
 
@@ -43,7 +43,7 @@ Planned or booked trips on time off appear under Needs a decision on Today and o
 
 **Import tickets** on the Tickets page reads up to 30 IRCTC e-ticket PDFs on the device, matches each to a journey (PNR, then route, on the travel date) and shows it as Matched, Check or New journey. Confirming uploads the originals and saves every attached or created journey in one workspace commit; a failed save removes the uploaded files.
 
-Ticket extraction reads PDF text and QR codes, and uses local browser OCR for scanned PDFs and ticket images. English recognition assets ship with the app; recognition does not send ticket pixels to an external service. Review detected details before applying them. Completed journeys appear in History and archived cancellations retain entered ticket details. Original PDFs are deleted seven days after cancellation or completion.
+Ticket extraction reads PDF text and QR codes, and uses local browser OCR for scanned PDFs and ticket images. English recognition assets ship with the app; recognition does not send ticket pixels to an external service. Review detected details before applying them. Completed journeys appear in History and archived cancellations retain entered ticket details. Original PDFs are deleted after the account’s configured retention period (default seven days after cancellation or completion).
 
 ## Verify
 
@@ -61,7 +61,7 @@ The deployment chart and Argo CD Application live in [homelab-ops](https://githu
 
 Uploaded PDF originals are encrypted in PostgreSQL's `RailFile` table as raw AES-256-GCM bytes (`payloadBytes`), read and written through `src/lib/ticket-storage.ts`. They are not stored on a frontend or backend pod filesystem. Open **View Ticket** in Ticket Vault or a journey's attachments to read the original inside RailWatch; PDFs support page navigation. Images and QR codes extract details locally and are not uploaded or stored. Download and remove actions use the attachment menu.
 
-The backend scheduler permanently removes original files seven days after cancellation or completion, including for disabled accounts. It also removes their attachment references atomically. Journey history, entered ticket details, and notes remain available in the archive. Historical database backups retain their own independent retention policy.
+The backend scheduler permanently removes original files after the configured period following cancellation or completion (default seven days), including for disabled accounts. It also removes their attachment references atomically. Journey history, entered ticket details, and notes remain available in the archive. Historical database backups retain their own independent retention policy.
 
 ## Operations and code navigation
 
@@ -86,3 +86,11 @@ For paginated journey lists, encrypted search and remaining scaling work, see [a
 For desktop Board/List views, travel-date ranges, quick filters and account-wide matching counts, see [journey workspace](docs/journey-workspace.md).
 
 For the brand colours, logo, icons and station directory, see [design system](docs/design-system.md).
+
+## Station refresh and retention
+
+See [native NTES station refresh](docs/stations.md). The station directory is derived only from NTES; legacy station-building tools are removed. Settings → Devices & data → Data retention lets each account set cancelled/skipped trip archiving and original PDF deletion periods (1–3650 days). Both default to 7 days for existing and new accounts. PDF age starts at completion/cancellation, independently of archive age. Shorter retention applies to already eligible files on cleanup, including workspace saves; increases cannot restore deleted files. Journey history, entered ticket details and past time off remain.
+
+## PNR status
+
+Opening journey details refreshes PNR status, with a manual retry action and no tracking toggle or scheduled polling. Passenger statuses, chart preparation and supplied coach/berth fields are stored privately with a last-checked time. Failed enquiries retain the last successful result; explicit cancellation of every passenger moves an active journey to Cancelled. See [PNR status](docs/pnr-status.md) for setup and limits. Fare ingestion and Spend are unchanged.

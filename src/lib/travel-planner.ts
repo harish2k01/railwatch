@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pnrSnapshotSchema } from "./pnr-status";
 
 const daySchema = z.string().refine(isDay, "Use a valid YYYY-MM-DD date.");
 export const statusSchema = z.enum(["needs_booking", "booked", "skipped", "cancellation_needed", "cancelled", "completed"]);
@@ -20,7 +21,7 @@ const routeFields = {
   windowDays: z.number().int().min(1).max(365), originOffset: z.number().int().min(0).max(7),
 };
 export const journeySchema = z.object({
-  ...routeFields, id: z.string(), date: daySchema, departure: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  ...routeFields, pnrStatus:pnrSnapshotSchema.optional(),pnrLastAttemptAt:z.string().datetime().optional(),pnrLastError:z.string().max(250).optional(), id: z.string(), date: daySchema, departure: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   ruleId: z.string().optional(), leg: z.enum(["outbound", "return"]).optional(), manualOverride: z.boolean().optional(),
   reminderOverride: reminderOverrideSchema.optional(), timePreference: z.enum(["any", "morning", "afternoon", "evening", "night"]).optional(),
   departureConfirmed: z.boolean().optional(),
@@ -45,7 +46,7 @@ export const ruleSchema = z.object({
 export const holidaySchema = z.object({ id: z.string(), name: z.string().trim().min(1).max(100), date: daySchema, type: z.enum(["company", "leave"]) });
 export const plannerSchema = z.object({
   version: z.literal(1), journeys: z.array(journeySchema).max(10000), rules: z.array(ruleSchema).max(100), holidays: z.array(holidaySchema).max(3000),
-  settings: z.object({ quietHours:z.object({enabled:z.boolean(),start:clock,end:clock}).refine(value=>!value.enabled||value.start!==value.end,{message:"Quiet hours must have different start and end times."}).optional(), bookingSchedule:reminderScheduleSchema.optional(),tatkalSchedule:reminderScheduleSchema.optional(),tatkalNonAcSchedule:reminderScheduleSchema.optional(),cancellationTime:clock.default("09:00"),cancellationEnabled:z.boolean().default(true),cancellationSchedule:reminderScheduleSchema.optional(),emailEnabled:z.boolean().default(false),telegramEnabled:z.boolean().default(false),telegramChatId:z.string().max(30).default(""),telegramProviderId:z.string().max(80).default(""), weekStartsOn:z.union([z.literal(0),z.literal(1)]).default(0),routineHorizonMode:z.enum(["months","count"]).default("months"),routineMonthsAhead:z.number().int().min(1).max(24).default(6),routineTicketCount:z.number().int().min(1).max(100).default(26), whatsappEnabled: z.boolean().default(false), sidebarCollapsed: z.boolean().default(false), bookingWindowDays: z.number().int().min(1).max(365).default(60), theme: z.enum(["light", "dark"]).default("light"), weekendDays: z.array(z.number().int().min(0).max(6)).max(6), reminderTimes: z.array(z.enum(REMINDER_KEYS)), reminderClock: reminderClockSchema.default(DEFAULT_CLOCK), whatsappNumber: z.string().max(20) }),
+  settings: z.object({ cancelledArchiveDays:z.number().int().min(1).max(3650).optional(),ticketRetentionDays:z.number().int().min(1).max(3650).optional(), quietHours:z.object({enabled:z.boolean(),start:clock,end:clock}).refine(value=>!value.enabled||value.start!==value.end,{message:"Quiet hours must have different start and end times."}).optional(), bookingSchedule:reminderScheduleSchema.optional(),tatkalSchedule:reminderScheduleSchema.optional(),tatkalNonAcSchedule:reminderScheduleSchema.optional(),cancellationTime:clock.default("09:00"),cancellationEnabled:z.boolean().default(true),cancellationSchedule:reminderScheduleSchema.optional(),emailEnabled:z.boolean().default(false),telegramEnabled:z.boolean().default(false),telegramChatId:z.string().max(30).default(""),telegramProviderId:z.string().max(80).default(""), weekStartsOn:z.union([z.literal(0),z.literal(1)]).default(0),routineHorizonMode:z.enum(["months","count"]).default("months"),routineMonthsAhead:z.number().int().min(1).max(24).default(6),routineTicketCount:z.number().int().min(1).max(100).default(26), whatsappEnabled: z.boolean().default(false), sidebarCollapsed: z.boolean().default(false), bookingWindowDays: z.number().int().min(1).max(365).default(60), theme: z.enum(["light", "dark"]).default("light"), weekendDays: z.array(z.number().int().min(0).max(6)).max(6), reminderTimes: z.array(z.enum(REMINDER_KEYS)), reminderClock: reminderClockSchema.default(DEFAULT_CLOCK), whatsappNumber: z.string().max(20) }),
 });
 export type Journey = z.infer<typeof journeySchema>;
 export type Rule = z.infer<typeof ruleSchema>;
@@ -149,7 +150,7 @@ export function reconcileJourneyLifecycle(planner:Planner,today:string):Planner{
   if(j.status==="booked"&&j.date<today){changed=true;return {...j,status:"completed" as const,completedAt:addDays(j.date,1)};}
   if(j.status==="cancelled"||j.status==="skipped"){
    const cancelledAt=j.cancelledAt&&j.cancelledAt<=today?j.cancelledAt:today;
-   const archivedAt=daysBetween(cancelledAt,today)>=CANCELLED_RETENTION_DAYS?today:undefined;
+   const archivedAt=daysBetween(cancelledAt,today)>=(planner.settings.cancelledArchiveDays??CANCELLED_RETENTION_DAYS)?today:undefined;
    if(cancelledAt!==j.cancelledAt||archivedAt){changed=true;return {...j,cancelledAt,archivedAt};}
   }else if(j.cancelledAt){changed=true;return {...j,cancelledAt:undefined};}
   return j;
@@ -217,7 +218,7 @@ export function migratePlanner(value: unknown): Planner {
   // Preserve legacy holiday records while removing the retired category from the UI.
   const holidays = Array.isArray(raw.holidays) ? raw.holidays.map(h => h && typeof h === "object" && h.type === "public" ? { ...h, type: "company" } : h) : raw.holidays;
   const planner = plannerSchema.parse({ ...raw, holidays });
-  planner.journeys = planner.journeys.map(j => ({ ...j, originOffset: 0, bookingDateOverride: undefined, windowDays: j.status === "needs_booking" ? planner.settings.bookingWindowDays : j.windowDays, trainName: j.trainName ?? j.train, trainNumber: j.trainNumber ?? "" }));
+  planner.journeys = planner.journeys.map(j => ({ ...j, ...(j.pnrStatus && j.pnrStatus.pnr !== j.pnr ? {pnrStatus:undefined,pnrLastAttemptAt:undefined,pnrLastError:undefined,currentStatus:undefined}:{}), originOffset: 0, bookingDateOverride: undefined, windowDays: j.status === "needs_booking" ? planner.settings.bookingWindowDays : j.windowDays, trainName: j.trainName ?? j.train, trainNumber: j.trainNumber ?? "" }));
   for (const rule of [...planner.rules]) {
     if (rule.returnAfterDays === null) continue;
     const offset = rule.returnAfterDays;

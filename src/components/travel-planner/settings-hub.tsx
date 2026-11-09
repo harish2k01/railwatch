@@ -61,6 +61,7 @@ export function SettingsHub({ personal, admin, planner, backup, restore, exportC
             <EmailTickets />
           </>}
           {section === "devices" && <>
+            {personal("retention")}
             <OfflineTickets sync={syncOffline} />
             <div className={s.card}>
               <div className={s.toggleRow}><span><strong>Download Backup</strong><span className={s.muted}>Everything in your workspace as one file</span></span><button type="button" className={s.btn} onClick={backup}>Download</button></div>
