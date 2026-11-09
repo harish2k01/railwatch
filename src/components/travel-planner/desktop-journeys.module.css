@@ -88,7 +88,7 @@
 @media(prefers-reduced-motion:no-preference){
   .board .card{transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
   .board .card:hover{transform:translateY(-1px);box-shadow:0 4px 12px #0002}
-  .board .cards>article{animation:cardIn .2s ease-out both}
+  .board .cards>article{animation:cardIn .2s ease-out backwards}
   .board .dropTarget{transition:background-color .15s ease}
 }
 @keyframes cardIn{from{opacity:0}to{opacity:1}}

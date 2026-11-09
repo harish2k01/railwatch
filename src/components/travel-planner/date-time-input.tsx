@@ -25,14 +25,20 @@ function commit(input: HTMLInputElement | null, value: string) {
 
 /** Places the popover under the field (fixed, so dialogs with scrolling bodies don't clip it), flipping above if needed. */
 function usePlacement(open: boolean, anchor: React.RefObject<HTMLElement | null>, pop: React.RefObject<HTMLElement | null>) {
-  const [style, setStyle] = useState<React.CSSProperties>({ visibility: "hidden" });
+  const [style, setStyle] = useState<React.CSSProperties>({ position: "fixed", top: 0, left: 0, visibility: "hidden" });
+  const applied = useRef({ top: 0, left: 0 });
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open) return; // the style kept from last time still matches applied, so the measurement stays right
     const place = () => {
-      const a = anchor.current?.getBoundingClientRect(), h = pop.current?.offsetHeight ?? 320, w = pop.current?.offsetWidth ?? 296;
-      if (!a) return;
+      const a = anchor.current?.getBoundingClientRect(), el = pop.current, h = el?.offsetHeight ?? 320, w = el?.offsetWidth ?? 296;
+      if (!a || !el) return;
       const below = a.bottom + 6 + h <= window.innerHeight || a.top < h + 6;
-      setStyle({ position: "fixed", top: below ? a.bottom + 6 : a.top - h - 6, left: Math.max(8, Math.min(a.left, window.innerWidth - w - 8)) });
+      const top = below ? a.bottom + 6 : a.top - h - 6, left = Math.max(8, Math.min(a.left, window.innerWidth - w - 8));
+      // A transformed ancestor (the dialog) makes "fixed" relative to itself, not the viewport: measure where (0,0)
+      // lands (its current box minus the offsets last applied) and subtract it, so it sits under the field either way.
+      const rect = el.getBoundingClientRect(), origin = { top: rect.top - applied.current.top, left: rect.left - applied.current.left };
+      applied.current = { top: top - origin.top, left: left - origin.left };
+      setStyle({ position: "fixed", ...applied.current });
     };
     place();
     window.addEventListener("resize", place); window.addEventListener("scroll", place, true);

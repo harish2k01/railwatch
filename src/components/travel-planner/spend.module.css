@@ -32,7 +32,7 @@
 @media(prefers-reduced-motion:no-preference){.bar i{transition:height .3s ease}}
 @media(prefers-reduced-motion:no-preference){
   .bar i{animation:barGrow .5s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom}
-  .stat{animation:statIn .25s ease-out both}.stat:nth-child(2){animation-delay:.04s}.stat:nth-child(3){animation-delay:.08s}.stat:nth-child(4){animation-delay:.12s}
+  .stat{animation:statIn .25s ease-out backwards}.stat:nth-child(2){animation-delay:.04s}.stat:nth-child(3){animation-delay:.08s}.stat:nth-child(4){animation-delay:.12s}
   .part i,.part b{transition:width .4s ease}
 }
 @keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}

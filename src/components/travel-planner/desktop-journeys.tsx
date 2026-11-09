@@ -3,9 +3,9 @@ import { effectiveTicketStatus } from "@/lib/pnr-status";
 import {useState,type DragEvent} from "react";
 import {ArrowRight,ChevronLeft,ChevronRight,Plus,Search} from "lucide-react";
 import {journeyTimeline} from "@/lib/journey-timeline";
-import {bookingDay,bookingInstant,bookingTimeLabel,formatDay,type Journey,type Rule} from "@/lib/travel-planner";
+import {bookingDay,bookingInstant,bookingTimeLabel,formatDay,tripTiming,type Journey,type Rule} from "@/lib/travel-planner";
 import type {JourneyPages,JourneyQuickFilter} from "@/lib/journey-pages";
-import {stationLabel} from "@/lib/journey-display";
+import {berthLabel,stationLabel} from "@/lib/journey-display";
 import {ActionMenu} from "./action-menu";
 import {JourneysNeedsYou} from "./journeys-needs-you";
 import {journeyRangeLabel,type JourneyRange} from "./journey-date-range";
@@ -40,9 +40,9 @@ export function DesktopJourneys(p:Props){
       :j.status==="booked"?(effectiveTicketStatus(j)&&effectiveTicketStatus(j)!=="CNF"?{text:effectiveTicketStatus(j)!,tone:"warn"}:!j.attachments?.length&&!j.pnr?{text:"no PDF",tone:"warn"}:{text:[j.coach,j.seat].filter(Boolean).join(" ")||"ticket",tone:"ok"})
       :j.status==="cancellation_needed"?{text:"confirm",tone:"warn"}:{text:j.status==="skipped"?"skipped":"",tone:"muted"};
     // Second line: the detail you would otherwise open the journey for.
-    const train=[j.trainNumber,j.trainName||j.train].filter(Boolean).join(" "),seat=[j.coach,j.seat,j.berth].filter(Boolean).join(" ");
+    const train=[j.trainNumber,j.trainName||j.train].filter(Boolean).join(" "),seat=[[j.coach,j.seat].filter(Boolean).join(" / "),berthLabel(j.berth)].filter(Boolean).join(" ");
     const detail=j.status==="needs_booking"?`Booking ${urgent?"opened":"opens"} ${formatDay(bookingDay(j),{weekday:"short",day:"numeric",month:"short"})} · ${bookingTimeLabel(j).replace(" IST","")}${j.bookingType==="tatkal"?" · Tatkal":""}`
-      :j.status==="booked"?[train,seat,j.departureConfirmed&&j.departure?`dep ${j.departure}`:""].filter(Boolean).join(" · ")||"Attach the IRCTC PDF to fill train and seat"
+      :j.status==="booked"?[train,seat,j.departureConfirmed&&j.departure?(tripTiming(j)??`Departs ${j.departure}`):""].filter(Boolean).join(" · ")||"Attach the IRCTC PDF to fill train and seat"
       :j.status==="cancellation_needed"?"Cancel on IRCTC, then confirm here":j.status==="skipped"?"Skipped · restore from the menu":"Cancelled";
     return <article key={j.id} className={`${s.card} ${urgent?s.urgent:""} ${dragged===j.id?s.dragging:""}`} draggable onDragStart={e=>dragStart(e,j.id)} onDragEnd={()=>{setDragged(undefined);setTarget(undefined);}} aria-label={`${j.from} to ${j.to}, ${formatDay(j.date)}`} aria-current={p.selectedId===j.id||undefined}><button className={s.cardOpen} onClick={()=>p.open(j)} aria-label={`Open journey ${j.from} to ${j.to}`}><span className={s.cardLine}><span className={s.cardDate}>{formatDay(j.date,{weekday:"short",day:"numeric",month:"short"})}</span><span className={s.cardRoute}>{code(j.from)} → {code(j.to)}</span>{flag.text&&<span className={s.cardFlag} data-tone={flag.tone}>{flag.text}</span>}</span>{detail&&<span className={s.cardDetail}>{detail}</span>}</button><div className={s.cardMenu}>{actions(j)}</div></article>;}
   /** Week-grouped rows with a stage bar; routine trips collapse under their routine (plan 2.4). */
