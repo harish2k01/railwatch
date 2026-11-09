@@ -5,7 +5,7 @@ vi.mock("@/lib/pnr-service", () => ({ startPnrStatus: mock.start, refreshPnr: mo
 vi.mock("@/lib/rate-limit", () => ({ enforceRateLimit: mock.limit }));
 import { POST } from "@/backend/routes/railwatch/pnr/route";
 import { ApiError } from "./http";
-const token = "00000000-0000-4000-8000-000000000000";
+const token = "sealed-check-token-0000";
 const request = (body: unknown) => new Request("http://localhost/api/railwatch/pnr", { method: "POST", headers: { origin: "http://localhost", "content-type": "application/json" }, body: JSON.stringify(body) });
 beforeEach(() => { vi.resetAllMocks(); mock.requireUser.mockResolvedValue({ id: "owner" }); mock.start.mockResolvedValue({ token, image: "data:image/png;base64,AA" }); mock.refresh.mockResolvedValue({ journey: { id: "j" } }); });
 it("does not start a check for another account's journey", async () => {

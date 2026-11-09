@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { prisma } from "./db";
+import { decryptSecret, encryptSecret } from "./crypto";
 import { ApiError } from "./http";
 import { storedPlanner } from "./workspace-storage";
 import { saveWorkspace } from "./railwatch-store";
@@ -17,27 +17,28 @@ export async function ownedPnrJourney(userId: string, id: string) {
   return { workspace, planner, journey };
 }
 
-/** Open CAPTCHA checks: bound to one account, journey and PNR, kept in memory for three minutes. */
+/**
+ * An open CAPTCHA check, sealed into the token the browser holds (encrypted with the app key), so any backend replica
+ * can finish it. Bound to one account, journey and PNR; valid for three minutes. The enquiry itself accepts one answer
+ * per picture.
+ */
 type Check = { userId: string; id: string; pnr: string; cookie: string; expires: number };
-const checks = new Map<string, Check>();
 const CHECK_TTL = 180_000;
-function sweep(now = Date.now()) { for (const [token, c] of checks) if (c.expires < now) checks.delete(token); while (checks.size > 200) checks.delete(checks.keys().next().value!); }
+function openCheck(token: string): Check | undefined { try { const c = JSON.parse(decryptSecret(token) ?? "") as Check; return c.expires > Date.now() ? c : undefined; } catch { return undefined; } }
 
 /** Step 1: gets a CAPTCHA picture for the user to answer for this journey's saved PNR. */
 export async function startPnrStatus(userId: string, id: string) {
   const { journey } = await ownedPnrJourney(userId, id);
   if (!journey.pnr) throw new ApiError(400, "Add a PNR to this journey first.");
   const { image, cookie } = await startPnrCheck();
-  sweep(); const token = randomUUID();
-  checks.set(token, { userId, id, pnr: journey.pnr, cookie, expires: Date.now() + CHECK_TTL });
+  const token = encryptSecret(JSON.stringify({ userId, id, pnr: journey.pnr, cookie, expires: Date.now() + CHECK_TTL } satisfies Check));
   return { token, image };
 }
 
 /** Step 2: submits the user's answer, then saves against fresh account state without overwriting concurrent edits. */
 export async function refreshPnr(userId: string, id: string, token: string, answer: string) {
-  sweep(); const check = checks.get(token);
+  const check = openCheck(token);
   if (!check || check.userId !== userId || check.id !== id) throw new ApiError(410, "That picture expired. Get a new one.", "PNR_EXPIRED");
-  checks.delete(token); // one answer per picture
   const initial = await ownedPnrJourney(userId, id);
   if (!initial.journey.pnr || initial.journey.pnr !== check.pnr) throw new ApiError(409, "The PNR changed. Get a new picture.", "VERSION_CONFLICT");
   let snapshot: Awaited<ReturnType<typeof finishPnrCheck>> | undefined;
