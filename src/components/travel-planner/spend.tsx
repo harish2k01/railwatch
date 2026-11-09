@@ -24,12 +24,14 @@ export function SpendView({ today, attachTickets }: { planner?: Planner; today: 
   const [error, setError] = useState("");
   useEffect(() => { let live = true; apiRequest<{ journeys: SpendJourney[] }>("/api/railwatch/spend", { cache: "no-store" }).then(async v => {
       if (!live) return; setAll(v.journeys);
-      // Trips attached before fares (or arrival times) were saved, or whose saved fare doesn't add up (an older misread): read the stored PDF on this device and save just those.
-      const todo = v.journeys.filter(j => j.pdf?.length && (!j.fare?.total || (j.fare.ticket !== undefined && !fareAddsUp(j.fare)) || (!j.arrival && j.date >= today)));
-      const fares: { id: string; fare?: NonNullable<Journey["fare"]>; arrival?: string; arrivalDate?: string }[] = [];
+      // Each stored ticket PDF is read once (on attach, or here for tickets attached before that): fare and arrival time. readTickets records it even when nothing was found, so Spend never re-reads.
+      const todo = v.journeys.filter(j => j.pdf?.some(p => !j.readTickets?.includes(p.id)));
+      const fares: { id: string; read: string[]; fare?: NonNullable<Journey["fare"]>; arrival?: string; arrivalDate?: string }[] = [];
       for (const [i, j] of todo.entries()) {
         if (!live) return; setReading(`Reading fares from attached tickets… ${i + 1} of ${todo.length}`);
-        for (const pdf of j.pdf!) { try { const blob = await getTicketFile(pdf.id); if (!blob) continue; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; const fare = d.fare?.total && (!j.fare?.total || fareAddsUp(d.fare)) ? d.fare : undefined; if (fare || d.arrival) { fares.push({ id: j.id, fare, arrival: d.arrival, arrivalDate: d.arrivalDate }); break; } } catch { /* leave this trip without a fare */ } }
+        const entry: (typeof fares)[number] = { id: j.id, read: [] };
+        for (const pdf of j.pdf!.filter(p => !j.readTickets?.includes(p.id))) { try { const blob = await getTicketFile(pdf.id); if (!blob) continue; entry.read.push(pdf.id); const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; const fare = d.fare?.total && (!j.fare?.total || fareAddsUp(d.fare)) ? d.fare : undefined; if (fare && !entry.fare) entry.fare = fare; if (d.arrival && !entry.arrival) { entry.arrival = d.arrival; entry.arrivalDate = d.arrivalDate; } } catch { /* unreadable: still recorded as read, so it isn't retried every visit */ } }
+        if (entry.read.length) fares.push(entry);
       }
       if (live) setReading("");
       if (fares.length && live) { await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares }) }).catch(() => undefined); const byId = new Map(fares.filter(f => f.fare).map(f => [f.id, f.fare])); if (live) setAll(list => list?.map(j => byId.get(j.id) ? { ...j, fare: byId.get(j.id) } : j)); }
