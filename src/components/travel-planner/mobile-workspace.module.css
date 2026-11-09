@@ -112,3 +112,4 @@
 .dateJump input{color:transparent;caret-color:transparent;padding:0!important;width:44px;height:44px;border-radius:10px}
 .dateJump input::-webkit-datetime-edit{opacity:0}
 .dateJump button{right:7px}
+.rowMeta .bars i{width:14px}

@@ -12,7 +12,7 @@
 .train rect:first-child{stroke:var(--rw-line);stroke-width:2}
 .window{fill:var(--rw-brand-soft)}
 .wheel{fill:var(--rw-muted)}
-.accent{fill:var(--rw-brand);stroke:var(--rw-brand);animation:accentIn .4s .25s ease-out both}
+.accent{fill:var(--rw-brand);stroke:var(--rw-brand);animation:accentIn .4s .25s ease-out backwards}
 .accent [fill=none]{fill:none}
 @keyframes emptyIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes trainIn{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}

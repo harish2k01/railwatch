@@ -89,8 +89,8 @@ dialog .head{padding-right:0}
   dialog[data-docked] .sticky{margin:0 -20px;padding:12px 20px 20px}
 }
 @media(prefers-reduced-motion:no-preference){
-  .detail>*{animation:jdIn .22s ease-out both}.detail>*:nth-child(2){animation-delay:.03s}.detail>*:nth-child(3){animation-delay:.06s}.detail>*:nth-child(4){animation-delay:.09s}
-  .stages li[data-state=done] .dot{animation:jdPop .3s ease-out both}
+  .detail>*{animation:jdIn .22s ease-out backwards}.detail>*:nth-child(2){animation-delay:.03s}.detail>*:nth-child(3){animation-delay:.06s}.detail>*:nth-child(4){animation-delay:.09s}
+  .stages li[data-state=done] .dot{animation:jdPop .3s ease-out backwards}
 }
 @keyframes jdIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @keyframes jdPop{from{transform:scale(.6)}to{transform:none}}

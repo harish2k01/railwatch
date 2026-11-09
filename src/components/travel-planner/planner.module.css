@@ -328,7 +328,7 @@
 @media(prefers-reduced-motion:no-preference){
   .app :is(.primary,.secondary,.iconButton):active:not(:disabled){transform:scale(.97)}
   .app :is(.primary,.secondary,.iconButton){transition:transform .1s ease,background-color .15s ease,border-color .15s ease,color .15s ease}
-  .vaultCard{animation:vaultIn .22s ease-out both;transition:transform .16s ease,border-color .16s ease}.vaultCard:hover{transform:translateY(-2px)}
+  .vaultCard{animation:vaultIn .22s ease-out backwards;transition:transform .16s ease,border-color .16s ease}.vaultCard:hover{transform:translateY(-2px)}
   .navItem,.navActive{transition:background-color .16s ease,color .16s ease}
 }
 @keyframes vaultIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
