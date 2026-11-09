@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emailText, isTicketEmail, parseTicketEmail } from "./ticket-email";
+import { emailText, isTicketEmail, parseTicketEmail , isCancelEmail, parseCancelEmail } from "./ticket-email";
 
 // Dummy values in the layout of an IRCTC booking-confirmation email (no real ticket data).
 const row = (...cells: string[]) => `<tr>${cells.map(c => `<td>${c}</td>`).join("")}</tr>`;
@@ -33,4 +33,16 @@ describe("IRCTC booking email", () => {
     expect(isTicketEmail("IRCTC <ticketadmin@irctc.co.in>", "Booking Confirmation on IRCTC, Train: 12632, 05-Jan-2027, SL, MDU - MS")).toBe(true);
     expect(isTicketEmail("someone@example.com", "Booking Confirmation")).toBe(false);
   });
+});
+
+describe("IRCTC cancellation email", () => {
+  // Dummy PNR; wording as IRCTC sends it.
+  const text = "Dear Customer,\nWe wish to inform you that your ticket against PNR Number: 1234567890 has been cancelled successfully as per your request. The refund amount of Rs. 255.36 will be refunded back to your respective account shortly.";
+  it("recognises the sender and subject, not booking confirmations", () => {
+    expect(isCancelEmail("ticketadmin@irctc.co.in", "Cancel Ticket")).toBe(true);
+    expect(isCancelEmail("ticketadmin@irctc.co.in", "Booking Confirmation on IRCTC, Train: 12632")).toBe(false);
+    expect(isCancelEmail("someone@example.com", "Cancel Ticket")).toBe(false);
+  });
+  it("reads the PNR and refund", () => { expect(parseCancelEmail(text)).toEqual({ pnr: "1234567890", refund: 255.36 }); });
+  it("ignores an eWallet top-up", () => { expect(parseCancelEmail("you have successfully deposited Rs 400.0 in your IRCTC eWallet account")).toBeUndefined(); });
 });
