@@ -52,12 +52,12 @@ function TicketFacts({ j }: { j: Journey }) {
 export function Dashboard({ planner, today, data, openJourney, createJourney, go, chooseDate, setStatus, skipTimeOff, keepTimeOff, openBookingDay, importTickets, attachTicket, updateStatus }: Props) {
   const { upcoming, bookingSoon, totals, week } = data;
   const found = upcoming.find(j => j.status === "booked") ?? upcoming[0];
-  // Tickets attached before arrival times were read: read the stored PDF on this device once and save the arrival.
+  // Tickets attached before arrival times were read: read the stored PDF on this device once, save the arrival and mark it read.
   const [arrival, setArrival] = useState<{ id: string; arrival: string; arrivalDate?: string }>();
   useEffect(() => {
-    const pdf = found?.status === "booked" && !found.arrival ? found.attachments?.find(a => a.type === "application/pdf") : undefined;
+    const pdf = found?.status === "booked" && !found.arrival ? found.attachments?.find(a => a.type === "application/pdf" && !found.readTickets?.includes(a.id)) : undefined;
     if (!found || !pdf) return; let live = true;
-    void (async () => { try { const blob = await getTicketFile(pdf.id); if (!blob) return; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; if (!d.arrival || !live) return; setArrival({ id: found.id, arrival: d.arrival, arrivalDate: d.arrivalDate }); await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares: [{ id: found.id, arrival: d.arrival, arrivalDate: d.arrivalDate }] }) }); } catch { /* the card still shows the other ticket details */ } })();
+    void (async () => { try { const blob = await getTicketFile(pdf.id); if (!blob) return; const d = (await extractTicketFile(new File([blob], pdf.name, { type: "application/pdf" }))).details; if (d.arrival && live) setArrival({ id: found.id, arrival: d.arrival, arrivalDate: d.arrivalDate }); await apiRequest("/api/railwatch/spend", { method: "POST", body: JSON.stringify({ fares: [{ id: found.id, read: [pdf.id], arrival: d.arrival, arrivalDate: d.arrivalDate }] }) }); } catch { /* the card still shows the other ticket details */ } })();
     return () => { live = false; };
   }, [found?.id, found?.arrival]); // eslint-disable-line react-hooks/exhaustive-deps -- read once per trip, not on every render
   const next = found && arrival?.id === found.id ? { ...found, ...arrival } : found;

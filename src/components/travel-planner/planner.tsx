@@ -23,6 +23,9 @@ import { EmptyState } from "./empty-state";
 import { BookingDay } from "./booking-day";
 import { offlineEnabled, offlineTargets, syncOffline, wipeOffline } from "@/lib/offline-tickets";
 import { TicketImport } from "./ticket-import";
+import { takeShared } from "@/lib/shared-inbox";
+import { parseSharedPnr, sharedPnrSummary } from "@/lib/pnr-text";
+import { recognizeTicket } from "@/lib/ticket-ocr";
 import { parseHolidayICS } from "@/lib/holiday-ics";
 import { SettingsHub } from "./settings-hub";
 import { FirstRun } from "./first-run";
@@ -60,7 +63,7 @@ const PRIMARY = new Set<string>(["home", "journeys", "calendar", "routines", "ho
 const greeting = (at?: Date) => { const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Kolkata" }).format(at ?? new Date())); return h < 12 ? "Good Morning" : h < 17 ? "Good Afternoon" : "Good Evening"; };
 type Tab = typeof NAV[number]["id"]|"workspace"|"users"|"integrations"|"operations";
 const PATHS:Record<Tab,string>={home:"/",journeys:"/journeys",calendar:"/calendar",routines:"/routines",holidays:"/time-off",vault:"/tickets",spend:"/spend",settings:"/settings",workspace:"/settings/workspace",users:"/settings/workspace/members",integrations:"/settings/workspace/integrations",operations:"/settings/workspace/health"};
-type Editor = { type: "tickets" } | { type: "booking"; journey: Journey } | { type: "journey"; journey?: Journey; date?: string; ticket?: boolean; editing?: boolean } | { type: "rule"; rule?: Partial<Rule> } | { type: "day"; date: string } | { type: "holiday" } | { type: "import" } | null;
+type Editor = { type: "tickets"; files?: File[] } | { type: "booking"; journey: Journey } | { type: "journey"; journey?: Journey; date?: string; ticket?: boolean; editing?: boolean } | { type: "rule"; rule?: Partial<Rule> } | { type: "day"; date: string } | { type: "holiday" } | { type: "import" } | null;
 /** Parses and migrates the serialized workspace while reporting invalid stored data. */
 function read(raw: string | null) { if (!raw || raw === "unavailable") return { planner: EMPTY_PLANNER, invalid: raw === "unavailable" }; try { return { planner: migratePlanner(JSON.parse(raw)), invalid: false }; } catch { return { planner: EMPTY_PLANNER, invalid: true }; } }
 /** Downloads generated calendar or backup content through a temporary object URL. */
@@ -196,7 +199,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
       await saveTicketFile(meta.id, file, meta.name);
       const base = j.status === "needs_booking" ? transitionJourney(j, "booked") : j;
       const fill = (key: keyof TicketDetails) => (details[key] ? { [key]: details[key] } : {});
-      const next: Journey = { ...base, ...fill("trainNumber"), ...fill("trainName"), ...fill("travelClass"), ...fill("pnr"), ...fill("coach"), ...fill("seat"), ...fill("berth"), ...fill("ticketStatus"), ...fill("arrival"), ...fill("arrivalDate"), ...(details.fare ? { fare: details.fare } : {}), ...(details.departure ? { departure: details.departure, departureConfirmed: true } : {}), attachments: [...(base.attachments ?? []), meta] };
+      const next: Journey = { ...base, ...fill("trainNumber"), ...fill("trainName"), ...fill("travelClass"), ...fill("pnr"), ...fill("coach"), ...fill("seat"), ...fill("berth"), ...fill("ticketStatus"), ...fill("arrival"), ...fill("arrivalDate"), ...(details.fare ? { fare: details.fare } : {}), ...(details.departure ? { departure: details.departure, departureConfirmed: true } : {}), attachments: [...(base.attachments ?? []), meta], readTickets: [...(base.readTickets ?? []), meta.id] };
       if (await update(next)) setEditor({ type: "journey", journey: next });
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t attach this ticket."); }
     finally { setBusyLabel(""); }
@@ -204,6 +207,32 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
   /** Opens the file picker for one journey and attaches the chosen PDF. */
   function pickTicketFor(j: Journey) { const input = document.createElement("input"); input.type = "file"; input.accept = "application/pdf,.pdf"; input.onchange = () => { const f = input.files?.[0]; if (f) void attachTicketFile(j, f); }; input.click(); }
   /** Skips one planned trip (it stays in Cancelled as skipped) or restores a skipped one. */
+  /** Shared to RailWatch from another app: ticket PDFs open Attach tickets; PNR result text or a screenshot updates its journey after confirming. */
+  async function receiveShared() {
+    const shared = await takeShared(); if (!shared) return;
+    const pdfs = shared.files.filter(f => f.type === "application/pdf");
+    if (pdfs.length) { open({ type: "tickets", files: pdfs }); return; }
+    let text = shared.text;
+    for (const image of shared.files.filter(f => f.type.startsWith("image/"))) {
+      setBusyLabel("Reading the shared screenshot…");
+      try { const bitmap = await createImageBitmap(image), canvas = document.createElement("canvas"); canvas.width = bitmap.width; canvas.height = bitmap.height; canvas.getContext("2d")!.drawImage(bitmap, 0, 0); text += "\n" + await recognizeTicket(canvas); } catch { /* fall through to "couldn't read" */ }
+    }
+    setBusyLabel("");
+    const pnr = parseSharedPnr(text), summary = sharedPnrSummary(pnr);
+    if (!pnr.pnr || !summary) { setError("Couldn’t find a PNR status in what was shared. Share the PNR result page text or a screenshot of it."); return; }
+    const found = (await apiRequest<JourneyPages>(`/api/railwatch/journeys?view=list&range=all&q=${pnr.pnr}`)).pages.all?.items.find(j => j.pnr === pnr.pnr);
+    if (!found) { setError(`No journey has PNR ${pnr.pnr}. Add the PNR to the journey first.`); return; }
+    const first = pnr.passengers.find(p => p.status !== "CAN"), trip = `${found.from} → ${found.to} on ${formatDay(found.date)}`;
+    if (summary === "CAN") {
+      if (await ask(`The PNR shows every passenger cancelled. Mark ${trip} cancelled?`, { confirmLabel: "Mark cancelled", danger: true })) await commit({ ...planner, journeys: [...planner.journeys.filter(j => j.id !== found.id), transitionJourney(found, "cancelled")] }, "Trip marked cancelled.", false, [found]);
+      return;
+    }
+    const seat = first?.coach ? `${first.coach}${first.berth ? ` / ${first.berth}` : ""}${first.berthType ? ` ${first.berthType}` : ""}` : summary === "WL" ? `WL ${first?.position ?? ""}`.trim() : summary;
+    if (!await ask(`Update ${trip}: ${seat}${pnr.chartPrepared ? " · chart prepared" : ""}?`, { confirmLabel: "Update journey" })) return;
+    const next: Journey = { ...found, ticketStatus: summary, currentStatus: summary === "WL" && first?.position ? `WL ${first.position}` : summary, ...(first?.coach ? { coach: first.coach } : {}), ...(first?.berth ? { seat: first.berth } : {}), ...(first?.berthType ? { berth: first.berthType } : {}), statusLog: [...(found.statusLog ?? []), { at: new Date().toISOString(), status: summary }].slice(-40) };
+    await commit({ ...planner, journeys: [...planner.journeys.filter(j => j.id !== found.id), next] }, "PNR status updated.", false, [found]);
+  }
+  useEffect(() => { if (new URL(location.href).searchParams.get("shared") !== "1") return; const t = setTimeout(() => { history.replaceState(null, "", location.pathname); void receiveShared(); }, 0); return () => clearTimeout(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, on arriving from the share sheet
   async function skipJourney(j: Journey) { if (!await ask(`Skip ${j.from} → ${j.to} on ${formatDay(j.date)}? You won't be reminded to book it.`)) return; void update(transitionJourney(j, "skipped")).then(saved => { if (saved && editor?.type === "journey") close(); }); }
   function restoreJourney(j: Journey) { void update(transitionJourney(j, "needs_booking")); }
   /** Waitlist tracking: records a new WL/RAC/CNF status (typed or pasted from the PNR SMS) with its history. */
@@ -356,7 +385,7 @@ export function TravelPlanner({ account }: { account: AccountWorkspace & UserPro
     </main></div>
     {mobile&&<MobileNavigation disabled={saving} tab={tab} more={moreOpen} openMore={()=>{const go=()=>setMoreOpen(!moreVisible);if(settingsNavigationAllowed(go))go();}} navigate={()=>setMoreOpen(false)}/>}
     {editor && <Modal docked={journeyDocked} title={editor.type === "tickets" ? "Attach tickets" : editor.type === "booking" ? "Booking day" : editor.type === "journey" ? editor.ticket ? "Record booked ticket" : editor.journey ? editor.editing ? "Edit journey" : "Journey" : "New journey" : editor.type === "rule" ? editor.rule?.id ? "Edit routine" : "New routine" : editor.type === "day" ? formatDay(editor.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : editor.type === "holiday" ? "Add time off" : "Import company holidays"} subtitle={editor.type === "booking" || editor.type === "tickets" ? undefined : editor.type === "journey" && editor.journey && editor.editing ? `${editor.journey.from} → ${editor.journey.to} · ${formatDay(editor.journey.date)}` : undefined} close={close} wide={editor.type === "tickets" || editor.type === "booking" || (editor.type === "journey" && Boolean(editor.journey) && Boolean(editor.editing))} guard={editor.type !== "day" && editor.type !== "booking" && editor.type !== "tickets" && (editor.type !== "journey" || !editor.journey || Boolean(editor.editing))}>
-      {editor.type === "tickets" && <TicketImport planner={planner} commit={commit} fail={setError} done={close}/>}
+      {editor.type === "tickets" && <TicketImport planner={planner} commit={commit} fail={setError} done={close} initial={editor.files}/>}
       {editor.type === "booking" && <BookingDay journey={editor.journey} routine={ruleName(editor.journey)} fail={setError} booked={(status, ticket) => { const j = editor.journey, next = { ...transitionJourney(j, "booked"), ticketStatus: status, attachments: ticket ? [...(j.attachments ?? []), ticket] : j.attachments } as Journey; void update(next).then(saved => { if (saved) { setNotice(status === "CNF" ? "Marked booked." : `Marked booked (${status}).`); open({ type: "journey", journey: next }); } }); }} retryTatkal={() => { const j = { ...editor.journey, bookingType: "tatkal" as const, tatkalClass: editor.journey.tatkalClass ?? "ac", trainOriginDate: editor.journey.trainOriginDate ?? editor.journey.date }; void update(j).then(saved => { if (saved) { setNotice("Switched to Tatkal."); open({ type: "booking", journey: j }); } }); }} skip={async () => { if (await ask("Skip this trip?")) void commit(skipForTimeOff({ ...planner, journeys: planner.journeys.some(x => x.id === editor.journey.id) ? planner.journeys : [...planner.journeys, editor.journey] }, editor.journey), "Trip skipped.", false, [editor.journey]).then(saved => { if (saved) close(); }); }} />}
       <div inert={saving}>
       {editor.type === "journey" && editor.journey && !editor.editing ? <JourneyDetail bookingDay={editor.journey.status === "needs_booking" ? () => open({ type: "booking", journey: editor.journey! }) : undefined} journey={editor.journey} today={today} routine={ruleName(editor.journey)} reminders={reminderLabel(editor.journey)} uploadsEnabled={policy.ticketUploadsEnabled} edit={()=>setEditor({...editor,editing:true})} attach={()=>setEditor({...editor,editing:true,ticket:true})} attachFile={file=>void attachTicketFile(editor.journey!,file)} skip={editor.journey.status==="needs_booking"?()=>skipJourney(editor.journey!):undefined} restore={editor.journey.status==="skipped"?()=>{restoreJourney(editor.journey!);close();}:undefined} view={setViewTicket} cancel={async ()=>{const j=editor.journey;if(j&&await ask("Have you cancelled this ticket through IRCTC?"))void update(transitionJourney(j,"cancelled")).then(saved=>{if(saved)close();});}}/> : editor.type === "journey" && <JourneyForm remindersEnabled={policy.remindersEnabled} uploadsEnabled={policy.ticketUploadsEnabled} journey={editor.journey} date={editor.date} ticket={editor.ticket} planner={planner} today={today} fail={setError} save={async (j, extra = []) => { const ids = new Set([j.id, ...extra.map(x => x.id)]); const saved = await commit({ ...planner, journeys: [...planner.journeys.filter(old => !ids.has(old.id)), j, ...extra] }, extra.length ? "Journeys saved." : "Journey saved."); if (saved) close(); return saved; }} />}
