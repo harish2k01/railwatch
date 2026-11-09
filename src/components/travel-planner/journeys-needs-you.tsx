@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { EmptyState } from "./empty-state";
-import { addDays, bookingDay, bookingInstant, bookingTimeLabel, formatDay, type Journey } from "@/lib/travel-planner";
+import { addDays, bookingDay, bookingInstant, bookingTimeLabel, formatDay, tripTiming, type Journey } from "@/lib/travel-planner";
+import { berthLabel } from "@/lib/journey-display";
 import type { JourneyPages } from "@/lib/journey-pages";
 import { ActionMenu, type Action } from "./action-menu";
 import s from "./journeys-needs-you.module.css";
@@ -32,7 +33,7 @@ export function JourneysNeedsYou({ rows, data, today, now, selectedId, busy, ope
   const months = shown.reduce<{ key: string; label: string; trips: Journey[] }[]>((acc, j) => { const key = j.date.slice(0, 7); let g = acc.find(x => x.key === key); if (!g) acc.push(g = { key, label: formatDay(j.date, { month: "long", year: j.date.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric" }), trips: [] }); g.trips.push(j); return acc; }, []);
   const status = (j: Journey) => noTicket(j) ? { text: "No PDF", tone: "warn" } : j.status === "booked" ? { text: j.ticketStatus && j.ticketStatus !== "CNF" ? j.ticketStatus : "Booked", tone: j.ticketStatus && j.ticketStatus !== "CNF" ? "warn" : "booked" } : j.status === "needs_booking" ? { text: bookingInstant(j) <= now ? "Book now" : "Planned", tone: bookingInstant(j) <= now ? "warn" : "planned" } : j.status === "cancellation_needed" ? { text: "To cancel", tone: "warn" } : { text: j.status === "skipped" ? "Skipped" : "Cancelled", tone: "muted" };
   const detail = (j: Journey) => j.status === "needs_booking" ? `Booking ${bookingInstant(j) <= now ? "opened" : "opens"} ${formatDay(bookingDay(j), { weekday: "short", day: "numeric", month: "short" })} · ${bookingTimeLabel(j).replace(" IST", "")}${j.bookingType === "tatkal" ? " · Tatkal" : ""}`
-    : j.status === "booked" ? [[j.trainNumber, j.trainName || j.train].filter(Boolean).join(" "), [j.coach, j.seat, j.berth].filter(Boolean).join(" "), j.departureConfirmed && j.departure ? `dep ${j.departure}` : ""].filter(Boolean).join(" · ") || "Attach the IRCTC PDF to fill train and seat"
+    : j.status === "booked" ? [[j.trainNumber, j.trainName || j.train].filter(Boolean).join(" "), [[j.coach, j.seat].filter(Boolean).join(" / "), berthLabel(j.berth)].filter(Boolean).join(" "), j.departureConfirmed && j.departure ? (tripTiming(j) ?? `Departs ${j.departure}`) : ""].filter(Boolean).join(" · ") || "Attach the IRCTC PDF to fill train and seat"
     : j.status === "cancellation_needed" ? "Cancel on IRCTC, then confirm here" : j.status === "skipped" ? "Skipped · restore from the menu" : "Cancelled";
   const needs = soon.length + cancelling.length + (missing ? 1 : 0);
   const nextKeys = Object.entries(data?.pages ?? {}).filter(([key, page]) => page.nextCursor && (tile === "all" || key === tile)).map(([key]) => key);
