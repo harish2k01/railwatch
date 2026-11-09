@@ -73,3 +73,17 @@ export function parseTicketEmail(raw: string): TicketDetails {
   const fare = parseFare(text); if (fare) details.fare = fare;
   return details;
 }
+
+/** IRCTC's "Cancel Ticket" email: sent after the user cancels a ticket on IRCTC. */
+export function isCancelEmail(from: string, subject: string) {
+  return /@irctc\.co\.in\b/i.test(from) && /cancel/i.test(subject) && !/booking\s+confirmation/i.test(subject);
+}
+
+/** Reads "your ticket against PNR Number: 1234567890 has been cancelled successfully … refund amount of Rs. 255.36". */
+export function parseCancelEmail(text: string): { pnr: string; refund?: number } | undefined {
+  const flat = text.replace(/\s+/g, " ");
+  const pnr = flat.match(/PNR\s*(?:Number|No\.?)?\s*[:\-]?\s*(\d{10})\b[^.]*?cancel+ed/i)?.[1];
+  if (!pnr) return undefined;
+  const refund = flat.match(/refund\s+amount\s+of\s+(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d{1,2})?)/i)?.[1];
+  return { pnr, ...(refund ? { refund: Number(refund.replace(/,/g, "")) } : {}) };
+}

@@ -31,3 +31,16 @@ export function applyTicketMail(planner: Planner, d: TicketDetails, newId: () =>
   };
   return { planner: { ...planner, journeys: [...planner.journeys, created] }, result: "created", journey: created };
 }
+
+/**
+ * Applies IRCTC's cancellation email: the journey with that PNR becomes cancelled (IRCTC confirms a cancellation the
+ * user made) and the refund is recorded on its fare for Spend. Unknown PNRs change nothing.
+ */
+export function applyCancelMail(planner: Planner, c: { pnr: string; refund?: number }): MailApply {
+  const match = planner.journeys.find(j => j.pnr === c.pnr);
+  if (!match) return { planner, result: "unmatched" };
+  const base = ["booked", "cancellation_needed", "needs_booking"].includes(match.status) ? transitionJourney(match, "cancelled") : match;
+  const next: Journey = { ...base, ...(c.refund !== undefined && match.fare ? { fare: { ...match.fare, refund: c.refund } } : {}) };
+  if (JSON.stringify(next) === JSON.stringify(match)) return { planner, result: "unchanged", journey: match };
+  return { planner: { ...planner, journeys: planner.journeys.map(j => j.id === match.id ? next : j) }, result: "attached", journey: next };
+}
