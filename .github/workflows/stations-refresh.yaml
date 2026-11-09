@@ -55,7 +55,9 @@ jobs:
           if [ "$phase" = "DONE" ] && [ "$count" -eq 0 ]; then
             # NTES gave nothing (usually it isn't answering requests from GitHub's servers). Don't record an
             # empty crawl as finished: reset it so the next run starts over, and fail so it shows up.
-            rm -f scripts/data/raw/crawl-status.json
+            # Clear the whole crawl: numbers.json would otherwise keep every prefix marked done, and the next run
+            # would resume straight into another empty "complete" crawl. The save step caches the empty folder.
+            rm -rf scripts/data/raw && mkdir -p scripts/data/raw
             echo "::error::Crawl found 0 trains; NTES likely isn't responding to GitHub runners. Run it from another network (self-hosted runner)."
             exit 1
           fi
