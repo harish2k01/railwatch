@@ -107,3 +107,8 @@
 /* Date jump: a calendar icon whose (invisible, full-size) native date input opens the picker. */
 .datePick{position:relative;overflow:hidden}
 .datePick input{position:absolute;inset:0;width:100%!important;height:100%;opacity:0;cursor:pointer}
+/* Calendar date jump: only the picker icon shows; the field behind it keeps the value for forms and tests. */
+.dateJump{width:44px;flex:none}
+.dateJump input{color:transparent;caret-color:transparent;padding:0!important;width:44px;height:44px;border-radius:10px}
+.dateJump input::-webkit-datetime-edit{opacity:0}
+.dateJump button{right:7px}
