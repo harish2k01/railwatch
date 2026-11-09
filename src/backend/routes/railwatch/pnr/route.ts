@@ -6,7 +6,7 @@ import { confirmPnrCancellation, refreshPnr, startPnrStatus } from "@/lib/pnr-se
 
 const body = z.union([
   z.object({ id: z.string().min(1).max(200), action: z.literal("start") }),
-  z.object({ id: z.string().min(1).max(200), action: z.literal("answer"), token: z.string().uuid(), answer: z.string().trim().min(1).max(12) }),
+  z.object({ id: z.string().min(1).max(200), action: z.literal("answer"), token: z.string().min(16).max(8000), answer: z.string().trim().min(1).max(12) }),
   z.object({ id: z.string().min(1).max(200), action: z.literal("cancel") }),
 ]);
 

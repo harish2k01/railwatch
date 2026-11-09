@@ -1,5 +1,6 @@
 import { ApiError } from "./http";
 import { parsePnrStatus } from "./pnr-status";
+import { logger } from "./logger";
 
 /**
  * Indian Railways PNR enquiry, with the CAPTCHA answered by the user. RailWatch fetches the CAPTCHA picture for
@@ -46,14 +47,17 @@ export async function finishPnrCheck(cookie: string, pnr: string, answer: string
     const query = new URLSearchParams({ inputCaptcha: answer, inputPnrNo: pnr, inputPage: "PNR", language: "en" });
     const response = await get(`${SITE}/CommonCaptcha?${query}`, cookie, "application/json,*/*");
     const text = await response.text();
-    if (!response.ok || !text.trim() || text.length > 256_000) throw new Error("empty");
-    data = JSON.parse(text);
+    if (!response.ok || !text.trim() || text.length > 256_000) { logger.warn("pnr.answer_failed", { stage: "response", status: response.status, length: text.length, type: response.headers.get("content-type") ?? "" }); throw new Error("empty"); }
+    try { data = JSON.parse(text); } catch { logger.warn("pnr.answer_failed", { stage: "json", status: response.status, length: text.length }); throw new Error("json"); }
   } catch {
     throw new ApiError(502, "PNR status could not be checked. Try again later or use the official page. Your last saved status is unchanged.", "PNR_UNAVAILABLE");
   }
   const message = typeof data.errorMessage === "string" ? data.errorMessage : "";
   if (/captcha/i.test(message)) throw new ApiError(422, "That answer didn’t match. Try the new picture.", "PNR_CAPTCHA");
-  if (message) throw new ApiError(502, "Indian Railways couldn’t return this PNR right now. Your last saved status is unchanged.", "PNR_UNAVAILABLE");
+  if (message) { logger.warn("pnr.answer_failed", { stage: "message", message: message.slice(0, 120) }); throw new ApiError(502, "Indian Railways couldn’t return this PNR right now. Your last saved status is unchanged.", "PNR_UNAVAILABLE"); }
   try { return parsePnrStatus(data, pnr); }
-  catch { throw new ApiError(502, "Indian Railways returned a status RailWatch couldn’t read. Your last saved status is unchanged.", "PNR_UNAVAILABLE"); }
+  catch (error) {
+    // Field names only (never values), to see what the enquiry returned.
+    const shape = (v: unknown): string => Array.isArray(v) ? `[${v.length ? shape(v[0]) : ""}]` : v && typeof v === "object" ? `{${Object.keys(v).slice(0, 40).join(",")}}` : typeof v;
+    logger.warn("pnr.answer_failed", { stage: "parse", reason: error instanceof Error ? error.message.slice(0, 200) : "", keys: shape(data).slice(0, 600), passengers: shape((data as Record<string, unknown>).passengerList ?? (data as Record<string, unknown>).passengers).slice(0, 400) }); throw new ApiError(502, "Indian Railways returned a status RailWatch couldn’t read. Your last saved status is unchanged.", "PNR_UNAVAILABLE"); }
 }

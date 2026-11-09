@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+process.env.APP_ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString("base64");
 const mock = vi.hoisted(() => ({ workspace: vi.fn(), planner: vi.fn(), save: vi.fn(), start: vi.fn(), finish: vi.fn(), notification: vi.fn() }));
 vi.mock("./db", () => ({ prisma: { railWorkspace: { findUnique: mock.workspace }, railNotification: { createMany: mock.notification } } }));
 vi.mock("./workspace-storage", () => ({ storedPlanner: mock.planner }));
@@ -24,13 +25,13 @@ it("does not contact Indian Railways for unavailable tickets", async () => {
   await expect(startPnrStatus("owner", "j")).rejects.toMatchObject({ status: 404 });
   expect(mock.start).not.toHaveBeenCalled();
 });
-it("submits the user's answer with the saved PNR, once per picture, for the same account only", async () => {
+it("submits the user's answer with the saved PNR, for the same account and journey only", async () => {
   const token = await begin();
   await expect(refreshPnr("someone-else", "j", token, "43")).rejects.toMatchObject({ status: 410 });
   const other = await begin();
   await refreshPnr("owner", "j", other, "43");
   expect(mock.finish).toHaveBeenCalledWith("JSESSIONID=x", "1234567890", "43");
-  await expect(refreshPnr("owner", "j", other, "43")).rejects.toMatchObject({ status: 410 });
+  await expect(refreshPnr("owner", "j", "forged-token-value", "43")).rejects.toMatchObject({ status: 410 });
 });
 it("records nothing for a wrong CAPTCHA answer", async () => {
   mock.finish.mockRejectedValue(new ApiError(422, "That answer didn’t match.", "PNR_CAPTCHA"));

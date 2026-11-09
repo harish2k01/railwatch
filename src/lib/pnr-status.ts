@@ -13,14 +13,17 @@ const record = (v: unknown): Record<string, unknown> => v && typeof v === "objec
 /** Validates provider output before it can replace the last successful snapshot. Fare is intentionally excluded. */
 export function parsePnrStatus(value: unknown, pnr: string, now = new Date()): PnrSnapshot {
   const data = record(value);
-  if (data.errorMessage || String(data.PNR ?? "") !== pnr) throw new Error("PNR_LOOKUP_FAILED");
-  const passengers = Array.isArray(data.passengers) ? data.passengers : [];
+  // The enquiry's own JSON (pnrNumber, passengerList) and ntes-client's naming (PNR, passengers) are both accepted.
+  const number = String(data.PNR ?? data.pnrNumber ?? data.pnrNo ?? "").replace(/D/g, "");
+  if (data.errorMessage || (number && number !== pnr)) throw new Error("PNR_LOOKUP_FAILED");
+  const list = data.passengers ?? data.passengerList ?? data.passengerDetails;
+  const passengers = Array.isArray(list) ? list : [];
   const info = Array.isArray(data.other_info) ? Object.assign({}, ...data.other_info.map(record)) : record(data.other_info);
-  return pnrSnapshotSchema.parse({ pnr, checkedAt: now.toISOString(), chartStatus: text(info.chartStatus ?? data.chartStatus), passengers: passengers.map((raw, index) => {
+  return pnrSnapshotSchema.parse({ pnr, checkedAt: now.toISOString(), chartStatus: text(info.chartStatus ?? data.chartStatus ?? (typeof data.chartPrepared === "boolean" ? (data.chartPrepared ? "Chart Prepared" : "Chart Not Prepared") : "")), passengers: passengers.map((raw, index) => {
     const p = record(raw);
-    const current = text(p.currentStatus ?? p.currentStatusDetails);
+    const current = text(p.currentStatusDetails ?? p.currentStatus);
     if (!current) throw new Error("PNR_LOOKUP_FAILED");
-    return { number: Number(p.passengerSerialNumber ?? index + 1), booking: text(p.bookingStatus ?? p.bookingStatusDetails), current, coach: text(p.currentCoachId ?? p.coach, 20), berth: text(p.currentBerthNo ?? p.berth, 30) };
+    return { number: Number(p.passengerSerialNumber ?? index + 1), booking: text(p.bookingStatusDetails ?? p.bookingStatus), current, coach: text(p.currentCoachId ?? p.coach, 20), berth: text(p.currentBerthNo ?? p.berth, 30) };
   }) });
 }
 
