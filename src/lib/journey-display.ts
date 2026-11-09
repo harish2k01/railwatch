@@ -21,3 +21,6 @@ export function timeOffGroups(holidays: Planner["holidays"], today: string, past
   return groupTimeOff(holidays).filter(group => past ? group.end < today : group.end >= today)
     .sort((a, b) => past ? b.end.localeCompare(a.end) : a.start.localeCompare(b.start));
 }
+
+/** "UPPER" / "LB" → "Upper" / "LB": berth types read as words, short codes stay codes. */
+export function berthLabel(berth?: string) { return berth && berth.length > 3 ? berth.charAt(0).toUpperCase() + berth.slice(1).toLowerCase() : berth; }
