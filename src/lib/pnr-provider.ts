@@ -21,14 +21,18 @@ function cookies(response: Response, previous = ""): string {
 }
 
 async function get(url: string, cookie: string, accept: string) {
-  return fetch(url, { headers: { "User-Agent": AGENT, Referer: PAGE, Accept: accept, "X-Requested-With": "XMLHttpRequest", ...(cookie ? { Cookie: cookie } : {}) }, signal: AbortSignal.timeout(TIMEOUT), redirect: "manual", cache: "no-store" });
+  return fetch(url, { headers: { "User-Agent": AGENT, Accept: accept, ...(url === PAGE ? {} : { Referer: PAGE, "X-Requested-With": "XMLHttpRequest" }), ...(cookie ? { Cookie: cookie } : {}) }, signal: AbortSignal.timeout(TIMEOUT), redirect: "manual", cache: "no-store" });
 }
 
 /** Starts a check: returns the CAPTCHA picture to show the user and the site session to answer it in. */
 export async function startPnrCheck(): Promise<{ image: string; cookie: string }> {
   try {
-    const config = await get(`${SITE}/CaptchaConfig`, "", "*/*");
-    let cookie = cookies(config);
+    // Same order as the official page: load the enquiry page (it starts the session the PNR lookup needs; without it
+    // the enquiry answers "Invalid facnam argument"), then the CAPTCHA settings and picture.
+    const page = await get(PAGE, "", "text/html,*/*");
+    let cookie = cookies(page);
+    const config = await get(`${SITE}/CaptchaConfig`, cookie, "*/*");
+    cookie = cookies(config, cookie);
     const picture = await get(`${SITE}/captchaDraw.png?${Date.now()}`, cookie, "image/png,image/*;q=0.8");
     cookie = cookies(picture, cookie);
     const bytes = Buffer.from(await picture.arrayBuffer());

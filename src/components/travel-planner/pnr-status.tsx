@@ -50,13 +50,19 @@ export function PnrStatus({ journey: j, saved }: { journey: Journey; saved: (jou
   return <section className={`${d.section} ${p.panel}`} aria-label="PNR status">
     <div className={d.line}><h3>PNR status</h3>{!check && <button type="button" className={s.secondary} disabled={busy} onClick={() => void start()}>{busy ? "Loading…" : snapshot ? "Check again" : "Check status"}</button>}</div>
     {suggest && <p className={p.suggest}>Travel is close. Check the PNR for the latest status, chart and berth.</p>}
-    {check && <form className={p.captcha} onSubmit={e => void submit(e)}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- a one-off data: URL from the enquiry */}
-      <img src={check.image} alt="Indian Railways check: work out the sum shown" width={150} height={30} />
-      <label><span>Answer</span><input inputMode="numeric" autoComplete="off" autoFocus maxLength={12} value={answer} onChange={e => setAnswer(e.target.value)} disabled={busy} /></label>
-      <button type="submit" className={s.primary} disabled={busy || !answer.trim()}>{busy ? "Checking…" : "Check"}</button>
-      <button type="button" className={s.textButton} disabled={busy} onClick={() => void start()}>New picture</button>
-      <button type="button" className={s.textButton} disabled={busy} onClick={() => setCheck(undefined)}>Cancel</button>
+    {check && <form className={p.captcha} onSubmit={e => void submit(e)} aria-label="Indian Railways quick check">
+      <p className={p.captchaHint}>Indian Railways asks for a quick check. Solve the sum to see your status.</p>
+      <div className={p.captchaRow}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a one-off data: URL from the enquiry */}
+        <img src={check.image} alt="Sum to solve" width={150} height={30} />
+        <span className={p.equals} aria-hidden="true">=</span>
+        <input aria-label="Answer to the sum" placeholder="Answer" inputMode="numeric" autoComplete="off" autoFocus maxLength={12} value={answer} onChange={e => setAnswer(e.target.value.replace(/[^d-]/g, ""))} disabled={busy} />
+        <button type="submit" className={s.primary} disabled={busy || !answer.trim()}>{busy ? "Checking…" : "Check"}</button>
+      </div>
+      <div className={p.captchaActions}>
+        <button type="button" className={s.textButton} disabled={busy} onClick={() => void start()}>New picture</button>
+        <button type="button" className={s.textButton} disabled={busy} onClick={() => { setCheck(undefined); setError(""); }}>Cancel</button>
+      </div>
     </form>}
     <p className={p.summary} data-status={summary}>{summary === "CANCELLED" ? "Cancelled" : summary === "CNF" ? "Confirmed" : summary === "WL" ? "Waitlisted" : summary === "RAC" ? "RAC" : snapshot ? "See passenger statuses" : "Not checked yet"}</p>
     {summary === "CANCELLED" && active && <div className={p.cancel}><span>Every passenger shows cancelled.</span><button type="button" className={s.secondary} disabled={busy} onClick={() => void markCancelled()}>Mark cancelled</button></div>}
@@ -65,7 +71,7 @@ export function PnrStatus({ journey: j, saved }: { journey: Journey; saved: (jou
       <p className={d.note}>{snapshot.chartStatus || "Chart status unavailable"} · Last checked {new Date(snapshot.checkedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST</p>
       <div className={p.scroll}><table><caption className={p.caption}>Passenger booking and current status</caption><thead><tr><th>Passenger</th><th>Booked</th><th>Current</th><th>Coach / berth</th></tr></thead><tbody>{snapshot.passengers.map(person => <tr key={person.number}><th scope="row">{person.number}</th><td>{person.booking || "—"}</td><td>{person.current}</td><td>{[person.coach, person.berth].filter(Boolean).join(" / ") || "Not supplied"}</td></tr>)}</tbody></table></div>
     </> : <p className={d.note}>Check the latest passenger status, chart preparation and coach or berth details. You’ll answer Indian Railways’ quick check.</p>}
-    {(error || j.pnrLastError) && <p role="alert">{error || j.pnrLastError}</p>}
+    {(error || (snapshot && j.pnrLastError)) && <p role="alert" className={p.error}>{error || j.pnrLastError}</p>}
     <a className={d.link} href="https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html" target="_blank" rel="noreferrer">Check on Indian Railways</a>
   </section>;
 }

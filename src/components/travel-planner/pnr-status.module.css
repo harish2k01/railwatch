@@ -6,10 +6,16 @@
 .scroll th,.scroll td{padding:12px 8px;border-bottom:1px solid var(--rw-line);overflow-wrap:anywhere}
 .caption{text-align:left;color:var(--rw-muted);padding-bottom:8px}
 @media(max-width:768px){.panel{padding:16px}.scroll th,.scroll td{padding:10px 5px;font-size:12px}}
-.captcha{display:flex;flex-wrap:wrap;align-items:end;gap:10px 12px;padding:14px;border-radius:12px;background:var(--rw-surface-2)}
-.captcha img{background:#fff;border-radius:6px;padding:4px;image-rendering:pixelated}
-.captcha label{display:grid;gap:4px;font-size:12px;color:var(--rw-muted)}
-.captcha input{width:96px}
 .cancel{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--rw-attention-bg);border:1px solid var(--rw-attention);color:var(--rw-attention-ink);font-size:14px}
 .cancel>span{flex:1 1 200px}
 .suggest{margin:0;padding:10px 12px;border-radius:10px;background:var(--rw-attention-bg);border:1px solid var(--rw-attention);color:var(--rw-attention-ink);font-size:14px}
+.captcha{display:grid;gap:10px;padding:14px;border-radius:12px;background:var(--rw-surface-2);border:1px solid var(--rw-line)}
+.captchaHint{margin:0;font-size:13px;color:var(--rw-muted)}
+.captchaRow{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.captchaRow img{height:44px;width:auto;padding:6px 10px;box-sizing:border-box;border-radius:10px;background:#fff;border:1px solid var(--rw-line)}
+.equals{font-size:18px;font-weight:700;color:var(--rw-muted)}
+.captchaRow input{width:110px;height:44px;flex:0 0 auto;font-size:16px;font-variant-numeric:tabular-nums;text-align:center}
+.captchaRow button{height:44px}
+.captchaActions{display:flex;gap:14px}
+.error{margin:0;padding:10px 12px;border-radius:10px;background:var(--rw-cancel-bg);color:var(--rw-cancel-ink);font-size:14px}
+@media(max-width:480px){.captchaRow input{flex:1 1 90px}.captchaRow button{flex:1 1 100%}}
