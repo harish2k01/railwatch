@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useId, useState } from "react";
 import { Check, Paperclip, FileText } from "lucide-react";
-import { formatDay, type Journey, type TicketAttachment } from "@/lib/travel-planner";
+import { formatDay, type Journey, type TicketAttachment, tripTiming } from "@/lib/travel-planner";
+import { berthLabel } from "@/lib/journey-display";
 import { journeyStages } from "@/lib/journey-stages";
 import { bookingDay as bookingDate, daysBetween } from "@/lib/travel-planner";
 /** Days from today until booking opens (0 = today, negative = already open). */
@@ -39,7 +40,7 @@ export function JourneyDetail({ pnrSaved, skip, restore, attachFile, journey: j,
   const stages = journeyStages(j, today, routine);
   const details: [string, string][] = [
     ["Train", [j.trainNumber, j.trainName || j.train].filter(Boolean).join(" · ")], ["PNR", j.pnr],
-    ["Coach · berth", [j.coach, j.seat, j.berth].filter(Boolean).join(" · ")], ["Departs", j.departureConfirmed && j.departure ? `${j.departure} IST` : ""],
+    ["Coach · berth", [j.coach, j.seat, berthLabel(j.berth)].filter(Boolean).join(" · ")], ["Departs", j.departureConfirmed && j.departure ? (tripTiming(j) ?? `${j.departure} IST`) : ""],
     ["Class", j.travelClass], ["Ticket status", j.currentStatus ?? (j.ticketStatus === "CNF" ? "Confirmed" : j.ticketStatus ?? "")],
   ];
   const booked = j.status === "booked";

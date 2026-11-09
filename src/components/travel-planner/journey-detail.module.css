@@ -94,3 +94,11 @@ dialog .head{padding-right:0}
 }
 @keyframes jdIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @keyframes jdPop{from{transform:scale(.6)}to{transform:none}}
+/* Phones: the journey sheet gets the canvas's 20px side margins (it had none below 601px). */
+@media(max-width:600px){
+  dialog .detail{padding:8px 20px 0}
+  dialog .sticky{margin:0 -20px;padding:12px 20px 16px}
+}
+/* Completed stages read as done at a glance: solid green with a dark check (the dark-green dot was nearly invisible). */
+.stages li[data-state=done] .dot{background:var(--rw-booked);color:var(--rw-ground)}
+.stages li[data-state=current] .dot{border-color:var(--rw-brand);background:radial-gradient(circle,var(--rw-brand) 0 4px,transparent 5px)}

@@ -93,3 +93,17 @@
 .segCount{font-weight:700;opacity:.8}
 /* Status chips scroll sideways without a visible scrollbar; the row fades at the edge to show there is more. */
 .segments{scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);scroll-snap-type:x proximity}.segments::-webkit-scrollbar{display:none}.segments>*{scroll-snap-align:start;flex:none}
+/* Station names under the route codes: undo the tight heading spacing inherited from the card (it swallowed spaces). */
+.stop small{letter-spacing:0}
+/* Journey rows: progress bars and a detail line together (canvas JourneysMobile). */
+.rowMeta{display:flex;align-items:center;gap:8px;min-width:0}
+.rowMeta small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--rw-muted)}
+.monthHead{margin:14px 4px 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rw-muted)}
+.monthHead:first-child{margin-top:0}
+/* Calendar layer toggles as chips (replaces a bare disclosure triangle). */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--rw-line);background:transparent;color:var(--rw-muted);font:600 13px inherit;font-family:inherit}
+.chips button[aria-pressed=true]{background:var(--rw-brand-soft);border-color:var(--rw-brand);color:var(--rw-brand-soft-ink)}
+/* Date jump: a calendar icon whose (invisible, full-size) native date input opens the picker. */
+.datePick{position:relative;overflow:hidden}
+.datePick input{position:absolute;inset:0;width:100%!important;height:100%;opacity:0;cursor:pointer}
