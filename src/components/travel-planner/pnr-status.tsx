@@ -56,7 +56,7 @@ export function PnrStatus({ journey: j, saved }: { journey: Journey; saved: (jou
         {/* eslint-disable-next-line @next/next/no-img-element -- a one-off data: URL from the enquiry */}
         <img src={check.image} alt="Sum to solve" width={150} height={30} />
         <span className={p.equals} aria-hidden="true">=</span>
-        <input aria-label="Answer to the sum" placeholder="Answer" inputMode="numeric" autoComplete="off" autoFocus maxLength={12} value={answer} onChange={e => setAnswer(e.target.value.replace(/[^d-]/g, ""))} disabled={busy} />
+        <input aria-label="Answer to the sum" placeholder="Answer" inputMode="numeric" autoComplete="off" autoFocus maxLength={12} value={answer} onChange={e => setAnswer(e.target.value.replace(/[^0-9-]/g, ""))} disabled={busy} />
         <button type="submit" className={s.primary} disabled={busy || !answer.trim()}>{busy ? "Checking…" : "Check"}</button>
       </div>
       <div className={p.captchaActions}>
