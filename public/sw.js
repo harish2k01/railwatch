@@ -8,6 +8,8 @@ self.addEventListener("activate", event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("railwatch-offline-") && key !== OFFLINE_CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", event => {
+  const target = new URL(event.request.url);
+  if (event.request.method === "POST" && target.origin === self.location.origin && target.pathname === "/share-target") { event.respondWith(receiveShare(event.request)); return; }
   if (event.request.mode !== "navigate" || event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(fetch(event.request).catch(() => caches.match("/offline.html")));
 });
@@ -52,3 +54,16 @@ self.addEventListener("notificationclick", event => {
     return self.clients.openWindow(target);
   }));
 });
+
+// Share target: keep what was shared (at most 10 files of 10 MB) in a private cache, then open the app to handle it.
+async function receiveShare(request) {
+  try {
+    const form = await request.formData(), cache = await caches.open("railwatch-share");
+    for (const key of await cache.keys()) await cache.delete(key);
+    const files = form.getAll("files").filter(f => f instanceof File && f.size <= 10 * 1024 * 1024).slice(0, 10);
+    const meta = { text: [form.get("title"), form.get("text"), form.get("url")].filter(v => typeof v === "string" && v).join("\n").slice(0, 20000), files: files.map((f, i) => ({ i, name: f.name.slice(0, 200), type: f.type })) };
+    await cache.put("/share-target/meta", new Response(JSON.stringify(meta), { headers: { "Content-Type": "application/json" } }));
+    for (const [i, f] of files.entries()) await cache.put("/share-target/file/" + i, new Response(f, { headers: { "Content-Type": f.type || "application/octet-stream" } }));
+    return Response.redirect("/tickets?shared=1", 303);
+  } catch { return Response.redirect("/tickets", 303); }
+}
