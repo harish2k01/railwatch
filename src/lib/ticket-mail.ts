@@ -5,8 +5,8 @@ import { logger } from "./logger";
 import { getProviderConfiguration, googleConfigured } from "./provider-config";
 import { storedPlanner } from "./workspace-storage";
 import { saveWorkspace } from "./railwatch-store";
-import { emailText, isTicketEmail, parseTicketEmail } from "./ticket-email";
-import { applyTicketMail } from "./ticket-mail-apply";
+import { emailText, isCancelEmail, isTicketEmail, parseCancelEmail, parseTicketEmail } from "./ticket-email";
+import { applyCancelMail, applyTicketMail } from "./ticket-mail-apply";
 
 /** A received email, from any source (Gmail API, IMAP, or forwarded to the inbound address). */
 export type Mail = { id: string; from: string; subject: string; html?: string; text?: string };
@@ -36,14 +36,15 @@ function forwardingNotice(mail: Mail) {
 export async function ingestMail(userId: string, mail: Mail): Promise<string> {
   const notice = forwardingNotice(mail);
   if (notice) { await prisma.railMailbox.updateMany({ where: { userId }, data: { notice } }); return "forwarding-confirmation"; }
-  if (!isTicketEmail(mail.from, mail.subject)) return "ignored";
-  const details = parseTicketEmail(mail.html ? emailText(mail.html) : mail.text ?? "");
+  const cancel = isCancelEmail(mail.from, mail.subject) ? parseCancelEmail(mail.html ? emailText(mail.html) : mail.text ?? "") : undefined;
+  if (!cancel && !isTicketEmail(mail.from, mail.subject)) return "ignored";
+  const details = cancel ? {} : parseTicketEmail(mail.html ? emailText(mail.html) : mail.text ?? "");
   const workspace = await prisma.railWorkspace.findUnique({ where: { userId }, select: { payload: true, storageVersion: true, version: true } });
   if (!workspace) return "no-workspace";
   const planner = await storedPlanner(prisma, userId, workspace);
-  const out = applyTicketMail(planner, details, randomUUID);
+  const out = cancel ? applyCancelMail(planner, cancel) : applyTicketMail(planner, details, randomUUID);
   if (out.result === "attached" || out.result === "created") await saveWorkspace(userId, out.planner, workspace.version);
-  logger.info("mail.ticket", { result: out.result });
+  logger.info(cancel ? "mail.cancellation" : "mail.ticket", { result: out.result });
   return out.journey ? `${out.result}:${out.journey.date} ${out.journey.from}-${out.journey.to}` : out.result;
 }
 

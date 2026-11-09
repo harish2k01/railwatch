@@ -11,6 +11,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    ".venv-pnr/**",
     "public/railwatch/pdf.worker.min.mjs",
     "public/railwatch/ocr/**",
     "public/railwatch/wasm/**",

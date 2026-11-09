@@ -14,6 +14,7 @@ import { ModalActions } from "./form-ui";
 import { useMobileWorkspace } from "./mobile-workspace";
 import s from "./planner.module.css";
 import d from "./journey-detail.module.css";
+import { PnrStatus } from "./pnr-status";
 
 /** Resolves a station code to its directory name, once the directory has loaded. */
 export function useStationName(code: string) {
@@ -25,8 +26,8 @@ export function useStationName(code: string) {
 /** Read-first journey panel (plan 2.2): stages, ticket, details, reminders and notes; edits sit behind ⋯. */
 const PILL: Record<Journey["status"], string> = { needs_booking: "Planned", booked: "Booked", skipped: "Skipped", cancellation_needed: "To cancel", cancelled: "Cancelled", completed: "Travelled" };
 
-export function JourneyDetail({ skip, restore, attachFile, journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
-  bookingDay?: () => void; attachFile?: (file: File) => void; skip?: () => void; restore?: () => void;
+export function JourneyDetail({ pnrSaved, skip, restore, attachFile, journey: j, today, routine, reminders, uploadsEnabled, edit, attach, view, cancel, remove, bookingDay }: {
+  pnrSaved: (journey: Journey) => void; bookingDay?: () => void; attachFile?: (file: File) => void; skip?: () => void; restore?: () => void;
   journey: Journey; today: string; routine?: string; reminders: string; uploadsEnabled: boolean;
   edit: () => void; attach: () => void; view: (file: TicketAttachment) => void; cancel: () => void; remove?: () => void;
 }) {
@@ -40,7 +41,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
   const details: [string, string][] = [
     ["Train", [j.trainNumber, j.trainName || j.train].filter(Boolean).join(" · ")], ["PNR", j.pnr],
     ["Coach · berth", [j.coach, j.seat, berthLabel(j.berth)].filter(Boolean).join(" · ")], ["Departs", j.departureConfirmed && j.departure ? (tripTiming(j) ?? `${j.departure} IST`) : ""],
-    ["Class", j.travelClass], ["Ticket status", j.ticketStatus === "CNF" ? "Confirmed" : j.currentStatus ?? j.ticketStatus ?? ""],
+    ["Class", j.travelClass], ["Ticket status", j.currentStatus ?? (j.ticketStatus === "CNF" ? "Confirmed" : j.ticketStatus ?? "")],
   ];
   const booked = j.status === "booked";
   const main = j.status === "cancellation_needed" ? { label: "Confirm cancellation", run: cancel }
@@ -67,6 +68,7 @@ export function JourneyDetail({ skip, restore, attachFile, journey: j, today, ro
       <dl className={d.grid}>{details.map(([label, value]) => <div key={label}><dt>{label}</dt><dd data-empty={!value || undefined}>{value || "Not set"}</dd></div>)}</dl>
       {(j.statusLog?.length ?? 0) > 0 && <p className={d.note}>Status history: {j.statusLog!.map(x => x.status).join(" → ")}</p>}
     </section>
+    {j.pnr && <PnrStatus key={j.id+j.pnr} journey={j} saved={pnrSaved}/>}
     <section aria-labelledby="journey-reminders" className={d.section}>
       <h3 id="journey-reminders">{mobile ? "Reminders & notes" : "Reminders"}</h3>
       <div className={d.line}><span>{j.status === "cancellation_needed" ? "Cancellation follow-up" : "Booking reminders"}</span><span className={d.note}>{reminders}</span></div>

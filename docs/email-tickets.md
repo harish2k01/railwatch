@@ -57,3 +57,7 @@ Server, port (993, TLS), address and an **app password** (Gmail: Google Account 
 2-Step Verification). RailWatch tests the login before saving and stores the settings encrypted
 (`RailMailbox.imap`). It searches INBOX for mail from `irctc.co.in` in the last 14 days. An app password gives full
 mailbox access, so prefer Gmail sign-in where possible.
+
+## Cancellations
+
+IRCTC's **Cancel Ticket** email (sent after you cancel on IRCTC) marks the journey with that PNR cancelled and records the refund amount on its fare, so it shows under Refunded on Spend. A PNR that matches no journey changes nothing, and a repeated email changes nothing. Other IRCTC mails, such as eWallet top-ups, are ignored.

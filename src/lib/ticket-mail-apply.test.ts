@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTicketMail } from "./ticket-mail-apply";
+import { applyCancelMail, applyTicketMail } from "./ticket-mail-apply";
 import { EMPTY_PLANNER, type Journey } from "./travel-planner";
 
 const planned: Journey = { id: "j1", date: "2027-01-05", from: "MDU", to: "MS", departure: "22:00", train: "", travelClass: "", windowDays: 60, originOffset: 0, status: "needs_booking", pnr: "", notes: "" };
@@ -22,5 +22,19 @@ describe("applyTicketMail", () => {
   });
   it("ignores mail without date, route or PNR", () => {
     expect(applyTicketMail(EMPTY_PLANNER, { pnr: "1234567890" }, () => "x").result).toBe("unmatched");
+  });
+});
+
+describe("applyCancelMail", () => {
+  const booked: Journey = { ...planned, status: "booked", pnr: "1234567890", fare: { total: 369.95, ticket: 340 } };
+  it("cancels the journey with that PNR and records the refund", () => {
+    const out = applyCancelMail({ ...EMPTY_PLANNER, journeys: [booked] }, { pnr: "1234567890", refund: 255.36 });
+    expect(out.result).toBe("attached");
+    expect(out.journey).toMatchObject({ status: "cancelled", fare: { total: 369.95, refund: 255.36 } });
+  });
+  it("changes nothing for an unknown PNR or a repeat email", () => {
+    expect(applyCancelMail({ ...EMPTY_PLANNER, journeys: [booked] }, { pnr: "9999999999" }).result).toBe("unmatched");
+    const once = applyCancelMail({ ...EMPTY_PLANNER, journeys: [booked] }, { pnr: "1234567890", refund: 255.36 });
+    expect(applyCancelMail(once.planner, { pnr: "1234567890", refund: 255.36 }).result).toBe("unchanged");
   });
 });

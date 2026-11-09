@@ -18,3 +18,6 @@ it("retains cancellations for seven days and archives them without losing ticket
  expect(archived.journeys[0]).toEqual({...ticket,cancelledAt:"2026-10-02",archivedAt:"2026-10-09"});
  expect(reconcileJourneyLifecycle(archived,"2026-10-10")).toBe(archived);
 });
+
+
+it("uses the account archive period without deleting journey history",()=>{const journey=journeySchema.parse({train:"",travelClass:"SL",windowDays:60,originOffset:0,departure:"22:00",notes:"",id:"cancelled",status:"cancelled",date:"2026-12-01",cancelledAt:"2026-10-01",from:"A",to:"B",pnr:""});const planner={...EMPTY_PLANNER,settings:{...EMPTY_PLANNER.settings,cancelledArchiveDays:30},journeys:[journey]};expect(reconcileJourneyLifecycle(planner,"2026-10-08").journeys[0].archivedAt).toBeUndefined();expect(reconcileJourneyLifecycle(planner,"2026-10-31").journeys[0].archivedAt).toBe("2026-10-31");});
