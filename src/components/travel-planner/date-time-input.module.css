@@ -8,7 +8,7 @@
 .trigger:hover:not(:disabled){background:var(--rw-surface-2);color:var(--rw-text)}
 .trigger:disabled{opacity:.4;cursor:default}
 
-.pop{z-index:1000;width:296px;padding:12px;border-radius:14px;background:var(--rw-surface);border:1px solid var(--rw-line);box-shadow:0 18px 48px rgb(0 0 0 / .35);color:var(--rw-text);font-family:inherit;animation:popIn .14s ease-out}
+.pop{position:absolute;z-index:1000;width:296px;padding:12px;border-radius:14px;background:var(--rw-surface);border:1px solid var(--rw-line);box-shadow:0 18px 48px rgb(0 0 0 / .35);color:var(--rw-text);font-family:inherit;animation:popIn .14s ease-out}
 .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .head strong{font-size:14px;font-weight:700}
 .head button,.foot button{border:0;background:transparent;color:var(--rw-text);border-radius:8px;cursor:pointer;font:600 13px inherit;font-family:inherit}

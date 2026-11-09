@@ -23,26 +23,29 @@ function commit(input: HTMLInputElement | null, value: string) {
   input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
-/** Places the popover under the field (fixed, so dialogs with scrolling bodies don't clip it), flipping above if needed. */
+/**
+ * Anchors the popover to the field (absolute, inside the field's wrapper): below it, or above when the viewport has
+ * no room below; right-aligned when it would run off the right edge. No screen coordinates, so animated or
+ * transformed dialogs can't throw it off.
+ */
 function usePlacement(open: boolean, anchor: React.RefObject<HTMLElement | null>, pop: React.RefObject<HTMLElement | null>) {
-  const [style, setStyle] = useState<React.CSSProperties>({ position: "fixed", top: 0, left: 0, visibility: "hidden" });
-  const applied = useRef({ top: 0, left: 0 });
+  const [style, setStyle] = useState<React.CSSProperties>({ top: "calc(100% + 6px)", left: 0 });
   useLayoutEffect(() => {
-    if (!open) return; // the style kept from last time still matches applied, so the measurement stays right
+    if (!open) return;
     const place = () => {
-      const a = anchor.current?.getBoundingClientRect(), el = pop.current, h = el?.offsetHeight ?? 320, w = el?.offsetWidth ?? 296;
-      if (!a || !el) return;
-      const below = a.bottom + 6 + h <= window.innerHeight || a.top < h + 6;
-      const top = below ? a.bottom + 6 : a.top - h - 6, left = Math.max(8, Math.min(a.left, window.innerWidth - w - 8));
-      // A transformed ancestor (the dialog) makes "fixed" relative to itself, not the viewport: measure where (0,0)
-      // lands (its current box minus the offsets last applied) and subtract it, so it sits under the field either way.
-      const rect = el.getBoundingClientRect(), origin = { top: rect.top - applied.current.top, left: rect.left - applied.current.left };
-      applied.current = { top: top - origin.top, left: left - origin.left };
-      setStyle({ position: "fixed", ...applied.current });
+      const a = anchor.current?.getBoundingClientRect(), h = pop.current?.offsetHeight ?? 340, w = pop.current?.offsetWidth ?? 296;
+      if (!a) return;
+      // Room is measured inside the nearest clipping box (a dialog's scroll area), not just the window.
+      let box = { top: 0, bottom: window.innerHeight, right: window.innerWidth };
+      for (let el = anchor.current?.parentElement; el && el !== document.body; el = el.parentElement) { const o = getComputedStyle(el).overflowY; if (o !== "visible") { const r = el.getBoundingClientRect(); box = { top: Math.max(0, r.top), bottom: Math.min(window.innerHeight, r.bottom), right: Math.min(window.innerWidth, r.right) }; break; } }
+      const room = box.bottom - a.bottom, above = a.top - box.top;
+      const below = room >= h + 12 || room >= above;
+      const right = a.left + w > box.right - 8;
+      setStyle({ ...(below ? { top: "calc(100% + 6px)" } : { bottom: "calc(100% + 6px)" }), ...(right ? { right: 0 } : { left: 0 }) });
     };
     place();
-    window.addEventListener("resize", place); window.addEventListener("scroll", place, true);
-    return () => { window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true); };
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
   }, [open, anchor, pop]);
   return style;
 }
