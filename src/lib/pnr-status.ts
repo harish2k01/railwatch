@@ -45,12 +45,26 @@ export function effectiveTicketStatus(journey: Pick<Journey, "pnr" | "pnrStatus"
   return journey.ticketStatus;
 }
 
-/** Updates status and cancels an active journey only when every passenger is explicitly cancelled. */
+/** Records the checked status and its history; it never cancels the journey (the user confirms that separately). */
 export function applyPnrStatus(journey: Journey, snapshot: PnrSnapshot): Journey {
   if (journey.pnr !== snapshot.pnr) throw new Error("PNR_CHANGED");
   const summary = pnrSummary(snapshot);
   const previous = journey.pnrStatus?.pnr === journey.pnr ? pnrSummary(journey.pnrStatus) : journey.currentStatus ?? journey.ticketStatus;
   const statusLog = summary && summary !== previous ? [...(journey.statusLog ?? []), { at: snapshot.checkedAt, status: summary }].slice(-40) : journey.statusLog;
-  const cancelled = summary === "CANCELLED" && ["booked", "cancellation_needed", "needs_booking"].includes(journey.status);
-  return { ...journey, ...(cancelled ? {status:"cancelled" as const,cancelledAt:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(snapshot.checkedAt)),...(journey.ruleId?{manualOverride:true}:{})}:{}), pnrStatus: snapshot, pnrLastAttemptAt: snapshot.checkedAt, pnrLastError: undefined, currentStatus: summary ?? "See passengers", statusLog };
+  // A cancelled status never changes the journey by itself: the user confirms it (confirmPnrCancellation).
+  return { ...journey, pnrStatus: snapshot, pnrLastAttemptAt: snapshot.checkedAt, pnrLastError: undefined, currentStatus: summary ?? "See passengers", statusLog };
+}
+
+/**
+ * Whether to suggest a PNR check (never run one): a booked trip with a PNR within three days of travel that is
+ * waitlisted or RAC, or hasn't been checked in the last 12 hours.
+ */
+export function suggestPnrCheck(journey: Journey, today: string, now = Date.now()): boolean {
+  if (!journey.pnr || journey.status !== "booked") return false;
+  const days = Math.round((Date.parse(`${journey.date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+  if (days < 0 || days > 3) return false;
+  const snapshot = journey.pnrStatus?.pnr === journey.pnr ? journey.pnrStatus : undefined;
+  const summary = snapshot ? pnrSummary(snapshot) : effectiveTicketStatus(journey);
+  if (summary === "CANCELLED") return false;
+  return summary === "WL" || summary === "RAC" || !snapshot || now - Date.parse(snapshot.checkedAt) > 12 * 3_600_000;
 }

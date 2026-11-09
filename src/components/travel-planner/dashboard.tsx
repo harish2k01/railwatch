@@ -1,5 +1,5 @@
 "use client";
-import { effectiveTicketStatus } from "@/lib/pnr-status";
+import { effectiveTicketStatus, suggestPnrCheck } from "@/lib/pnr-status";
 import { ask } from "./confirm";
 import { EmptyState } from "./empty-state";
 import Link from "next/link";
@@ -103,6 +103,7 @@ export function Dashboard({ planner, today, data, openJourney, createJourney, go
           <header className={t.cardHead}><h2 id="today-next" className={t.eyebrow}>Next trip · {daysBetween(today, next.date) === 0 ? "today" : `in ${daysBetween(today, next.date)} day${daysBetween(today, next.date) === 1 ? "" : "s"}`}</h2><span className={`${t.pill} ${next.status === "booked" ? t.pillBooked : t.pillPlanned}`}><i aria-hidden="true" />{STATUS[next.status]}{next.ticketStatus && next.ticketStatus !== "CNF" ? ` · ${next.ticketStatus}` : ""}</span></header>
           <div className={t.route}><Stop code={next.from} /><span aria-hidden="true" className={t.track} /><Stop code={next.to} /><span className={t.when}><b>{formatDay(next.date, { weekday: "short", day: "numeric", month: "short" })}</b><small>{(() => { const name = planner.rules.find(r => r.id === next.ruleId)?.name ?? "", leg = next.leg === "return" ? "Return" : next.ruleId ? "Onward" : ""; return [name, name.toLowerCase().includes(leg.toLowerCase()) ? "" : leg]; })().concat([ next.departureConfirmed && next.departure ? `${next.departure} IST` : ""]).filter(Boolean).join(" · ") || "One-off trip"}</small></span></div>
           {next.status === "booked" && <TicketFacts j={next} />}
+          {suggestPnrCheck(next, today) && <div className={t.nudge}><Ticket size={20} aria-hidden="true" /><span>Travel is close. Check the PNR for the latest status, chart and berth.</span><button type="button" className={s.secondary} onClick={() => openJourney(next)}>Check PNR</button></div>}
           {next.status === "booked" && !next.attachments?.length && <div className={t.nudge}><AlertTriangle size={20} aria-hidden="true" /><span>No ticket attached. Add it now so the train, coach and PNR are here on the day.</span>{attachTicket && <button type="button" className={s.primary} onClick={() => attachTicket(next)}>Attach ticket</button>}</div>}
           <div className={t.actions}><button type="button" className={s.secondary} onClick={() => openJourney(next)}>Open journey</button></div>
         </section> : <section className={t.card}><div className={s.dashboardEmpty}><CheckCheck size={26} />{planner.rules.length ? <><h3>No trips coming up</h3><p>Your routines have nothing in the next few weeks. Plan a one-off trip or check your routines.</p></> : <><h3>Start with your regular trip</h3><p>Set up your weekly route once. RailWatch plans each journey and reminds you before booking opens.</p><Link className={s.secondary} href="/routines">Set up a routine</Link></>}<button className={s.textButton} onClick={createJourney}><Plus size={15} />Plan a one-off trip</button></div></section>}
