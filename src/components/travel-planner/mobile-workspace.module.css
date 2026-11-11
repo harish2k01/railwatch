@@ -175,3 +175,8 @@
 .passFacts dd{overflow-wrap:anywhere}
 .passRoute{min-width:0}.passRoute .stop{min-width:0}
 @media(max-width:360px){.passRoute .stop b{font-size:32px}.doCard{width:150px}}
+
+/* Grid children default to min-width:auto, so the scrolling card rail widened the whole screen column at 320px. */
+.screen>*{min-width:0}
+.doRail{min-width:0;width:100%}
+
