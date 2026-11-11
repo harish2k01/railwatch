@@ -185,3 +185,7 @@
 .largeTitle{flex-wrap:wrap;min-width:0}
 .titleActions{flex-wrap:wrap;justify-content:flex-end;min-width:0;margin-left:auto}
 
+
+/* You: the account header shares its row with the bell. */
+.moreTop{display:flex;align-items:center;gap:12px}.moreTop>.moreHead{flex:1;min-width:0}
+
