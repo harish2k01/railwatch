@@ -6,7 +6,7 @@ import {expect} from './browser-expect.mjs';
 
 /** Exercises the populated test account at phone, tablet and desktop widths in both themes. */
 /** Opens user settings: More → User settings on phones (Today has no top bar), the profile menu otherwise. */
-async function openUserSettings(page){const profile=page.getByRole("button",{name:"Open profile menu",exact:true});if(await profile.isVisible()){await page.goto(new URL("/settings",page.url()).href);return;}if(!(await page.getByRole("navigation",{name:"More destinations"}).isVisible()))await page.getByRole("navigation",{name:"Mobile navigation"}).getByRole("button",{name:"More",exact:true}).click();await page.getByRole("button",{name:"User settings",exact:true}).click();}
+async function openUserSettings(page){const profile=page.getByRole("button",{name:"Open profile menu",exact:true});if(await profile.isVisible()){await page.goto(new URL("/settings",page.url()).href);return;}if(!(await page.getByRole("navigation",{name:"More destinations"}).isVisible()))await page.getByRole("navigation",{name:"Mobile navigation"}).getByRole("button",{name:"You",exact:true}).click();await page.getByRole("button",{name:"User settings",exact:true}).click();}
 export async function verifyResponsive({page,api,url,otherApi}) {
   const curve=createECDH('prime256v1');curve.generateKeys();
   const subscription={endpoint:'https://fcm.googleapis.com/fcm/send/railwatch-isolated-test',keys:{p256dh:curve.getPublicKey().toString('base64url'),auth:randomBytes(16).toString('base64url')}};
@@ -45,7 +45,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
       if(width<=390) {
         await page.goto(url+'/journeys');
         const mobileNav=page.getByRole('navigation',{name:'Mobile navigation'});
-        for(const name of ['Today','Journeys','Calendar']) {
+        for(const name of ['Today','Journeys','Tickets']) {
           const link=mobileNav.getByRole('link',{name,exact:true});await expect(link).toBeVisible();
           const box=await link.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width,`Mobile ${name} fits`);
         }
@@ -54,7 +54,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
         if(width===390){const datedJourney=page.getByRole('button',{name:/Open journey/}).first();await datedJourney.waitFor();await expect(datedJourney).toHaveAccessibleName(/ on .*\d{4}$/);assert.match(await datedJourney.innerText(),/^\d{2}\n[A-Z]{3}\n/,'Journey row shows the day and weekday tile; the year stays in the accessible name');await page.screenshot({path:`build/railwatch-qa/mobile-list-${theme}.png`,animations:'disabled'});}
         await page.getByRole('button',{name:'Planned',exact:true}).click();
         await expect(page.getByRole('button',{name:'Planned',exact:true})).toHaveAttribute('aria-pressed','true');
-        await mobileNav.getByRole('button',{name:'More',exact:true}).click();
+        await mobileNav.getByRole('button',{name:'You',exact:true}).click();
         await expect(page.getByRole('navigation',{name:'More destinations'})).toBeVisible();
         const more=page.getByRole('navigation',{name:'More destinations'});
         await more.getByRole('link',{name:'Routines',exact:false}).click();await expect(page.getByRole('heading',{name:'Routines',exact:true})).toBeVisible();
@@ -133,7 +133,7 @@ export async function verifyResponsive({page,api,url,otherApi}) {
   await openUserSettings(page);await guardedSettings.getByRole('button',{name:'Profile',exact:true}).click();await expect(guardedSettings.getByRole('textbox',{name:'Username',exact:true})).toHaveValue(originalName);await guardedSettings.getByRole('button',{name:'Close user settings',exact:true}).click();
   page.removeAllListeners('dialog');page.on('dialog',async d=>{settingsWarnings++;await d.dismiss();});
   await page.goto(url+'/settings/workspace');const bookingDays=page.getByRole('spinbutton',{name:'Booking opens this many days before travel',exact:true}),originalDays=await bookingDays.inputValue();await bookingDays.fill('61');
-  await page.getByRole('button',{name:'More',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,4);
+  await page.getByRole('button',{name:'You',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,4);
   await page.locator('summary').filter({hasText:'Admin section'}).click();await page.getByRole('link',{name:'Routines & calendar',exact:true}).click();await expect(bookingDays).toBeVisible();assert.equal(settingsWarnings,5);
   await bookingDays.fill(originalDays);await page.getByRole('button',{name:'Save booking rules',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Booking rules saved.'})).toBeVisible();await page.getByRole('link',{name:'Routines & calendar',exact:true}).click();assert.equal(settingsWarnings,5);
   page.removeAllListeners('dialog');page.on('dialog',d=>d.accept());
