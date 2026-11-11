@@ -169,3 +169,9 @@
 .doActions button{flex:1;min-height:36px;border:0;border-radius:10px;background:var(--rw-surface);color:var(--rw-text);font:700 13px inherit;font-family:inherit}
 .doActions button:first-child{background:var(--rw-brand);color:var(--rw-brand-ink)}
 @media(prefers-reduced-motion:no-preference){.passMain:active,.doOpen:active{transform:scale(.98);transition:transform .12s ease}}
+/* Keep Today within the screen at 320px: the card rail scrolls inside its own box, and the pass facts wrap. */
+.doRail{margin:0!important;padding:2px 0 6px!important;max-width:100%}
+.passFacts{grid-template-columns:repeat(auto-fit,minmax(64px,1fr))!important;justify-content:stretch!important}
+.passFacts dd{overflow-wrap:anywhere}
+.passRoute{min-width:0}.passRoute .stop{min-width:0}
+@media(max-width:360px){.passRoute .stop b{font-size:32px}.doCard{width:150px}}
