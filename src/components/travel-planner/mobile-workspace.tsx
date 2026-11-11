@@ -1,8 +1,8 @@
 "use client";
-import {useSyncExternalStore, type ReactNode} from "react";
+import {createContext,useContext,useSyncExternalStore, type ReactNode} from "react";
 import { useStationName } from "./journey-detail";
 import Link from "next/link";
-import { CalendarDays, Files, House, LayoutList, MoreHorizontal, Plus } from "lucide-react";
+import { CalendarDays, CircleUserRound, Clock3, Files, House, LayoutList, Plus, Ticket, TriangleAlert, UmbrellaOff } from "lucide-react";
 import {addDays,bookingDay,formatDay,todayIST,tripTiming,type Journey,type TicketAttachment} from "@/lib/travel-planner";
 import {berthLabel,stationLabel} from "@/lib/journey-display";
 import type {DashboardView} from "@/lib/planning-views";
@@ -14,9 +14,21 @@ function subscribe(listener:()=>void){const query=window.matchMedia("(max-width:
 /** Uses a separate phone presentation while retaining the shared account controller. */
 export function useMobileWorkspace(){return useSyncExternalStore(subscribe,()=>window.matchMedia("(max-width: 768px)").matches,()=>false);}
 
-/** Keeps primary destinations within thumb reach; other routes live in More. */
-export function MobileNavigation({tab,more,openMore,navigate,disabled=false}:{tab:string;more:boolean;disabled?:boolean;openMore:()=>void;navigate:()=>void}){
-  return <nav className={m.navigation} aria-label="Mobile navigation" inert={disabled}>{[{id:"home",label:"Today",href:"/",icon:House},{id:"journeys",label:"Journeys",href:"/journeys",icon:LayoutList},{id:"calendar",label:"Calendar",href:"/calendar",icon:CalendarDays}].map(item=><Link key={item.id} href={item.href} aria-current={!more&&tab===item.id?"page":undefined} onClick={navigate}><item.icon size={21}/><span>{item.label}</span></Link>)}<button onClick={openMore} aria-expanded={more} aria-pressed={more||!["home","journeys","calendar"].includes(tab)}><MoreHorizontal size={21}/><span>More</span></button></nav>;
+/** Header actions every phone screen shows beside its large title (the notification bell), set by the planner. */
+export const MobileHeaderActions=createContext<ReactNode>(null);
+
+/**
+ * Floating tab bar (canvas NativeToday): Today, Journeys, a centre New journey button, Tickets and You (account,
+ * settings and the other destinations). Kept within thumb reach and off the screen edges.
+ */
+export function MobileNavigation({tab,more,openMore,navigate,newJourney,disabled=false}:{tab:string;more:boolean;disabled?:boolean;openMore:()=>void;navigate:()=>void;newJourney:()=>void}){
+  const link=(id:string,label:string,href:string,Icon:typeof House)=><Link key={id} href={href} aria-current={!more&&tab===id?"page":undefined} onClick={navigate}><Icon size={22} aria-hidden="true"/><span>{label}</span></Link>;
+  return <nav className={m.tabBar} aria-label="Mobile navigation" inert={disabled}>
+    {link("home","Today","/",House)}{link("journeys","Journeys","/journeys",LayoutList)}
+    <button type="button" className={m.tabNew} aria-label="New journey" onClick={newJourney}><Plus size={24} strokeWidth={2.6} aria-hidden="true"/></button>
+    {link("vault","Tickets","/tickets",Ticket)}
+    <button type="button" onClick={openMore} aria-expanded={more} aria-pressed={more||!["home","journeys","vault"].includes(tab)}><CircleUserRound size={22} aria-hidden="true"/><span>You</span></button>
+  </nav>;
 }
 /** Presents one compact journey with a date tile and accessible whole-row action. */
 /** Train and seat for a booked trip ("12632 · S7 / 14 Upper"), else its departure time. */
@@ -49,41 +61,63 @@ export function MonthList<T>({items,date,render,className}:{items:T[];date:(item
 }
 /** Station code with its directory name underneath (the name, not the code twice). */
 function MobileStop({code,end=false}:{code:string;end?:boolean}){const name=useStationName(stationLabel(code));return <span className={m.stop} data-end={end||undefined}><b>{stationLabel(code)}</b>{name&&<small>{name}</small>}</span>;}
-/** Today on phones (canvas TodayMobile.dc.html): header, next trip, Do next, this week. */
+/** One horizontally scrolling "Do next" card (canvas NativeToday). */
+function DoCard({tone,icon,title,lines,open,children}:{tone:"open"|"warn"|"off";icon:ReactNode;title:string;lines:string[];open:()=>void;children?:ReactNode}){
+  return <div className={m.doCard} data-tone={tone}><button type="button" className={m.doOpen} onClick={open}>{icon}<span><b>{title}</b>{lines.map(l=><small key={l}>{l}</small>)}</span></button>{children}</div>;
+}
+/** The next trip as a boarding pass: route, times, then train, coach, berth and class below a perforation. */
+function BoardingPass({j,open,view}:{j:Journey;open:()=>void;view?:()=>void}){
+  const days=Math.round((Date.parse(j.date)-Date.parse(todayIST()))/86_400_000);
+  const when=days===0?"today":days===1?"tomorrow":`in ${days} days`;
+  const status=j.status==="needs_booking"?"Planned":j.ticketStatus==="WL"?"Waitlisted":j.ticketStatus==="RAC"?"RAC":j.status==="booked"?"Confirmed":STATUS[j.status];
+  const timing=tripTiming(j), arrive=timing?.split(" → ")[1]?.split(" · ")[0];
+  const facts:[string,string|undefined][]=[["Train",j.trainNumber||undefined],["Coach",j.coach],["Berth",[j.seat,berthLabel(j.berth)].filter(Boolean).join(" ")||undefined],["Class",j.travelClass||undefined]];
+  const shown=facts.filter((f):f is [string,string]=>Boolean(f[1]));
+  return <section className={m.pass} data-booked={j.status==="booked"||undefined} aria-label="Next trip">
+    <button type="button" className={m.passMain} onClick={open} aria-label={`Next trip ${j.from} to ${j.to}, ${formatDay(j.date,{weekday:"long",day:"numeric",month:"long"})}, ${status}`}>
+      <span className={m.passTop}><span>Next trip · {when}</span><i>{status}</i></span>
+      <span className={m.passRoute}><MobileStop code={j.from}/><span className={m.passLine} aria-hidden="true">{timing?.split(" · ")[1]??""}</span><MobileStop code={j.to} end/></span>
+      <span className={m.passTimes}><span>{formatDay(j.date,{weekday:"short",day:"numeric",month:"short"})}{j.departureConfirmed&&j.departure?` · ${j.departure}`:""}</span>{arrive&&<span>{arrive}</span>}</span>
+    </button>
+    {shown.length>0&&<><span className={m.perforation} aria-hidden="true"/><dl className={m.passFacts}>{shown.map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl></>}
+    {view&&<button type="button" className={m.passTicket} onClick={view}><Files size={17} aria-hidden="true"/>Show ticket</button>}
+  </section>;
+}
+/** Today on phones (canvas NativeToday): large title, boarding-pass next trip, swipeable Do next cards, this week. */
 export function MobileHome({data,open,view,plan,go,skip,keep,today,attach}:{data:DashboardView;open:(j:Journey)=>void;view:(file:TicketAttachment)=>void;plan:()=>void;go:(status:string)=>void;skip?:(j:Journey)=>void;keep?:(j:Journey)=>void;today?:string;attach?:(j:Journey)=>void}){
+  const bell=useContext(MobileHeaderActions);
   const next=data.upcoming.find(j=>j.status==="booked")??data.upcoming[0];
   const pdf=next?.attachments?.find(file=>file.type==="application/pdf");
-  const details=next?[[next.trainNumber,next.trainName||next.train].filter(Boolean).join(" "),tripTiming(next),next.travelClass,next.coach&&`Coach ${next.coach}`,next.seat&&`Seat ${next.seat}`,berthLabel(next.berth),next.pnr&&`PNR ${next.pnr}`].filter(Boolean).join(" · "):"";
-  const decisions=data.conflicts??[];
   const start=today||next?.date||"";
-  const all=[...data.upcoming,...data.attention,...data.bookingSoon];
-  const doNext=[...data.attention.map(j=>({j,booking:false})),...data.bookingSoon.filter(j=>!data.attention.some(a=>a.id===j.id)).map(j=>({j,booking:true}))].slice(0,4);
+  const decisions=data.conflicts??[];
+  const short=(d:string)=>formatDay(d,{day:"numeric",month:"short"});
+  const cards:ReactNode[]=[
+    ...decisions.map(j=><DoCard key={"d"+j.id} tone="off" icon={<UmbrellaOff size={24} aria-hidden="true"/>} title="On your time off" lines={[`${stationLabel(j.from)} → ${stationLabel(j.to)} · ${short(j.date)}`,"Skip or keep?"]} open={()=>open(j)}>{(skip||keep)&&<span className={m.doActions}>{skip&&<button type="button" onClick={()=>skip(j)}>Skip</button>}{keep&&<button type="button" onClick={()=>keep(j)}>Keep</button>}</span>}</DoCard>),
+    ...(next&&next.status==="booked"&&!pdf?[<DoCard key="t" tone="warn" icon={<Ticket size={24} aria-hidden="true"/>} title="Attach ticket" lines={[`${stationLabel(next.from)} → ${stationLabel(next.to)} · ${short(next.date)}`,"So it’s here offline"]} open={()=>attach?attach(next):open(next)}/>]:[]),
+    ...data.attention.map(j=><DoCard key={"a"+j.id} tone="warn" icon={<TriangleAlert size={24} aria-hidden="true"/>} title={j.status==="cancellation_needed"?"Confirm cancellation":"Book now"} lines={[`${stationLabel(j.from)} → ${stationLabel(j.to)} · ${short(j.date)}`,j.status==="cancellation_needed"?"Cancelled on IRCTC?":"Booking window is open"]} open={()=>open(j)}/>),
+    ...data.bookingSoon.filter(j=>!data.attention.some(a=>a.id===j.id)).map(j=><DoCard key={"b"+j.id} tone="open" icon={<Clock3 size={24} aria-hidden="true"/>} title="Booking opens" lines={[formatDay(bookingDay(j),{weekday:"short",day:"numeric",month:"short"}),`${stationLabel(j.from)} → ${stationLabel(j.to)} · ${short(j.date)}`]} open={()=>open(j)}/>),
+  ].slice(0,6);
+  const week=start?data.upcoming.filter(j=>j.date>=start&&j.date<=addDays(start,6)&&j.id!==next?.id).slice(0,4):[];
   return <div className={m.screen}>
-    <header className={m.todayHead}><div><span className={m.dateLine}>{start&&formatDay(start,{weekday:"long",day:"numeric",month:"long"})}</span><h1>Today</h1></div><button type="button" className={m.iconPrimary} aria-label="New journey" onClick={plan}><Plus size={20}/></button></header>
-    {decisions.length>0&&<section className={m.decision} aria-labelledby="mobile-decision"><h2 id="mobile-decision">Needs a decision</h2>{decisions.map(j=><div key={j.id} className={m.decisionRow}><button className={m.decisionTrip} onClick={()=>open(j)}><b>{formatDay(j.date,{weekday:"short",day:"numeric",month:"short"})} · {stationLabel(j.from)} → {stationLabel(j.to)}</b><small>On your time off</small></button><div className={m.decisionActions}>{skip&&<button onClick={()=>skip(j)}>Skip</button>}{keep&&<button onClick={()=>keep(j)}>Keep</button>}</div></div>)}</section>}
-    {next?<section aria-label="Next journey" className={m.trip}><button className={m.tripOpen} onClick={()=>open(next)} aria-label={`Open journey ${next.from} to ${next.to} on ${formatDay(next.date,{day:"numeric",month:"long",year:"numeric"})}`}>
-      <span className={m.tripTop}><span className={m.eyebrow}>Next trip</span><span className={m.tripStatus} data-status={next.status}>{next.status==="needs_booking"?"Planned":STATUS[next.status]}</span></span>
-      <span className={m.route}><MobileStop code={next.from}/><span className={m.track} aria-hidden="true"/><MobileStop code={next.to} end/></span>
-      <span className={m.when}>{formatDay(next.date,{weekday:"short",day:"numeric",month:"short"})} · Onward{next.departureConfirmed&&next.departure?` · ${next.departure} IST`:""}</span>
-      {details&&<span className={m.tripDetails}>{details}</span>}</button>
-      {pdf?<button className={m.primary} onClick={()=>view(pdf)}><Files size={17}/>View ticket</button>:next.status==="booked"&&<div className={m.nudge}><span>No ticket attached yet</span><button type="button" onClick={()=>attach?attach(next):open(next)}>Attach</button></div>}
-    </section>:<section className={m.empty}><CalendarDays size={26}/><h2>No upcoming trip yet</h2><p>Your next booked journey will appear here.</p></section>}
-    <section aria-labelledby="mobile-do-next"><div className={m.sectionHead}><h2 id="mobile-do-next">Do next</h2>{doNext.length>0&&<button onClick={()=>go("all")}>View all</button>}</div>
-      {doNext.length?<div className={m.list}>{doNext.map(({j,booking})=><MobileJourneyRow key={j.id} journey={j} booking={booking} open={()=>open(j)} label={booking?`Opens ${formatDay(bookingDay(j),{weekday:"short",day:"numeric",month:"short"})} · travel ${formatDay(j.date,{day:"numeric",month:"short"})}`:j.status==="cancellation_needed"?"Cancellation to confirm":"Booking window open"}/>)}</div>:<p className={m.emptyText}>Nothing to do right now.</p>}</section>
-    {start&&<section aria-labelledby="mobile-week"><h2 id="mobile-week">This week</h2><div className={m.strip}>{Array.from({length:7},(_,i)=>addDays(start,i)).map(d=>{const n=all.filter(j=>j.date===d).length;return <span key={d} data-today={d===start||undefined}><small>{formatDay(d,{weekday:"short"}).slice(0,1)}</small><b>{Number(d.slice(-2))}</b><i aria-hidden="true" data-on={n>0||undefined}/></span>;})}</div></section>}
+    <header className={m.largeTitle}><div><span className={m.dateLine}>{start&&formatDay(start,{weekday:"long",day:"numeric",month:"long"})}</span><h1>Today</h1></div><div className={m.titleActions}>{bell}</div></header>
+    {next?<BoardingPass j={next} open={()=>open(next)} view={pdf?()=>view(pdf):undefined}/>:<section className={m.empty}><CalendarDays size={26}/><h2>No upcoming trip yet</h2><p>Your next booked journey will appear here.</p><button type="button" className={m.primary} onClick={plan}><Plus size={17}/>Plan a trip</button></section>}
+    <section aria-labelledby="mobile-do-next"><div className={m.sectionHead}><h2 id="mobile-do-next">Do next</h2>{cards.length>0&&<button onClick={()=>go("all")}>See all</button>}</div>
+      {cards.length?<div className={m.doRail}>{cards}</div>:<p className={m.emptyText}>Nothing to do right now.</p>}</section>
+    {week.length>0&&<section aria-labelledby="mobile-week"><h2 id="mobile-week">This week</h2><div className={m.list}>{week.map(j=><MobileJourneyRow key={j.id} journey={j} open={()=>open(j)}/>)}</div></section>}
   </div>;
 }
-export function MobileScreen({title,children,action}:{title:string;children:ReactNode;action?:ReactNode}){return <div className={m.screen}><div className={m.heading}><h1>{title}</h1>{action}</div>{children}</div>;}
+export function MobileScreen({title,children,action}:{title:string;children:ReactNode;action?:ReactNode}){const bell=useContext(MobileHeaderActions);return <div className={m.screen}><div className={m.largeTitle}><h1>{title}</h1><div className={m.titleActions}>{action}{bell}</div></div>{children}</div>;}
 /** Shows a seven-day selector around the chosen date, including exact event counts. */
 export function MobileWeek({date,choose,count}:{date:string;choose:(date:string)=>void;count:(date:string)=>number}){return <div className={m.week} aria-label="Calendar week">{Array.from({length:7},(_,i)=>addDays(date,i-3)).map(value=><button key={value} aria-label={`View ${value}, ${count(value)} events`} aria-pressed={value===date} onClick={()=>choose(value)}><small>{formatDay(value,{weekday:"short"}).toUpperCase()}</small><b>{Number(value.slice(-2))}</b><span aria-hidden="true" data-on={count(value)>0||undefined}/></button>)}</div>;}
 /** More on phones (canvas MoreMobile.dc.html): account header, Plan, Settings and Workspace groups, Sign out. */
 export function MobileMore({name,admin,missingTickets,hints={},openSettings,theme,signOut,close}:{name:string;admin:boolean;missingTickets:number;hints?:{timeOff?:string;routines?:string;reminders?:string};openSettings:()=>void;theme:{label:string;toggle:()=>void};signOut:()=>void;close:()=>void}){
+  const bell=useContext(MobileHeaderActions);
   const item=(href:string,label:string,value?:ReactNode,last?:boolean)=><Link className={m.moreItem} data-last={last||undefined} href={href} onClick={close}>{label}{value!==undefined&&<span className={m.moreValue}>{value}</span>}</Link>;
   return <div className={m.more}>
-    <button type="button" className={m.moreHead} aria-label="User settings" onClick={openSettings}><span className={m.avatar} aria-hidden="true">{(name.trim()[0]??"?").toUpperCase()}</span><span><h1>{name}</h1><small>{admin?"Admin · ":""}Profile and security</small></span></button>
+    <div className={m.moreTop}><button type="button" className={m.moreHead} aria-label="User settings" onClick={openSettings}><span className={m.avatar} aria-hidden="true">{(name.trim()[0]??"?").toUpperCase()}</span><span><h1>{name}</h1><small>{admin?"Admin · ":""}Profile and security</small></span></button><div className={m.titleActions}>{bell}</div></div>
     <nav aria-label="More destinations">
       <h2 className={m.moreGroup}>Plan</h2>
-      <div className={m.moreCard}>{item("/time-off","Time off",hints.timeOff)}{item("/routines","Routines",hints.routines)}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined)}{item("/spend","Spend",undefined,true)}</div>
+      <div className={m.moreCard}>{item("/calendar","Calendar")}{item("/time-off","Time off",hints.timeOff)}{item("/routines","Routines",hints.routines)}{item("/tickets","Tickets",missingTickets?<b className={m.moreWarn}>{missingTickets} missing</b>:undefined)}{item("/spend","Spend",undefined,true)}</div>
       <h2 className={m.moreGroup}>Settings</h2>
       <div className={m.moreCard}>{item("/settings#settings-reminders","Reminders",hints.reminders)}{item("/settings#settings-trips","Trips & days off")}{item("/settings#settings-connections","Connections")}{item("/settings#settings-account","Account")}{item("/settings#settings-devices","Devices & data")}<button type="button" className={m.moreItem} data-last onClick={theme.toggle}>{theme.label}</button></div>
       {admin&&<><h2 className={m.moreGroup}>Workspace</h2><div className={m.moreCard}>{item("/settings/workspace","Members and booking rules")}{item("/settings/workspace/health","System health",undefined,true)}</div></>}
